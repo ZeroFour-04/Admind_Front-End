@@ -1,0 +1,36 @@
+/* PALETA CRUDA — la única capa donde vive un hex.
+   Nadie consume estos nombres en un componente: existen para que colores.css
+   los aliase con nombre semántico. Agregar modo oscuro después es reescribir
+   los alias de colores.css, no esta paleta. */
+:root{
+  /* Verde de marca — rampa «Pino institucional». Cuatro pasos, ni uno más. */
+  --verde-50:#EEF5F2;
+  --verde-600:#0E6B5A;
+  --verde-700:#0B5546;
+  --verde-900:#06302A;
+
+  /* Neutros — con una pizca del verde adentro para que el gris no se vea azul
+     al lado del acento. */
+  --gris-0:#FFFFFF;
+  --gris-25:#F6F8F7;
+  --gris-75:#EDF1EF;
+  --gris-200:#D6DCDA;
+  --gris-350:#B4BDBA;
+  --gris-500:#64706C;
+  --gris-700:#4B5754;
+  --gris-950:#14201D;
+
+  /* Estados — fijos, ajenos a la marca. Si mañana la marca cambia de verde,
+     esta lista no se toca. */
+  --ambar-fondo:#FBF0DC;   --ambar-tinta:#6B4A05;
+  --hoja-fondo:#E2F0E4;    --hoja-tinta:#1F5A2C;
+  --rojo-fondo:#FBE7E5;    --rojo-tinta:#8A1E15;
+  --rojo-600:#A3251A;      --rojo-700:#7F1B12;
+  --piedra-fondo:#ECEFEE;  --piedra-tinta:#3F4A47;
+  --azul-fondo:#E4EDF8;    --azul-tinta:#1B4470;
+
+  /* Alfas derivadas del acento y de la sombra. */
+  --verde-600-a32:rgba(14,107,90,.32);
+  --tinta-a28:rgba(6,48,42,.28);
+  --tinta-a14:rgba(6,48,42,.14);
+}

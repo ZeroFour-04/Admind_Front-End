@@ -1,0 +1,103 @@
+/* COMPONENTES — CSS plano sobre variables. Ningún hex aquí.
+   Las clases .am-es-* fuerzan un estado para poder mostrarlo en el muestrario;
+   en producción no se usan. */
+
+/* ---------- BOTONES ----------------------------------------------------
+   La acción siempre es relleno sólido con radio pequeño. Nunca fondo suave:
+   ese lenguaje pertenece a las pastillas de estado. */
+.am-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--e-2);min-height:var(--toque-minimo);padding:0 var(--e-4);border:1px solid transparent;border-radius:var(--radio-control);font-size:var(--tipo-cuerpo);font-weight:var(--peso-texto-medio);line-height:1;white-space:nowrap;cursor:pointer;background:none;transition:background var(--transicion),border-color var(--transicion),color var(--transicion)}
+.am-btn:disabled{cursor:not-allowed}
+.am-btn--primario{background:var(--acento-600);color:var(--acento-tinta)}
+.am-btn--primario:hover,.am-btn--primario.am-es-hover{background:var(--acento-700)}
+.am-btn--primario:disabled{background:var(--superficie-hundida);color:var(--texto-suave)}
+.am-btn--secundario{background:var(--superficie-tarjeta);border-color:var(--borde-fuerte);color:var(--texto-fuerte)}
+.am-btn--secundario:hover,.am-btn--secundario.am-es-hover{background:var(--superficie-hundida)}
+.am-btn--secundario:disabled{background:var(--superficie-hundida);border-color:var(--borde);color:var(--texto-suave)}
+.am-btn--peligro{background:var(--estado-error-relleno);color:var(--acento-tinta)}
+.am-btn--peligro:hover,.am-btn--peligro.am-es-hover{background:var(--estado-error-relleno-hover)}
+.am-btn--peligro:disabled{background:var(--superficie-hundida);color:var(--texto-suave)}
+.am-btn--texto{padding:0 var(--e-2);color:var(--acento-700);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.am-btn--texto:hover,.am-btn--texto.am-es-hover{color:var(--acento-900);background:var(--acento-50)}
+.am-btn--texto:disabled{color:var(--texto-suave);text-decoration-color:var(--borde-fuerte)}
+.am-btn.am-es-foco{outline:2px solid var(--acento-600);outline-offset:2px}
+
+/* ---------- CAMPO DE FORMULARIO ----------------------------------------
+   Siempre con label asociado. El placeholder nunca hace de etiqueta. */
+.am-campo{display:flex;flex-direction:column;gap:var(--e-1);max-width:420px}
+.am-campo__etiqueta{font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-medio);line-height:var(--alto-corto)}
+.am-campo__control{min-height:var(--toque-minimo);padding:0 var(--e-3);background:var(--superficie-tarjeta);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);font-size:var(--tipo-cuerpo);color:var(--texto-fuerte);transition:border-color var(--transicion),box-shadow var(--transicion)}
+textarea.am-campo__control{min-height:96px;padding:var(--e-3);line-height:var(--alto-cuerpo);resize:vertical}
+.am-campo__control:focus,.am-campo__control.am-es-foco{outline:none;border-color:var(--acento-600);box-shadow:0 0 0 3px var(--acento-anillo)}
+.am-campo__control[aria-invalid="true"]{border-color:var(--estado-error-relleno)}
+.am-campo__control:disabled{background:var(--superficie-hundida);border-color:var(--borde);color:var(--texto-suave);cursor:not-allowed}
+.am-campo__ayuda{font-size:var(--tipo-meta);color:var(--texto-suave)}
+.am-campo__error{display:flex;gap:var(--e-1);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--estado-error-texto)}
+
+/* ---------- PASTILLA DE ESTADO -----------------------------------------
+   Fondo suave, radio total, texto oscuro del mismo tono. Nunca rellena
+   sólido, nunca es cliqueable, nunca comunica sin texto. */
+.am-pastilla{display:inline-flex;align-items:center;gap:var(--e-1);padding:var(--e-1) var(--e-3);border-radius:var(--radio-pastilla);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);line-height:1.35;white-space:nowrap}
+.am-pastilla--tramite{background:var(--estado-tramite-fondo);color:var(--estado-tramite-texto)}
+.am-pastilla--confirmado{background:var(--estado-confirmado-fondo);color:var(--estado-confirmado-texto)}
+.am-pastilla--error{background:var(--estado-error-fondo);color:var(--estado-error-texto)}
+.am-pastilla--neutro{background:var(--estado-neutro-fondo);color:var(--estado-neutro-texto)}
+.am-pastilla--info{background:var(--info-fondo);color:var(--info-texto)}
+.am-pastilla__reloj{font-variant-numeric:var(--cifras-tabulares)}
+
+/* ---------- TARJETA Y TABLA --------------------------------------------
+   Las tarjetas se separan con borde, no con sombra. */
+.am-tarjeta{background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-caja)}
+.am-tabla-caja{background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-caja);overflow:hidden}
+.am-tabla{font-size:var(--tipo-cuerpo)}
+.am-tabla thead th{background:var(--superficie-hundida);padding:var(--e-3) var(--e-4);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-medio);text-align:left;border-bottom:1px solid var(--borde)}
+.am-tabla td{padding:var(--e-3) var(--e-4);border-bottom:1px solid var(--borde);color:var(--texto-fuerte);vertical-align:middle}
+.am-tabla tbody tr:last-child td{border-bottom:0}
+.am-tabla tbody tr:hover,.am-tabla tbody tr.am-es-hover{background:var(--superficie-hundida)}
+.am-tabla .am-col-num{text-align:right;font-variant-numeric:var(--cifras-tabulares)}
+.am-tabla th.am-col-num{text-align:right}
+.am-tabla__secundario{color:var(--texto-suave);font-size:var(--tipo-meta)}
+
+/* ---------- TESELA DE PANEL -------------------------------------------- */
+.am-tesela{display:flex;flex-direction:column;gap:var(--e-1);padding:var(--e-5);background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-caja)}
+.am-tesela__titulo{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular-medio);line-height:var(--alto-corto);letter-spacing:-.006em}
+.am-tesela__cifra{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-cifra);font-weight:var(--peso-titular);line-height:1.05;letter-spacing:-.02em;font-variant-numeric:var(--cifras-tabulares)}
+.am-tesela__pie{font-size:var(--tipo-meta);color:var(--texto-suave)}
+
+/* ---------- BARRA SUPERIOR ---------------------------------------------
+   La franja identificadora es el cuarto y último sitio del acento. */
+.am-barra{background:var(--superficie-tarjeta);border-bottom:1px solid var(--borde)}
+.am-barra__franja{height:4px;background:var(--acento-600)}
+.am-barra__fila{display:flex;align-items:center;gap:var(--e-5);padding:var(--e-3) var(--e-6);min-height:60px}
+.am-barra__marca{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular);letter-spacing:-.01em;color:var(--texto-fuerte)}
+.am-barra__conjunto{display:flex;flex-direction:column;gap:2px;padding-left:var(--e-5);border-left:1px solid var(--borde)}
+.am-barra__conjunto b{font-size:var(--tipo-cuerpo);font-weight:var(--peso-texto-medio);line-height:1.2}
+.am-barra__conjunto span{font-size:var(--tipo-meta);color:var(--texto-suave);line-height:1.2}
+.am-barra__derecha{margin-left:auto;display:flex;align-items:center;gap:var(--e-3)}
+
+/* ---------- NAVEGACIÓN LATERAL Y PESTAÑAS ------------------------------ */
+.am-lateral{display:flex;flex-direction:column;gap:2px;padding:var(--e-3);background:var(--superficie-tarjeta);border-right:1px solid var(--borde);min-width:232px}
+.am-lateral__grupo{padding:var(--e-4) var(--e-3) var(--e-1);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-suave)}
+.am-lateral__item{display:flex;align-items:center;gap:var(--e-3);min-height:var(--toque-minimo);padding:0 var(--e-3);border:0;border-radius:var(--radio-control);background:none;font-size:var(--tipo-cuerpo);color:var(--texto-medio);text-align:left;text-decoration:none;cursor:pointer;transition:background var(--transicion),color var(--transicion)}
+.am-lateral__item:hover,.am-lateral__item.am-es-hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
+.am-lateral__item.am-es-activo{background:var(--acento-50);color:var(--acento-900);font-weight:var(--peso-texto-medio);box-shadow:inset 2px 0 0 var(--acento-600)}
+.am-lateral__cuenta{margin-left:auto;font-size:var(--tipo-meta);color:var(--texto-suave);font-variant-numeric:var(--cifras-tabulares)}
+.am-lateral__item.am-es-activo .am-lateral__cuenta{color:var(--acento-700)}
+
+.am-pestanas{display:flex;gap:var(--e-5);border-bottom:1px solid var(--borde)}
+.am-pestana{min-height:var(--toque-minimo);padding:0 var(--e-1);border:0;background:none;font-size:var(--tipo-cuerpo);color:var(--texto-medio);cursor:pointer;box-shadow:inset 0 -1px 0 transparent;transition:color var(--transicion),box-shadow var(--transicion)}
+.am-pestana:hover{color:var(--texto-fuerte)}
+.am-pestana.am-es-activa{color:var(--acento-900);font-weight:var(--peso-texto-medio);box-shadow:inset 0 -2px 0 var(--acento-600)}
+
+/* ---------- ESTADO VACÍO ----------------------------------------------- */
+.am-vacio{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e-3);padding:var(--e-8) var(--e-6);background:var(--superficie-tarjeta);border:1px dashed var(--borde-fuerte);border-radius:var(--radio-caja)}
+.am-vacio__titulo{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular-medio);line-height:var(--alto-corto)}
+.am-vacio__texto{font-size:var(--tipo-cuerpo);color:var(--texto-medio);max-width:52ch}
+
+/* ---------- MODAL — lo único que flota, lo único con sombra ------------ */
+.am-velo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:var(--e-5);background:var(--tinta-a28)}
+.am-modal{width:100%;max-width:460px;background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-caja);box-shadow:var(--sombra-flotante)}
+.am-modal__cuerpo{display:flex;flex-direction:column;gap:var(--e-3);padding:var(--e-6)}
+.am-modal__titulo{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular-medio);line-height:var(--alto-corto)}
+.am-modal__texto{font-size:var(--tipo-guia);color:var(--texto-medio);line-height:var(--alto-cuerpo)}
+.am-modal__pie{display:flex;justify-content:flex-end;gap:var(--e-2);padding:var(--e-4) var(--e-6);border-top:1px solid var(--borde);background:var(--superficie-pagina);border-radius:0 0 var(--radio-caja) var(--radio-caja)}
+@media (max-width:420px){.am-modal__pie{flex-direction:column-reverse}.am-modal__pie .am-btn{width:100%}}

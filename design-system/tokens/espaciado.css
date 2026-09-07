@@ -1,0 +1,33 @@
+/* ESPACIADO, RADIOS Y ELEVACIÓN */
+:root{
+  /* Escala de 4px. Nueve pasos: los saltos son perceptibles, así que la
+     densidad de una tabla y el aire de un formulario no se negocian a ojo. */
+  --e-1:4px;
+  --e-2:8px;
+  --e-3:12px;
+  --e-4:16px;
+  --e-5:20px;
+  --e-6:24px;
+  --e-7:32px;
+  --e-8:40px;
+  --e-9:64px;
+
+  /* Tres radios, cada uno con un trabajo. El mismo radio en todo aplana la
+     jerarquía; por eso el control es más cerrado que el contenedor. */
+  --radio-control:4px;  /* botón, campo, casilla */
+  --radio-caja:8px;     /* tarjeta, tesela, modal, tabla */
+  --radio-pastilla:999px; /* pastilla de estado y solo eso */
+
+  /* Una sola sombra en todo el sistema, y existe únicamente para lo que flota
+     sobre el contenido: modal, menú desplegable, popover. Las tarjetas se
+     separan con borde. Si algo lleva sombra y no flota, está mal. */
+  --sombra-flotante:0 12px 32px -8px var(--tinta-a28),0 2px 6px -3px var(--tinta-a14);
+
+  /* Movimiento: solo responde a una acción (abrir, cerrar, confirmar).
+     No hay animación de entrada al cargar ni al hacer scroll. */
+  --transicion:120ms cubic-bezier(.2,0,.3,1); /* @kind other */
+
+  /* Área táctil mínima y ancho máximo de contenido. */
+  --toque-minimo:44px;
+  --ancho-contenido:1100px;
+}

@@ -1,0 +1,19 @@
+/* BASE — reset corto y valores por defecto del documento. */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--superficie-pagina);color:var(--texto-fuerte);font-family:var(--fuente-texto);font-size:var(--tipo-cuerpo);font-weight:var(--peso-texto);line-height:var(--alto-cuerpo);font-optical-sizing:auto}
+h1,h2,h3,h4{font-family:var(--fuente-titular);font-stretch:normal;line-height:var(--alto-titular);margin:0}
+h1{font-size:var(--tipo-vista);font-weight:var(--peso-titular);letter-spacing:-.012em}
+h2,h3,h4{font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular-medio);letter-spacing:-.006em}
+p{margin:0;max-width:var(--medida-texto);text-wrap:pretty}
+a{color:var(--acento-700);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--acento-900)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acento-600);outline-offset:2px;border-radius:var(--radio-control)}
+table{border-collapse:collapse;width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+::placeholder{color:var(--texto-suave)}
+/* Cifras tabulares: aplicar a toda celda o dato numérico. */
+.am-num{font-variant-numeric:var(--cifras-tabulares)}
+.am-medida{max-width:var(--medida-texto)}
+.am-contenido{max-width:var(--ancho-contenido);margin-inline:auto;padding-inline:var(--e-6)}
+@media (prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}

@@ -1,0 +1,142 @@
+<!-- @dsCard group="Muestrario" viewport="1100x900" name="Muestrario de componentes" subtitle="Todos los estados visibles a la vez: botones, campos, pastillas, tabla, tesela, barra, vacío y modal" -->
+<!DOCTYPE html><html lang="es-CO"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AdMind · Muestrario de componentes</title>
+<link rel="stylesheet" href="../styles.css"><link rel="stylesheet" href="muestrario.css"></head>
+<body>
+<div class="hoja">
+
+<div class="encabezado">
+<h1>Muestrario de componentes</h1>
+<p>Cada estado está forzado con una clase <code>am-es-*</code> para poder verlos todos a la vez. En producción esas clases no se usan: el hover y el foco los pone el navegador.</p>
+</div>
+
+<section>
+<div class="rotulo"><h2>Botones</h2><span>Toda acción es relleno sólido con radio de 4px. Ninguna acción usa fondo suave: ese lenguaje pertenece a la pastilla de estado.</span></div>
+<div class="malla-btn">
+<span></span><b>Primario</b><b>Secundario</b><b>Peligro</b><b>Texto</b>
+<i>Reposo</i>
+<div><button class="am-btn am-btn--primario">Confirmar reserva</button></div>
+<div><button class="am-btn am-btn--secundario">Cancelar</button></div>
+<div><button class="am-btn am-btn--peligro">Eliminar unidad</button></div>
+<div><button class="am-btn am-btn--texto">Ver historial</button></div>
+<i>Hover</i>
+<div><button class="am-btn am-btn--primario am-es-hover">Confirmar reserva</button></div>
+<div><button class="am-btn am-btn--secundario am-es-hover">Cancelar</button></div>
+<div><button class="am-btn am-btn--peligro am-es-hover">Eliminar unidad</button></div>
+<div><button class="am-btn am-btn--texto am-es-hover">Ver historial</button></div>
+<i>Foco de teclado</i>
+<div><button class="am-btn am-btn--primario am-es-foco">Confirmar reserva</button></div>
+<div><button class="am-btn am-btn--secundario am-es-foco">Cancelar</button></div>
+<div><button class="am-btn am-btn--peligro am-es-foco">Eliminar unidad</button></div>
+<div><button class="am-btn am-btn--texto am-es-foco">Ver historial</button></div>
+<i>Deshabilitado</i>
+<div><button class="am-btn am-btn--primario" disabled>Confirmar reserva</button></div>
+<div><button class="am-btn am-btn--secundario" disabled>Cancelar</button></div>
+<div><button class="am-btn am-btn--peligro" disabled>Eliminar unidad</button></div>
+<div><button class="am-btn am-btn--texto" disabled>Ver historial</button></div>
+</div>
+<p class="nota">El anillo de foco es el mismo en todo el sistema, también sobre el botón rojo: quien navega con teclado no debería aprender un anillo distinto por variante.</p>
+</section>
+
+<section>
+<div class="rotulo"><h2>Campo de formulario</h2><span>Siempre con etiqueta asociada. El placeholder nunca hace de etiqueta.</span></div>
+<div class="malla-campos">
+<div class="am-campo">
+<label class="am-campo__etiqueta" for="m1">Unidad</label>
+<input class="am-campo__control am-num" id="m1" value="Torre 3 – 402">
+<span class="am-campo__ayuda">Torre y apartamento, separados por guion</span>
+</div>
+<div class="am-campo">
+<label class="am-campo__etiqueta" for="m2">Zona común</label>
+<select class="am-campo__control am-es-foco" id="m2"><option>Salón comunal</option><option>Zona BBQ</option><option>Gimnasio</option></select>
+<span class="am-campo__ayuda">Con foco de teclado</span>
+</div>
+<div class="am-campo">
+<label class="am-campo__etiqueta" for="m3">Documento del visitante</label>
+<input class="am-campo__control am-num" id="m3" value="1037" aria-invalid="true" aria-describedby="m3-error">
+<span class="am-campo__error" id="m3-error">El documento debe tener entre 6 y 12 dígitos. Corrígelo y vuelve a guardar.</span>
+</div>
+<div class="am-campo">
+<label class="am-campo__etiqueta" for="m4">Coeficiente de copropiedad</label>
+<input class="am-campo__control am-num" id="m4" value="0,00412 %" disabled>
+<span class="am-campo__ayuda">Lo fija el reglamento de propiedad horizontal</span>
+</div>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Pastilla de estado</h2><span>Cinco tonos fijos, ajenos a la marca. Fondo suave, radio total, texto oscuro del mismo tono, siempre con palabra.</span></div>
+<div class="pastillas">
+<span class="am-pastilla am-pastilla--tramite">En trámite<span class="am-pastilla__reloj">· 2:41</span></span>
+<span class="am-pastilla am-pastilla--confirmado">Confirmada</span>
+<span class="am-pastilla am-pastilla--error">Rechazada</span>
+<span class="am-pastilla am-pastilla--neutro">Cerrada</span>
+<span class="am-pastilla am-pastilla--info">Cuota extraordinaria</span>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Fila de tabla</h2><span>Encabezado en superficie hundida, hover de fila completa, columna numérica alineada a la derecha con cifras tabulares.</span></div>
+<div class="am-tabla-caja">
+<table class="am-tabla">
+<thead><tr><th scope="col" style="width:20%">Unidad</th><th scope="col">Asunto</th><th scope="col" style="width:20%">Estado</th><th scope="col" class="am-col-num" style="width:16%">Antigüedad</th></tr></thead>
+<tbody>
+<tr><td>Torre 3 – 402</td><td>Filtración en el cielo raso<div class="am-tabla__secundario">Reportada por Marta Ospina</div></td><td><span class="am-pastilla am-pastilla--tramite">En trámite</span></td><td class="am-col-num">6 días</td></tr>
+<tr class="am-es-hover"><td>Torre 1 – 105</td><td>Reserva del salón comunal<div class="am-tabla__secundario">Sábado 12 de septiembre</div></td><td><span class="am-pastilla am-pastilla--confirmado">Confirmada</span></td><td class="am-col-num">2 días</td></tr>
+<tr><td>Torre 2 – 803</td><td>Ruido después de las 10:00 p. m.<div class="am-tabla__secundario">Cerrada por el consejo</div></td><td><span class="am-pastilla am-pastilla--neutro">Cerrada</span></td><td class="am-col-num">11 días</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Tesela de panel</h2><span>La cifra en Archivo 700 de 40px con cifras tabulares, para que dos teselas lado a lado se comparen sin que los dígitos bailen.</span></div>
+<div class="teselas">
+<div class="am-tesela"><p class="am-tesela__titulo">Solicitudes en trámite</p><p class="am-tesela__cifra">18</p><p class="am-tesela__pie">Al viernes 5 de septiembre</p></div>
+<div class="am-tesela"><p class="am-tesela__titulo">Cartera vencida</p><p class="am-tesela__cifra">$ 12.480.000</p><span class="am-pastilla am-pastilla--error" style="align-self:flex-start">7 unidades en mora</span></div>
+<div class="am-tesela"><p class="am-tesela__titulo">Reservas de la semana</p><p class="am-tesela__cifra">9</p><p class="am-tesela__pie">Del lunes 8 al domingo 14</p></div>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Barra superior</h2><span>La franja de 4px es el cuarto y último sitio del acento. Es siempre verde de marca: si cambiara por conjunto, el verde dejaría de ser identidad y pasaría a ser dato.</span></div>
+<div style="border:1px solid var(--borde);border-radius:var(--radio-caja);overflow:hidden">
+<header class="am-barra">
+<div class="am-barra__franja" aria-hidden="true"></div>
+<div class="am-barra__fila">
+<span class="am-barra__marca">AdMind</span>
+<div class="am-barra__conjunto"><b>Conjunto Residencial Altos del Poblado</b><span class="am-num">NIT 901.245.877-3</span></div>
+<div class="am-barra__derecha"><button class="am-btn am-btn--texto">Cambiar de conjunto</button><button class="am-btn am-btn--secundario">Salir</button></div>
+</div>
+</header>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Estado vacío</h2><span>No es un error ni una disculpa: dice qué falta, de dónde vendrá y pone la acción que corresponde.</span></div>
+<div class="am-vacio">
+<p class="am-vacio__titulo">Todavía no hay solicitudes en la bandeja</p>
+<p class="am-vacio__texto">Cuando un residente abra un caso desde su celular, aparece aquí con su antigüedad y su prioridad.</p>
+<button class="am-btn am-btn--primario">Crear solicitud</button>
+</div>
+</section>
+
+<section>
+<div class="rotulo"><h2>Modal de confirmación</h2><span>Lo único que flota sobre el contenido, y por eso lo único con sombra. La acción conserva el nombre del botón que lo abrió.</span></div>
+<div class="marco-modal">
+<div class="am-velo">
+<div class="am-modal" role="dialog" aria-modal="true" aria-label="Confirmar la reserva del salón comunal">
+<div class="am-modal__cuerpo">
+<p class="am-modal__titulo">¿Confirmar la reserva del salón comunal?</p>
+<p class="am-modal__texto">Queda a nombre de Torre 3 – 402 para el sábado 12 de septiembre, de 2:00 p. m. a 8:00 p. m. El pago de $ 180.000 se carga a la cuota de octubre.</p>
+</div>
+<div class="am-modal__pie">
+<button class="am-btn am-btn--secundario">Cancelar</button>
+<button class="am-btn am-btn--primario">Confirmar reserva</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+</div>
+</body></html>

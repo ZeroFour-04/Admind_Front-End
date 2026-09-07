@@ -1,0 +1,18 @@
+/* MUESTRARIO — solo para la página de muestrario. No se transplanta. */
+body{background:var(--superficie-pagina);padding:var(--e-7) 0 var(--e-9)}
+.hoja{max-width:var(--ancho-contenido);margin-inline:auto;padding-inline:var(--e-6);display:flex;flex-direction:column;gap:var(--e-9)}
+.encabezado{display:flex;flex-direction:column;gap:var(--e-3)}
+.encabezado p{font-size:var(--tipo-guia);color:var(--texto-medio)}
+section{display:flex;flex-direction:column;gap:var(--e-5)}
+.rotulo{display:flex;flex-direction:column;gap:var(--e-1);padding-bottom:var(--e-2);border-bottom:1px solid var(--borde)}
+.rotulo h2{font-size:var(--tipo-tarjeta)}
+.rotulo span{font-size:var(--tipo-meta);color:var(--texto-suave);max-width:var(--medida-texto)}
+.malla-btn{display:grid;grid-template-columns:110px repeat(4,1fr);gap:var(--e-3);align-items:center}
+.malla-btn b{font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-medio)}
+.malla-btn i{font-style:normal;font-size:var(--tipo-meta);color:var(--texto-suave)}
+.malla-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-5)}
+.pastillas{display:flex;flex-wrap:wrap;gap:var(--e-2)}
+.teselas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--e-4)}
+.marco-modal{position:relative;min-height:280px;border:1px solid var(--borde);border-radius:var(--radio-caja);background:var(--superficie-pagina);overflow:hidden}
+.nota{font-size:var(--tipo-meta);color:var(--texto-suave);max-width:var(--medida-texto)}
+@media (max-width:820px){.malla-btn{grid-template-columns:1fr}.malla-campos{grid-template-columns:1fr}}

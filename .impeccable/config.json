@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "design-system/guidelines/muestrario.html"
+        ],
+        "createdAt": "2026-09-07T06:38:31.327Z",
+        "reason": "Claude: los tres contenedores marcados (am-tabla-caja L79, marco de barra L102, marco-modal L125) son marcos de exhibicion cuyo contenido va al ras a proposito - las celdas traen su propio padding, la franja de acento de 4px es full-bleed y el velo del modal usa inset:0. Archivo importado literalmente del proyecto de Claude Design del usuario; editarlo lo haria divergir de la fuente."
+      }
+    ]
+  }
+}

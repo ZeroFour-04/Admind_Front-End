@@ -1,0 +1,7 @@
+/* Tipografías autoalojadas. Nunca desde el CDN de Google Fonts: servir una
+   tipografía desde un tercero le entrega la IP de cada residente a ese tercero,
+   y eso es tratamiento de datos personales fuera de la autorización (Ley 1581). */
+@font-face{font-family:"Archivo";src:url("../assets/fonts/Archivo-Variable.ttf") format("truetype-variations"),url("../assets/fonts/Archivo-Variable.ttf") format("truetype");font-weight:100 900;font-stretch:62.5% 125%;font-style:normal;font-display:swap}
+@font-face{font-family:"Archivo";src:url("../assets/fonts/Archivo-Variable-Italic.ttf") format("truetype-variations"),url("../assets/fonts/Archivo-Variable-Italic.ttf") format("truetype");font-weight:100 900;font-stretch:62.5% 125%;font-style:italic;font-display:swap}
+@font-face{font-family:"Inter";src:url("../assets/fonts/Inter-Variable.ttf") format("truetype-variations"),url("../assets/fonts/Inter-Variable.ttf") format("truetype");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("../assets/fonts/Inter-Variable-Italic.ttf") format("truetype-variations"),url("../assets/fonts/Inter-Variable-Italic.ttf") format("truetype");font-weight:100 900;font-style:italic;font-display:swap}

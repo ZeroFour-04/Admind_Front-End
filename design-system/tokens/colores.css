@@ -1,0 +1,42 @@
+/* COLOR SEMÁNTICO — lo único que consume un componente.
+   Cada par de color usado en la interfaz lleva su ratio anotado.
+   Modo claro. Para agregar modo oscuro: duplicar este bloque bajo
+   [data-tema="oscuro"] y reapuntar los alias a la paleta. Nada más. */
+:root{
+  /* --- CAPA BASE: el 85% de lo que se ve --- */
+  --superficie-pagina:var(--gris-25);    /* fondo de la aplicación */
+  --superficie-tarjeta:var(--gris-0);    /* tarjeta, tesela, modal, fila de tabla */
+  --superficie-hundida:var(--gris-75);   /* encabezado de tabla, hover de fila, campo deshabilitado */
+
+  --borde:var(--gris-200);               /* separación de tarjetas y filas */
+  --borde-fuerte:var(--gris-350);        /* contorno de campos: 3.02:1 sobre tarjeta */
+
+  --texto-fuerte:var(--gris-950);        /* 16.8:1 sobre tarjeta · 15.7:1 sobre página */
+  --texto-medio:var(--gris-700);         /* 7.5:1 sobre tarjeta · 7.1:1 sobre página */
+  --texto-suave:var(--gris-500);         /* 5.2:1 sobre tarjeta · 4.8:1 sobre página */
+
+  /* --- CAPA DE ACENTO: solo cuatro sitios ---
+     1. botón de acción primaria
+     2. ítem activo de la navegación lateral y pestaña seleccionada
+     3. anillo de foco de los formularios
+     4. franja identificadora del conjunto activo                     */
+  --acento-50:var(--verde-50);           /* fondo del ítem activo · 8.3:1 con acento-700 */
+  --acento-600:var(--verde-600);         /* relleno primario · 6.4:1 con blanco */
+  --acento-700:var(--verde-700);         /* hover y presionado · 8.8:1 con blanco */
+  --acento-900:var(--verde-900);         /* texto de marca sobre acento-50 · 13.8:1 */
+  --acento-tinta:var(--gris-0);          /* texto sobre relleno de acento */
+  --acento-anillo:var(--verde-600-a32);  /* halo de 3px del foco de teclado */
+
+  /* --- ESTADOS: cinco, fijos, sin relación con la marca ---
+     El acento nunca comunica significado. Estos colores nunca rellenan un botón. */
+  --estado-tramite-fondo:var(--ambar-fondo);   --estado-tramite-texto:var(--ambar-tinta);   /* 7.2:1 */
+  --estado-confirmado-fondo:var(--hoja-fondo); --estado-confirmado-texto:var(--hoja-tinta); /* 7.0:1 */
+  --estado-error-fondo:var(--rojo-fondo);      --estado-error-texto:var(--rojo-tinta);      /* 7.8:1 */
+  --estado-neutro-fondo:var(--piedra-fondo);   --estado-neutro-texto:var(--piedra-tinta);   /* 8.1:1 */
+  --info-fondo:var(--azul-fondo);              --info-texto:var(--azul-tinta);              /* 8.5:1 */
+
+  /* Relleno de la acción destructiva. Es acción, no estado: por eso es sólido
+     y por eso vive aparte del fondo suave de error. 7.4:1 con blanco. */
+  --estado-error-relleno:var(--rojo-600);
+  --estado-error-relleno-hover:var(--rojo-700);
+}
