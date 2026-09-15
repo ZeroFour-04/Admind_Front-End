@@ -1,0 +1,24 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Elige un conjunto{% endblock %}
+
+{% block cuerpo %}
+{% include "componentes/barra_superior.html" with sin_conjunto=True %}
+<main class="vista vista--sin-lateral">
+  <div class="vista__encabezado">
+    <h1>Elige un conjunto</h1>
+    <span class="am-pastilla am-pastilla--info">Maqueta con datos de ejemplo</span>
+  </div>
+  <p class="vista__guia">Tienes acceso a estos conjuntos. Todo lo que veas y registres después pertenece al que elijas.</p>
+
+  <ul class="rejilla-tarjetas" role="list">
+    {% for conjunto in conjuntos %}
+      <li class="am-tarjeta tarjeta-conjunto">
+        <h2>{{ conjunto.nombre }}</h2>
+        <p class="tarjeta-conjunto__dato">{{ conjunto.direccion }}</p>
+        <a class="am-btn am-btn--primario" href="{% url 'paneles:inicio' %}">Entrar al conjunto</a>
+      </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}

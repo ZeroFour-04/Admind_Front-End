@@ -1,0 +1,25 @@
+{% comment %}
+BarraSuperior. Con `sin_conjunto`, solo la marca y Salir (pantalla del selector).
+Maqueta: el nombre del conjunto está fijo; cuando el selector sea real, sale de la sesión.
+{% endcomment %}
+<header class="am-barra">
+  <div class="am-barra__franja" aria-hidden="true"></div>
+  <div class="am-barra__fila">
+    <span class="am-barra__marca">AdMind</span>
+    {% if not sin_conjunto %}
+      <div class="am-barra__conjunto">
+        <b>Conjunto Residencial Altos de Manablanca</b>
+        <span>Facatativá, Cundinamarca</span>
+      </div>
+    {% endif %}
+    <div class="am-barra__derecha">
+      {% if not sin_conjunto %}
+        <a class="am-btn am-btn--texto" href="{% url 'conjuntos:selector' %}">Cambiar de conjunto</a>
+      {% endif %}
+      <form method="post" action="{% url 'cuentas:salir' %}">
+        {% csrf_token %}
+        <button type="submit" class="am-btn am-btn--secundario">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

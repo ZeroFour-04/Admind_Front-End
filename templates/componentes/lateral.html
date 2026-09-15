@@ -1,0 +1,13 @@
+{% comment %}
+Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista tiene que avisarlo.
+{% endcomment %}
+{% with actual=request.resolver_match.app_name %}
+<nav class="am-lateral" aria-label="Secciones del conjunto">
+  <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}>Inicio</a>
+  <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
+  <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
+  <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
+  <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
+  <a class="am-lateral__item{% if actual == 'unidades' %} am-es-activo{% endif %}" href="{% url 'unidades:lista' %}"{% if actual == 'unidades' %} aria-current="page"{% endif %}>Apartamentos y parqueaderos</a>
+</nav>
+{% endwith %}

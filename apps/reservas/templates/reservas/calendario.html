@@ -1,0 +1,53 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Zonas comunes{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/reservas.css' %}">{% endblock %}
+{% block titulo_vista %}Zonas comunes{% endblock %}
+
+{% block contenido %}
+<section class="am-tarjeta calendario" aria-labelledby="titulo-mes">
+  <div class="calendario__encabezado">
+    <a class="am-btn am-btn--secundario" href="?mes={{ mes_anterior|date:'Y-m' }}">Mes anterior</a>
+    <h2 id="titulo-mes">{{ mes|date:"F Y"|capfirst }}</h2>
+    <a class="am-btn am-btn--secundario" href="?mes={{ mes_siguiente|date:'Y-m' }}">Mes siguiente</a>
+  </div>
+
+  <table class="calendario__tabla">
+    <thead>
+      <tr>
+        {% for fecha in semanas.0 %}
+          <th scope="col"><abbr title="{{ fecha|date:'l'|capfirst }}">{{ fecha|date:"D"|capfirst }}</abbr></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for semana in semanas %}
+        <tr>
+          {% for fecha in semana %}
+            <td>
+              {% if fecha.month == mes.month %}
+                <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
+                   href="?mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
+                   aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
+                   {% if fecha == hoy %}aria-current="date"{% endif %}>
+                  <span class="am-num">{{ fecha.day }}</span>
+                  {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
+                </a>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<p class="vista__guia">
+  {% if dia_elegido %}
+    Día elegido: {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower|capfirst }}.
+  {% else %}
+    Elige un día del calendario.
+  {% endif %}
+</p>
+{% endblock %}

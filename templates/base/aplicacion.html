@@ -1,0 +1,15 @@
+{% extends "base/base.html" %}
+
+{% block cuerpo %}
+{% include "componentes/barra_superior.html" %}
+<div class="aplicacion">
+  {% include "componentes/lateral.html" %}
+  <main class="vista">
+    <div class="vista__encabezado">
+      <h1>{% block titulo_vista %}{% endblock %}</h1>
+      {% block estado_vista %}<span class="am-pastilla am-pastilla--info">Maqueta con datos de ejemplo</span>{% endblock %}
+    </div>
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

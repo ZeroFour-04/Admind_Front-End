@@ -1,0 +1,10 @@
+{% extends "base/base.html" %}
+
+{% block cuerpo %}
+<main class="pagina-sin-sesion">
+  <p class="am-barra__marca">AdMind</p>
+  <div class="am-tarjeta tarjeta-sin-sesion">
+    {% block contenido %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Recuperar contraseña{% endblock %}
+
+{% block contenido %}
+<div class="vista__encabezado">
+  <h1 class="tarjeta-sin-sesion__titulo">Recuperar contraseña</h1>
+  <span class="am-pastilla am-pastilla--info">Maqueta</span>
+</div>
+
+<p class="tarjeta-sin-sesion__texto">Escribe el correo con el que inicias sesión. Te llega un enlace de un solo uso para crear una contraseña nueva.</p>
+
+{# Sin <form>: la maqueta no envía nada. #}
+<div class="formulario">
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="correo-recuperacion">Correo</label>
+    <input class="am-campo__control" type="email" id="correo-recuperacion" autocomplete="username">
+  </div>
+  <button type="button" class="am-btn am-btn--primario formulario__envio">Enviar enlace</button>
+</div>
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:ingreso' %}">Volver a iniciar sesión</a>
+</p>
+{% endblock %}

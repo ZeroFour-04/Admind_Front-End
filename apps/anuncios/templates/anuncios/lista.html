@@ -1,0 +1,21 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Anuncios{% endblock %}
+{% block titulo_vista %}Anuncios{% endblock %}
+
+{% block contenido %}
+<ul class="pila" role="list">
+  {% for anuncio in anuncios %}
+    <li class="am-tarjeta tarjeta-contenido">
+      <h2>{{ anuncio.titulo }}</h2>
+      <p class="tarjeta-contenido__meta">{{ anuncio.alcance }} · publicado el {{ anuncio.publicado|date:"l j \d\e F"|lower }}</p>
+      <p>{{ anuncio.texto }}</p>
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="acciones">
+  <button type="button" class="am-btn am-btn--primario">Publicar anuncio</button>
+  <button type="button" class="am-btn am-btn--secundario">Modificar anuncio</button>
+</div>
+{% endblock %}
