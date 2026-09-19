@@ -68,7 +68,7 @@ textarea.am-campo__control{min-height:96px;padding:var(--e-3);line-height:var(--
 .am-barra{background:var(--superficie-tarjeta);border-bottom:1px solid var(--borde)}
 .am-barra__franja{height:4px;background:var(--acento-600)}
 .am-barra__fila{display:flex;align-items:center;gap:var(--e-5);padding:var(--e-3) var(--e-6);min-height:60px}
-.am-barra__marca{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular);letter-spacing:-.01em;color:var(--texto-fuerte)}
+.am-barra__marca{font-family:var(--fuente-titular);font-stretch:normal;font-size:var(--tipo-tarjeta);font-weight:var(--peso-titular);letter-spacing:-.01em;color:var(--texto-fuerte);text-decoration:none}
 .am-barra__conjunto{display:flex;flex-direction:column;gap:2px;padding-left:var(--e-5);border-left:1px solid var(--borde)}
 .am-barra__conjunto b{font-size:var(--tipo-cuerpo);font-weight:var(--peso-texto-medio);line-height:1.2}
 .am-barra__conjunto span{font-size:var(--tipo-meta);color:var(--texto-suave);line-height:1.2}
