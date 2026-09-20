@@ -7,16 +7,26 @@
 <main class="vista vista--sin-lateral">
   <div class="vista__encabezado">
     <h1>Elige un conjunto</h1>
-    <span class="am-pastilla am-pastilla--info">Maqueta con datos de ejemplo</span>
+    <span class="am-pastilla am-pastilla--info">Selecciona tu conjunto activo</span>
   </div>
   <p class="vista__guia">Tienes acceso a estos conjuntos. Todo lo que veas y registres después pertenece al que elijas.</p>
 
+  {% if error %}
+    <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+  <div class="vista__acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'conjuntos:nuevo' %}">Crear conjunto</a>
+  </div>
   <ul class="rejilla-tarjetas" role="list">
     {% for conjunto in conjuntos %}
       <li class="am-tarjeta tarjeta-conjunto">
         <h2>{{ conjunto.nombre }}</h2>
-        <p class="tarjeta-conjunto__dato">{{ conjunto.direccion }}</p>
-        <a class="am-btn am-btn--primario" href="{% url 'paneles:inicio' %}">Entrar al conjunto</a>
+        {% if conjunto.direccion %}<p class="tarjeta-conjunto__dato">{{ conjunto.direccion }}</p>{% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="conjunto" value="{{ conjunto.id }}">
+          <button class="am-btn am-btn--primario" type="submit">Entrar al conjunto</button>
+        </form>
       </li>
     {% endfor %}
   </ul>

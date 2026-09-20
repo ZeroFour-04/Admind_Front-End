@@ -32,6 +32,17 @@ textarea.am-campo__control{min-height:96px;padding:var(--e-3);line-height:var(--
 .am-campo__control:disabled{background:var(--superficie-hundida);border-color:var(--borde);color:var(--texto-suave);cursor:not-allowed}
 .am-campo__ayuda{font-size:var(--tipo-meta);color:var(--texto-suave)}
 .am-campo__error{display:flex;gap:var(--e-1);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--estado-error-texto)}
+.am-formulario{display:flex;flex-direction:column;gap:var(--e-4);max-width:720px;padding:var(--e-5)}
+.am-formulario .am-campo__control{width:100%}
+.am-formulario input,.am-formulario select{min-height:var(--toque-minimo);padding:0 var(--e-3);background:var(--superficie-tarjeta);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control)}
+.am-alerta{padding:var(--e-3);border-radius:var(--radio-control);font-size:var(--tipo-meta)}
+.am-alerta--error{background:var(--estado-error-fondo);color:var(--estado-error-texto)}
+.am-detalle{max-width:720px;padding:var(--e-5)}
+.am-detalle__lista{display:grid;gap:var(--e-4);margin:0}
+.am-detalle__lista div{display:grid;gap:var(--e-1);padding-bottom:var(--e-3);border-bottom:1px solid var(--borde)}
+.am-detalle__lista div:last-child{padding-bottom:0;border-bottom:0}
+.am-detalle__lista dt{font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-suave)}
+.am-detalle__lista dd{margin:0;color:var(--texto-fuerte)}
 
 /* ---------- PASTILLA DE ESTADO -----------------------------------------
    Fondo suave, radio total, texto oscuro del mismo tono. Nunca rellena

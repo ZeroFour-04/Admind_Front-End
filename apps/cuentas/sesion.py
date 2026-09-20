@@ -5,6 +5,8 @@ from django.shortcuts import redirect
 
 from cliente_api.http import CLAVE_TOKEN, token_de
 
+CLAVE_CONJUNTO_ACTIVO = "conjunto_activo"
+
 
 def publica(vista):
     """Marca una vista que se puede abrir sin haber iniciado sesión."""
@@ -17,11 +19,17 @@ def abrir_sesion(request, datos_de_ingreso):
     # Id de sesión nuevo al entrar: una cookie de sesión anterior al ingreso no sirve después.
     request.session.cycle_key()
     request.session[CLAVE_TOKEN] = datos_de_ingreso["token"]
+    request.session[CLAVE_CONJUNTO_ACTIVO] = datos_de_ingreso.get(CLAVE_CONJUNTO_ACTIVO)
     request.session.set_expiry(datetime.fromisoformat(datos_de_ingreso["vence_en"]))
 
 
 def cerrar_sesion(request):
     request.session.flush()
+
+
+def guardar_conjunto_activo(request, conjunto):
+    request.session[CLAVE_CONJUNTO_ACTIVO] = conjunto
+    request.session.modified = True
 
 
 class SesionRequeridaMiddleware:

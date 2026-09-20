@@ -1,0 +1,28 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Añadir usuario{% endblock %}
+{% block titulo_vista %}Añadir usuario{% endblock %}
+
+{% block contenido %}
+<form method="post" class="am-formulario am-tarjeta">
+  {% csrf_token %}
+  {% if formulario.non_field_errors %}
+    <div class="am-alerta am-alerta--error" role="alert">
+      {{ formulario.non_field_errors }}
+    </div>
+  {% endif %}
+  {% for campo in formulario %}
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+        <span class="am-campo__error">{{ error }}</span>
+      {% endfor %}
+    </div>
+  {% endfor %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'usuarios:lista' %}">Cancelar</a>
+    <button class="am-btn am-btn--primario" type="submit">Guardar usuario</button>
+  </div>
+</form>
+{% endblock %}

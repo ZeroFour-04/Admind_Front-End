@@ -1,0 +1,43 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Usuarios{% endblock %}
+{% block titulo_vista %}Usuarios{% endblock %}
+
+{% block contenido %}
+<div class="vista__acciones">
+  <a class="am-btn am-btn--primario" href="{% url 'usuarios:nuevo' %}">Añadir usuario</a>
+</div>
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif usuarios %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for usuario in usuarios %}
+          <tr>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.correo }}</td>
+            <td>
+              <a class="am-btn am-btn--secundario" href="{% url 'usuarios:detalle' usuario.id %}">
+                Ver todos los datos
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+<div class="am-vacio">
+  <p class="am-vacio__titulo">Todavía no hay usuarios para mostrar</p>
+  <p class="am-vacio__texto">Los usuarios que agregues aparecerán aquí.</p>
+</div>
+{% endif %}
+{% endblock %}

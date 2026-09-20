@@ -6,4 +6,5 @@ app_name = "conjuntos"
 
 urlpatterns = [
     path("", views.selector, name="selector"),
+    path("nuevo/", views.nuevo, name="nuevo"),
 ]

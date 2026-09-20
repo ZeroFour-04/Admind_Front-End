@@ -8,6 +8,7 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
   <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
+  <a class="am-lateral__item{% if actual == 'usuarios' %} am-es-activo{% endif %}" href="{% url 'usuarios:lista' %}"{% if actual == 'usuarios' %} aria-current="page"{% endif %}>Usuarios</a>
   <a class="am-lateral__item{% if actual == 'unidades' %} am-es-activo{% endif %}" href="{% url 'unidades:lista' %}"{% if actual == 'unidades' %} aria-current="page"{% endif %}>Apartamentos y parqueaderos</a>
 </nav>
 {% endwith %}

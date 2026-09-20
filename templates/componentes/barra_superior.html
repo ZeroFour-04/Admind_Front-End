@@ -8,8 +8,7 @@ Maqueta: el nombre del conjunto está fijo; cuando el selector sea real, sale de
     <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos">AdMind</a>
     {% if not sin_conjunto %}
       <div class="am-barra__conjunto">
-        <b>Conjunto Residencial Altos de Manablanca</b>
-        <span>Facatativá, Cundinamarca</span>
+        <b>{{ request.session.conjunto_activo.nombre|default:"Conjunto activo" }}</b>
       </div>
     {% endif %}
     <div class="am-barra__derecha">
