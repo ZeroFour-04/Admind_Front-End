@@ -1,0 +1,20 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Crear contraseña nueva{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Crear contraseña nueva</h1>
+<p class="tarjeta-sin-sesion__texto">Al guardarla se cierran todas tus sesiones abiertas, en cualquier equipo.</p>
+
+<form method="post" class="formulario" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.contrasena tipo="password" autocompletar="new-password" ayuda="Mínimo 8 caracteres. Que no sea solo números ni se parezca a tu correo." %}
+  {% include "componentes/campo.html" with campo=formulario.confirmacion tipo="password" autocompletar="new-password" %}
+  <button type="submit" class="am-btn am-btn--primario formulario__envio">Guardar contraseña</button>
+</form>
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:recuperar-contrasena' %}">Pedir otro enlace</a>
+</p>
+{% endblock %}

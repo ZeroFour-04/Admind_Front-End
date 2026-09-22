@@ -16,6 +16,16 @@ ul[role="list"]{list-style:none;margin:0;padding:0}
 
 /* Error general de un formulario. Es estado, así que usa los colores de error, nunca el acento. */
 .aviso-error{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--estado-error-fondo);color:var(--estado-error-texto);font-weight:var(--peso-texto-medio)}
+/* Confirmación de que algo salió bien. También es estado. */
+.aviso-exito{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--estado-confirmado-fondo);color:var(--estado-confirmado-texto);font-weight:var(--peso-texto-medio)}
+
+/* ---------- Segundo factor (HU-02) ------------------------------------ */
+.pasos-configuracion{margin:0;padding-left:var(--e-5);display:flex;flex-direction:column;gap:var(--e-2);color:var(--texto-medio)}
+.qr-segundo-factor{align-self:center;background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-control);padding:var(--e-2)}
+.clave-manual{color:var(--texto-medio)}
+.clave-manual code{word-break:break-all;color:var(--texto-fuerte)}
+.codigos-de-respaldo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-2)}
+.codigos-de-respaldo code{display:block;padding:var(--e-2) var(--e-3);background:var(--superficie-hundida);border-radius:var(--radio-control);text-align:center;letter-spacing:.08em;color:var(--texto-fuerte)}
 
 /* ---------- Barra superior: que sus partes bajen de línea en pantallas angostas */
 .am-barra__fila{flex-wrap:wrap;row-gap:var(--e-2)}
@@ -58,3 +68,23 @@ a.am-btn--secundario:hover{color:var(--texto-fuerte)}
   .tarjeta-sin-sesion{padding:var(--e-6) var(--e-4)}
   .vista{padding-inline:var(--e-3)}
 }
+
+/* ---------- Conjunto: color, asistente y requisitos (HU-03, HU-26) ----- */
+/* La franja de cada tarjeta del selector lleva el acento de su conjunto: es la misma
+   franja identificadora de la barra, el cuarto sitio del acento (maestro §6.1). */
+.tarjeta-conjunto{position:relative;overflow:hidden}
+.tarjeta-conjunto__franja{position:absolute;inset:0 0 auto 0;height:4px;background:var(--acento-600)}
+
+.selector-acento{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.selector-acento__opciones{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:var(--e-2)}
+.selector-acento__opcion{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo);padding:0 var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+.selector-acento__opcion:has(input:checked){border-color:var(--acento-600);box-shadow:0 0 0 1px var(--acento-600)}
+.selector-acento__opcion input{accent-color:var(--acento-600)}
+.selector-acento__muestra,.muestra-acento{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--acento-600);vertical-align:middle}
+
+.pasos-asistente{flex-wrap:wrap}
+.lista-simple{display:flex;flex-direction:column;gap:var(--e-1)}
+.requisitos{display:flex;flex-direction:column}
+.requisitos__item{display:flex;justify-content:space-between;align-items:center;gap:var(--e-3);padding:var(--e-3) 0;border-bottom:1px solid var(--borde)}
+.requisitos__item:last-child{border-bottom:0}
+details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-medio)}

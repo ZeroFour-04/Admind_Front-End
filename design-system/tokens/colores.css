@@ -40,3 +40,16 @@
   --estado-error-relleno:var(--rojo-600);
   --estado-error-relleno-hover:var(--rojo-700);
 }
+
+/* ACENTO POR CONJUNTO (maestro §6.3, HU-26). El elemento que lleva data-acento —la
+   página entera, o la tarjeta de un conjunto en el selector— reapunta los alias del
+   acento a su rampa. Nada más cambia: neutros y estados son iguales en todo conjunto.
+   Van después de :root para ganarle con la misma especificidad. */
+[data-acento="verde"]{--acento-50:var(--verde-50);--acento-600:var(--verde-600);--acento-700:var(--verde-700);--acento-900:var(--verde-900);--acento-anillo:var(--verde-600-a32)}
+[data-acento="azul"]{--acento-50:var(--rampa-azul-50);--acento-600:var(--rampa-azul-600);--acento-700:var(--rampa-azul-700);--acento-900:var(--rampa-azul-900);--acento-anillo:var(--rampa-azul-600-a32)}
+[data-acento="indigo"]{--acento-50:var(--rampa-indigo-50);--acento-600:var(--rampa-indigo-600);--acento-700:var(--rampa-indigo-700);--acento-900:var(--rampa-indigo-900);--acento-anillo:var(--rampa-indigo-600-a32)}
+[data-acento="purpura"]{--acento-50:var(--rampa-purpura-50);--acento-600:var(--rampa-purpura-600);--acento-700:var(--rampa-purpura-700);--acento-900:var(--rampa-purpura-900);--acento-anillo:var(--rampa-purpura-600-a32)}
+[data-acento="vino"]{--acento-50:var(--rampa-vino-50);--acento-600:var(--rampa-vino-600);--acento-700:var(--rampa-vino-700);--acento-900:var(--rampa-vino-900);--acento-anillo:var(--rampa-vino-600-a32)}
+[data-acento="terracota"]{--acento-50:var(--rampa-terracota-50);--acento-600:var(--rampa-terracota-600);--acento-700:var(--rampa-terracota-700);--acento-900:var(--rampa-terracota-900);--acento-anillo:var(--rampa-terracota-600-a32)}
+[data-acento="ocre"]{--acento-50:var(--rampa-ocre-50);--acento-600:var(--rampa-ocre-600);--acento-700:var(--rampa-ocre-700);--acento-900:var(--rampa-ocre-900);--acento-anillo:var(--rampa-ocre-600-a32)}
+[data-acento="pizarra"]{--acento-50:var(--rampa-pizarra-50);--acento-600:var(--rampa-pizarra-600);--acento-700:var(--rampa-pizarra-700);--acento-900:var(--rampa-pizarra-900);--acento-anillo:var(--rampa-pizarra-600-a32)}

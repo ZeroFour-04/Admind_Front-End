@@ -5,36 +5,15 @@
 {% block contenido %}
 <h1 class="tarjeta-sin-sesion__titulo">Iniciar sesión</h1>
 
-<form method="post" class="formulario" novalidate>
+{% if restablecida %}
+  <div class="aviso-exito" role="status">Tu contraseña cambió. Inicia sesión con la nueva.</div>
+{% endif %}
+
+<form method="post" action="{% url 'cuentas:ingreso' %}" class="formulario" novalidate>
   {% csrf_token %}
-
-  {% if formulario.non_field_errors %}
-    <div class="aviso-error" role="alert">
-      {% for error in formulario.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-    </div>
-  {% endif %}
-
-  {% with campo=formulario.correo %}
-  <div class="am-campo">
-    <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-    <input class="am-campo__control" type="email" id="{{ campo.id_for_label }}" name="{{ campo.html_name }}"
-           value="{{ campo.value|default_if_none:'' }}" autocomplete="username" required
-           {% if campo.errors %}aria-invalid="true" aria-describedby="{{ campo.id_for_label }}-error"{% endif %}>
-    {% if campo.errors %}<span class="am-campo__error" id="{{ campo.id_for_label }}-error">{{ campo.errors|join:" " }}</span>{% endif %}
-  </div>
-  {% endwith %}
-
-  {% with campo=formulario.contrasena %}
-  <div class="am-campo">
-    <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-    {# La contraseña nunca se devuelve al formulario, ni siquiera si hubo error. #}
-    <input class="am-campo__control" type="password" id="{{ campo.id_for_label }}" name="{{ campo.html_name }}"
-           autocomplete="current-password" required
-           {% if campo.errors %}aria-invalid="true" aria-describedby="{{ campo.id_for_label }}-error"{% endif %}>
-    {% if campo.errors %}<span class="am-campo__error" id="{{ campo.id_for_label }}-error">{{ campo.errors|join:" " }}</span>{% endif %}
-  </div>
-  {% endwith %}
-
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.correo tipo="email" autocompletar="username" %}
+  {% include "componentes/campo.html" with campo=formulario.contrasena tipo="password" autocompletar="current-password" %}
   <button type="submit" class="am-btn am-btn--primario formulario__envio">Iniciar sesión</button>
 </form>
 

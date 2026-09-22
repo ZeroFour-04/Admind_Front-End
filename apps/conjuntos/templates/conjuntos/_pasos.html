@@ -1,0 +1,26 @@
+{% comment %}
+Los tres pasos del asistente de creación (HU-03). Mientras el conjunto no exista, solo el primero es enlace.
+{% endcomment %}
+<nav class="am-pestanas pasos-asistente" aria-label="Pasos para crear el conjunto">
+  {% if paso == 1 %}
+    <span class="am-pestana am-es-activa" aria-current="step">1. Datos básicos</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-datos' %}">1. Datos básicos</a>
+  {% else %}
+    <span class="am-pestana">1. Datos básicos</span>
+  {% endif %}
+  {% if paso == 2 %}
+    <span class="am-pestana am-es-activa" aria-current="step">2. Administración</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-administracion' %}">2. Administración</a>
+  {% else %}
+    <span class="am-pestana">2. Administración</span>
+  {% endif %}
+  {% if paso == 3 %}
+    <span class="am-pestana am-es-activa" aria-current="step">3. Resumen</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-resumen' %}">3. Resumen</a>
+  {% else %}
+    <span class="am-pestana">3. Resumen</span>
+  {% endif %}
+</nav>

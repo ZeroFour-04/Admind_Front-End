@@ -1,0 +1,70 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Resumen del conjunto{% endblock %}
+{% block titulo_vista %}Resumen del conjunto{% endblock %}
+{% block estado_vista %}
+  {% if resumen.conjunto.operativo %}
+    <span class="am-pastilla am-pastilla--confirmado">Operativo</span>
+  {% elif resumen %}
+    <span class="am-pastilla am-pastilla--tramite">Sin activar</span>
+  {% endif %}
+{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+
+{% if activado %}
+  <div class="aviso-exito" role="status">El conjunto quedó operativo.</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">
+    <p>{{ error }}</p>
+    {% if faltantes %}
+      <ul>{% for faltante in faltantes %}<li>{{ faltante }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if resumen %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-datos">
+    <h2 id="titulo-datos">Datos básicos</h2>
+    <dl class="am-detalle__lista">
+      <dt>Nombre</dt><dd>{{ resumen.conjunto.nombre }}</dd>
+      <dt>Dirección</dt><dd>{{ resumen.conjunto.direccion|default:"Sin dirección" }}</dd>
+      <dt>Color</dt>
+      <dd><span class="muestra-acento" data-acento="{{ resumen.conjunto.acento }}" aria-hidden="true"></span> {{ nombre_del_acento }}</dd>
+      <dt>Administración</dt>
+      <dd>{% for persona in resumen.administradores %}{{ persona.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Nadie todavía{% endfor %}</dd>
+    </dl>
+  </section>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-requisitos">
+    <h2 id="titulo-requisitos">Requisitos para dejarlo operativo</h2>
+    <ul class="requisitos" role="list">
+      {% for requisito in resumen.requisitos %}
+        <li class="requisitos__item">
+          <span>{{ requisito.descripcion }}</span>
+          {% if requisito.cumplido %}
+            <span class="am-pastilla am-pastilla--confirmado">Cumplido</span>
+          {% elif requisito.disponible %}
+            <span class="am-pastilla am-pastilla--tramite">Pendiente</span>
+          {% else %}
+            <span class="am-pastilla am-pastilla--neutro">Módulo en construcción</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="tarjeta-contenido__meta">Las áreas comunes, el reglamento y las reglas beta se configuran en módulos que todavía no existen. Mientras tanto, ningún conjunto puede quedar operativo.</p>
+  </section>
+
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-administracion' %}">Volver</a>
+    {% if resumen.puede_activar and not resumen.conjunto.operativo %}
+      <form method="post">
+        {% csrf_token %}
+        <button class="am-btn am-btn--primario" type="submit">Dejar operativo</button>
+      </form>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

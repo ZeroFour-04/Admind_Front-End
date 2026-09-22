@@ -9,6 +9,18 @@
   --verde-700:#0B5546;
   --verde-900:#06302A;
 
+  /* Rampas del catálogo de acentos por conjunto (maestro §6.3, HU-26). El verde de
+     arriba es el de por defecto; estas siete solo se usan a través de colores.css,
+     cuando la página o una tarjeta lleva data-acento. Contraste del 600 con blanco
+     entre 5.9:1 y 8.8:1. */
+  --rampa-azul-50:#EAF2FA;      --rampa-azul-600:#1D5FA8;      --rampa-azul-700:#164A85;      --rampa-azul-900:#0C3765;
+  --rampa-indigo-50:#EEF0FB;    --rampa-indigo-600:#4340A8;    --rampa-indigo-700:#363385;    --rampa-indigo-900:#1F1D52;
+  --rampa-purpura-50:#F4ECF8;   --rampa-purpura-600:#6B2D8C;   --rampa-purpura-700:#55236F;   --rampa-purpura-900:#351646;
+  --rampa-vino-50:#FAECEF;      --rampa-vino-600:#9B2242;      --rampa-vino-700:#7C1B35;      --rampa-vino-900:#4C1020;
+  --rampa-terracota-50:#FBEDE7; --rampa-terracota-600:#A8451E; --rampa-terracota-700:#863718; --rampa-terracota-900:#4F1F0C;
+  --rampa-ocre-50:#FAF0DF;      --rampa-ocre-600:#8A5A0F;      --rampa-ocre-700:#6E4709;      --rampa-ocre-900:#422A04;
+  --rampa-pizarra-50:#EEF1F5;   --rampa-pizarra-600:#41586F;   --rampa-pizarra-700:#334659;   --rampa-pizarra-900:#1E2A36;
+
   /* Neutros — con una pizca del verde adentro para que el gris no se vea azul
      al lado del acento. */
   --gris-0:#FFFFFF;
@@ -31,6 +43,13 @@
 
   /* Alfas derivadas del acento y de la sombra. */
   --verde-600-a32:rgba(14,107,90,.32);
+  --rampa-azul-600-a32:rgba(29,95,168,.32);
+  --rampa-indigo-600-a32:rgba(67,64,168,.32);
+  --rampa-purpura-600-a32:rgba(107,45,140,.32);
+  --rampa-vino-600-a32:rgba(155,34,66,.32);
+  --rampa-terracota-600-a32:rgba(168,69,30,.32);
+  --rampa-ocre-600-a32:rgba(138,90,15,.32);
+  --rampa-pizarra-600-a32:rgba(65,88,111,.32);
   --tinta-a28:rgba(6,48,42,.28);
   --tinta-a14:rgba(6,48,42,.14);
 }

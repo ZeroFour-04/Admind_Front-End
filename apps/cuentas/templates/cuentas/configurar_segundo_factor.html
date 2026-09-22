@@ -1,0 +1,34 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Activar la verificación en dos pasos{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Activa la verificación en dos pasos</h1>
+<p class="tarjeta-sin-sesion__texto">Tu cuenta maneja información sensible de los residentes. Para protegerla, además de la contraseña vas a usar un código que cambia cada 30 segundos.</p>
+
+{% if error %}
+  <div class="aviso-error" role="alert">{{ error }}</div>
+{% else %}
+  <ol class="pasos-configuracion">
+    <li>Instala en tu celular una aplicación de autenticación, como Google Authenticator o Microsoft Authenticator.</li>
+    <li>Escanea este código con la aplicación.</li>
+  </ol>
+  <img class="qr-segundo-factor" src="{{ secreto.qr }}" width="200" height="200" alt="Código QR para agregar AdMind a la aplicación de autenticación">
+  <details class="clave-manual">
+    <summary>No puedo escanear el código</summary>
+    <p>Escribe esta clave en la aplicación: <code>{{ secreto.clave }}</code></p>
+  </details>
+
+  <form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% include "componentes/campo.html" with campo=formulario.codigo autocompletar="one-time-code" modo="numeric" ayuda="Los 6 números que muestra la aplicación." %}
+    <button type="submit" class="am-btn am-btn--primario formulario__envio">Activar</button>
+  </form>
+{% endif %}
+
+<form method="post" action="{% url 'cuentas:salir' %}" class="tarjeta-sin-sesion__pie">
+  {% csrf_token %}
+  <button type="submit" class="am-btn am-btn--texto">Salir</button>
+</form>
+{% endblock %}

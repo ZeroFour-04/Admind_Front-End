@@ -29,14 +29,22 @@ class ErrorDeApi(Exception):
         self.estado = estado
         self.mensaje = MENSAJES_POR_ESTADO.get(estado, MENSAJE_ERROR_GENERAL)
         self.campos = {}
+        self.cuerpo = cuerpo if isinstance(cuerpo, dict) else {}
 
         if not isinstance(cuerpo, dict):
             return
-        if estado == 400:
-            # DRF responde {"campo": ["mensaje", ...]} cuando la entrada no tiene la forma correcta.
-            self.campos = {campo: mensajes for campo, mensajes in cuerpo.items() if campo != "non_field_errors"}
+        if estado in (400, 409):
+            # DRF responde {"campo": ["mensaje", ...]} cuando la entrada no tiene la forma correcta,
+            # y {"detail": "..."} cuando el problema es de la operación y no de un campo.
+            self.campos = {
+                campo: mensajes
+                for campo, mensajes in cuerpo.items()
+                if campo not in ("non_field_errors", "detail") and isinstance(mensajes, list)
+            }
             if "non_field_errors" in cuerpo:
                 self.mensaje = " ".join(cuerpo["non_field_errors"])
+            elif "detail" in cuerpo:
+                self.mensaje = cuerpo["detail"]
         elif estado == 401 and "detail" in cuerpo:
             # El login responde aquí su mensaje genérico, que no revela si el correo existe (HU-01).
             self.mensaje = cuerpo["detail"]

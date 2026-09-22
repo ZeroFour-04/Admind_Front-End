@@ -1,0 +1,42 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}{% if editando %}Datos del conjunto{% else %}Crear conjunto{% endif %}{% endblock %}
+{% block titulo_vista %}{% if editando %}Datos del conjunto{% else %}Crear conjunto{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=editando %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% else %}
+  <p class="vista__guia">Cada paso se guarda al continuar. El conjunto no queda operativo hasta cumplir todos los requisitos del resumen.</p>
+  <form method="post" class="am-formulario am-tarjeta" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% include "componentes/campo.html" with campo=formulario.nombre %}
+    {% include "componentes/campo.html" with campo=formulario.direccion autocompletar="street-address" ayuda="Obligatoria para dejarlo operativo." %}
+
+    <fieldset class="selector-acento">
+      <legend class="am-campo__etiqueta">{{ formulario.acento.label }}</legend>
+      <p class="am-campo__ayuda">Colorea la barra y los botones mientras trabajes en este conjunto, para que siempre sepas en cuál estás.</p>
+      <div class="selector-acento__opciones">
+        {% for valor, nombre in acentos %}
+          <label class="selector-acento__opcion" data-acento="{{ valor }}">
+            <input type="radio" name="{{ formulario.acento.html_name }}" value="{{ valor }}"
+                   {% if formulario.acento.value == valor %}checked{% endif %}>
+            <span class="selector-acento__muestra" aria-hidden="true"></span>
+            {{ nombre }}
+          </label>
+        {% endfor %}
+      </div>
+      {% if formulario.acento.errors %}<span class="am-campo__error">{{ formulario.acento.errors|join:" " }}</span>{% endif %}
+    </fieldset>
+
+    <div class="acciones">
+      <a class="am-btn am-btn--secundario" href="{% if editando %}{% url 'conjuntos:asistente-resumen' %}{% else %}{% url 'conjuntos:selector' %}{% endif %}">Cancelar</a>
+      <button class="am-btn am-btn--primario" type="submit">{% if editando %}Guardar y continuar{% else %}Crear y continuar{% endif %}</button>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}
