@@ -1,0 +1,67 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Color y logo{% endblock %}
+{% block titulo_vista %}Color y logo del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% else %}
+  {% if guardado %}<div class="aviso-exito" role="status">Cambios guardados.</div>{% endif %}
+  <p class="vista__guia">El color y el logo ayudan a reconocer en qué conjunto estás trabajando. Los ven todas las personas del conjunto.</p>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-color">
+    <h2 id="titulo-color">Color</h2>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="color">
+      {% include "componentes/errores_formulario.html" with formulario=color %}
+      {% include "conjuntos/_selector_acento.html" with campo=color.acento %}
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Guardar color</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-logo">
+    <h2 id="titulo-logo">Logo</h2>
+    <div class="vista-previa-logo">
+      {% if conjunto.logo %}
+        <img src="{% url 'conjuntos:logo' conjunto.logo %}" alt="Logo actual de {{ conjunto.nombre }}">
+      {% else %}
+        <p>Sin logo. En la barra y en el selector se muestra el nombre: <b>{{ conjunto.nombre }}</b></p>
+      {% endif %}
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="am-formulario" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="logo">
+      {% include "componentes/errores_formulario.html" with formulario=logo %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ logo.archivo.id_for_label }}">{{ logo.archivo.label }}</label>
+        <input class="am-campo__control campo-archivo" type="file" id="{{ logo.archivo.id_for_label }}" name="{{ logo.archivo.html_name }}"
+               accept="image/png,image/jpeg,image/webp" required aria-describedby="{{ logo.archivo.id_for_label }}-ayuda{% if logo.archivo.errors %} {{ logo.archivo.id_for_label }}-error{% endif %}"
+               {% if logo.archivo.errors %}aria-invalid="true"{% endif %}>
+        <span class="am-campo__ayuda" id="{{ logo.archivo.id_for_label }}-ayuda">PNG, JPG o WebP de hasta 512 KB. Se ve mejor horizontal y con fondo transparente.</span>
+        {% if logo.archivo.errors %}<span class="am-campo__error" id="{{ logo.archivo.id_for_label }}-error">{{ logo.archivo.errors|join:" " }}</span>{% endif %}
+      </div>
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">{% if conjunto.logo %}Cambiar logo{% else %}Subir logo{% endif %}</button>
+      </div>
+    </form>
+
+    {% if conjunto.logo %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="quitar_logo">
+        <button class="am-btn am-btn--secundario" type="submit">Quitar logo</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-resumen' %}">Volver al conjunto</a>
+  </div>
+{% endif %}
+{% endblock %}

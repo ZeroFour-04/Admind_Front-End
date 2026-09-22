@@ -25,6 +25,7 @@
         {# Cada tarjeta lleva el color de su conjunto: el mismo que verá en la barra al entrar (HU-26). #}
         <li class="am-tarjeta tarjeta-conjunto" data-acento="{{ conjunto.acento }}">
           <span class="tarjeta-conjunto__franja" aria-hidden="true"></span>
+          {% if conjunto.logo %}<img class="tarjeta-conjunto__logo" src="{% url 'conjuntos:logo' conjunto.logo %}" alt="">{% endif %}
           <h2>{{ conjunto.nombre }}</h2>
           {% if conjunto.direccion %}<p class="tarjeta-conjunto__dato">{{ conjunto.direccion }}</p>{% endif %}
           <form method="post">

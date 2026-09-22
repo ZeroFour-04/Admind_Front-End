@@ -1,0 +1,17 @@
+"""Lo que comparten las pruebas de pantallas: un navegador con sesión abierta, sin API de verdad."""
+from django.test import Client
+
+TORRES = {"id": "5d6e1f7a-0000-4000-8000-000000000001", "nombre": "Torres del Río", "acento": "azul", "logo": None}
+HUELLA = "a" * 64
+
+
+def cliente_con_sesion(permisos=(), conjunto_activo=TORRES):
+    """Como si hubiera iniciado sesión: token guardado, conjunto activo y permisos en la sesión."""
+    cliente = Client()
+    sesion = cliente.session
+    sesion["token_api"] = "token-de-prueba"
+    sesion["conjunto_activo"] = dict(conjunto_activo) if conjunto_activo else None
+    sesion["permisos"] = list(permisos)
+    sesion["dos_factores"] = {"requerido": False, "verificado": False, "configurado": False}
+    sesion.save()
+    return cliente

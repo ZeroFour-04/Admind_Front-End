@@ -1,5 +1,7 @@
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_http_methods
+from django.urls import reverse
+from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
@@ -7,7 +9,20 @@ from cliente_api import conjuntos as api_conjuntos
 from cliente_api import cuentas as api_cuentas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import ACENTOS, AdministradorForm, ConjuntoForm
+from .forms import ACENTOS, AcentoForm, AdministradorForm, ConjuntoForm, LogoForm
+
+# Los únicos tipos que la API acepta como logo. Cualquier otra cosa no se le entrega al navegador.
+TIPOS_DE_LOGO = {"image/png", "image/jpeg", "image/webp"}
+
+
+def actualizar_conjunto_activo(request, conjunto):
+    """El nombre, el color y el logo de la barra salen de la sesión: se actualizan al cambiarlos."""
+    activo = {clave: conjunto.get(clave) for clave in ("id", "nombre", "acento", "logo")}
+    guardar_estado(request, {"conjunto_activo": activo})
+
+
+def puede_cambiar_identidad(request):
+    return tiene_permiso(request, "conjunto.branding") or tiene_permiso(request, "conjunto.activar")
 
 
 @require_http_methods(["GET", "POST"])
@@ -90,9 +105,7 @@ def datos(request):
         except ErrorDeApi as error:
             errores_de_la_api_al_formulario(formulario, error)
         else:
-            # El nombre y el color de la barra salen de la sesión: se actualizan aquí.
-            activo = {clave: resumen["conjunto"][clave] for clave in ("id", "nombre", "acento")}
-            guardar_estado(request, {"conjunto_activo": activo})
+            actualizar_conjunto_activo(request, resumen["conjunto"])
             return redirect("conjuntos:asistente-administracion")
     contexto = {"formulario": formulario, "acentos": ACENTOS, "paso": 1, "editando": True}
     return render(request, "conjuntos/asistente_datos.html", contexto)
@@ -139,6 +152,69 @@ def resumen(request):
         "faltantes": faltantes,
         "activado": activado,
         "nombre_del_acento": dict(ACENTOS).get((datos_del_resumen or {}).get("conjunto", {}).get("acento")),
+        "puede_cambiar_identidad": puede_cambiar_identidad(request),
         "paso": 3,
     }
     return render(request, "conjuntos/asistente_resumen.html", contexto)
+
+
+# Identidad visual (HU-21): el color, uno de los ocho del catálogo, y el logo.
+
+
+@require_http_methods(["GET", "POST"])
+def identidad(request):
+    """Color y logo del conjunto activo. Cada formulario de la pantalla manda su `accion`."""
+    try:
+        conjunto = api_conjuntos.identidad(request)
+    except ApiNoDisponible:
+        return render(request, "conjuntos/identidad.html", {"error": MENSAJE_API_NO_DISPONIBLE})
+    except ErrorDeApi as error:
+        return render(request, "conjuntos/identidad.html", {"error": error.mensaje})
+
+    accion = request.POST.get("accion")
+    color = AcentoForm(request.POST if accion == "color" else None, initial={"acento": conjunto["acento"]})
+    logo = LogoForm(request.POST if accion == "logo" else None, request.FILES if accion == "logo" else None)
+    # Los errores de quitar el logo se muestran junto al logo.
+    formulario = color if accion == "color" else logo
+    if accion in ("color", "logo", "quitar_logo") and (accion == "quitar_logo" or formulario.is_valid()):
+        try:
+            if accion == "color":
+                conjunto = api_conjuntos.cambiar_acento(request, color.cleaned_data["acento"])
+            elif accion == "logo":
+                conjunto = api_conjuntos.subir_logo(request, logo.cleaned_data["archivo"])
+            else:
+                conjunto = api_conjuntos.quitar_logo(request)
+        except ApiNoDisponible:
+            formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(formulario, error)
+        else:
+            actualizar_conjunto_activo(request, conjunto)
+            return redirect(f"{reverse('conjuntos:identidad')}?guardado=1")
+
+    contexto = {
+        "conjunto": conjunto,
+        "color": color,
+        "logo": logo,
+        "acentos": ACENTOS,
+        "guardado": request.GET.get("guardado") == "1",
+    }
+    return render(request, "conjuntos/identidad.html", contexto)
+
+
+@require_GET
+def logo(request, huella):
+    """La imagen del logo. La pide este servidor con el token de la sesión: el navegador no habla con la API.
+
+    La URL lleva la huella de la imagen, así que lo que hay en una URL nunca cambia y el navegador
+    lo puede guardar. Si la API no la entrega, 404: la barra y el selector siguen mostrando el nombre.
+    """
+    try:
+        contenido, tipo = api_conjuntos.imagen_del_logo(request, huella)
+    except (ApiNoDisponible, ErrorDeApi):
+        raise Http404
+    if tipo not in TIPOS_DE_LOGO:
+        raise Http404
+    respuesta = HttpResponse(contenido, content_type=tipo)
+    respuesta["Cache-Control"] = "private, max-age=31536000, immutable"
+    return respuesta

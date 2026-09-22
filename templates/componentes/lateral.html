@@ -7,6 +7,7 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
   <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
+  <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>
   <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
   {% if "conjunto.editar" in request.session.permisos or "conjunto.activar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'conjuntos' %} am-es-activo{% endif %}" href="{% url 'conjuntos:asistente-resumen' %}"{% if actual == 'conjuntos' %} aria-current="page"{% endif %}>Conjunto</a>

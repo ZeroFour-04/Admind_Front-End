@@ -1,0 +1,10 @@
+{% comment %}
+Área de texto con las clases de design-system/. Parámetro: campo.
+{% endcomment %}
+<div class="am-campo">
+  <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+  <textarea class="am-campo__control campo-texto-largo" id="{{ campo.id_for_label }}" name="{{ campo.html_name }}" rows="6"
+            maxlength="{{ campo.field.max_length }}" required
+            {% if campo.errors %}aria-invalid="true" aria-describedby="{{ campo.id_for_label }}-error"{% endif %}>{{ campo.value|default_if_none:'' }}</textarea>
+  {% if campo.errors %}<span class="am-campo__error" id="{{ campo.id_for_label }}-error">{{ campo.errors|join:" " }}</span>{% endif %}
+</div>

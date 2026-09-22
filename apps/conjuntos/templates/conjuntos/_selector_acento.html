@@ -1,0 +1,19 @@
+{% comment %}
+Los ocho acentos del catálogo (maestro §6.3) como opciones de radio. Parámetros: campo y acentos.
+Cada opción lleva su data-acento, así que la muestra se pinta con su propio color.
+{% endcomment %}
+<fieldset class="selector-acento">
+  <legend class="am-campo__etiqueta">{{ campo.label }}</legend>
+  <p class="am-campo__ayuda">Colorea la barra y los botones mientras trabajes en este conjunto, para que siempre sepas en cuál estás.</p>
+  <div class="selector-acento__opciones">
+    {% for valor, nombre in acentos %}
+      <label class="selector-acento__opcion" data-acento="{{ valor }}">
+        <input type="radio" name="{{ campo.html_name }}" value="{{ valor }}"
+               {% if campo.value == valor %}checked{% endif %}>
+        <span class="selector-acento__muestra" aria-hidden="true"></span>
+        {{ nombre }}
+      </label>
+    {% endfor %}
+  </div>
+  {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+</fieldset>

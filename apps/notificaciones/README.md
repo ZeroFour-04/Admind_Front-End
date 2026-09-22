@@ -6,7 +6,7 @@ Las notificaciones dentro de la aplicación. El correo sale del backend y no pas
 
 ## Qué va aquí
 
-- Listado de notificaciones del usuario y su marca de leída
+- Listado de notificaciones del usuario en el conjunto activo (`/notificaciones/`). La marca de leída todavía no existe
 
 ## Con qué se conecta
 

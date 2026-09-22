@@ -1,0 +1,26 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Notificaciones{% endblock %}
+{% block titulo_vista %}Notificaciones{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif avisos %}
+  <ul class="pila" role="list">
+    {% for aviso in avisos %}
+      <li class="am-tarjeta tarjeta-contenido">
+        <h2>{{ aviso.titulo }}</h2>
+        <p class="tarjeta-contenido__meta">{{ aviso.creada_en|date:"l j \d\e F, g:i a"|lower }}{% if aviso.origen == "anuncio" %} · <a href="{% url 'anuncios:lista' %}">Ver en anuncios</a>{% endif %}</p>
+        <p class="tarjeta-contenido__cuerpo">{{ aviso.cuerpo }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">No tienes notificaciones</p>
+    <p class="am-vacio__texto">Cuando algo del conjunto te toque, el aviso llega aquí y a tu correo.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -58,24 +58,41 @@ def token_de(request):
     return request.session.get(CLAVE_TOKEN)
 
 
-def pedir(request, metodo, ruta, datos=None):
-    """Llama a la API en nombre del usuario de `request` y devuelve el JSON de la respuesta."""
-    cabeceras = {"Accept": "application/json"}
+def pedir(request, metodo, ruta, datos=None, archivos=None):
+    """Llama a la API en nombre del usuario de `request` y devuelve el JSON de la respuesta.
+
+    Con `archivos` ({campo: (nombre, contenido, tipo)}) la petición va como formulario multipart.
+    """
+    respuesta = enviar(request, metodo, ruta, {"Accept": "application/json"}, datos, archivos)
+    return cuerpo_json(respuesta)
+
+
+def pedir_archivo(request, ruta):
+    """Descarga un archivo de la API (por ejemplo, el logo de un conjunto) y devuelve (contenido, tipo)."""
+    respuesta = enviar(request, "GET", ruta, {}, None, None)
+    if respuesta.status_code >= 400:
+        cuerpo_json(respuesta)  # levanta el error que corresponde
+    return respuesta.content, respuesta.headers.get("Content-Type", "")
+
+
+def enviar(request, metodo, ruta, cabeceras, datos, archivos):
     token = token_de(request)
     if token:
         cabeceras["Authorization"] = f"Token {token}"
-
+    cuerpo = {"data": datos, "files": archivos} if archivos else {"json": datos}
     try:
-        respuesta = requests.request(
+        return requests.request(
             metodo,
             f"{settings.ADMIND_API_URL}/{ruta}",
-            json=datos,
             headers=cabeceras,
             timeout=settings.ADMIND_API_TIEMPO_ESPERA,
+            **cuerpo,
         )
     except requests.RequestException as error:
         raise ApiNoDisponible() from error
 
+
+def cuerpo_json(respuesta):
     try:
         cuerpo = respuesta.json() if respuesta.content else None
     except ValueError:

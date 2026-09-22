@@ -88,3 +88,29 @@ a.am-btn--secundario:hover{color:var(--texto-fuerte)}
 .requisitos__item{display:flex;justify-content:space-between;align-items:center;gap:var(--e-3);padding:var(--e-3) 0;border-bottom:1px solid var(--borde)}
 .requisitos__item:last-child{border-bottom:0}
 details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-medio)}
+
+/* ---------- Logo del conjunto (HU-21) ---------------------------------- */
+/* Sin logo no se reserva ningún espacio: la barra y las tarjetas muestran solo el nombre.
+   El logo no es acento: no cuenta entre los cuatro sitios del maestro §6.1. */
+.am-barra__conjunto.barra-conjunto--con-logo{flex-direction:row;align-items:center;gap:var(--e-3)}
+.barra-conjunto__logo{display:block;height:32px;width:auto;max-width:120px;object-fit:contain}
+.tarjeta-conjunto__logo{display:block;height:48px;width:auto;max-width:160px;object-fit:contain}
+.resumen-logo{display:block;height:40px;width:auto;max-width:160px;object-fit:contain}
+.vista-previa-logo{display:flex;align-items:center;min-height:96px;padding:var(--e-4);border:1px dashed var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-medio)}
+.vista-previa-logo img{display:block;max-height:64px;max-width:240px;object-fit:contain}
+.campo-archivo{padding:var(--e-2) var(--e-3)}
+/* Un formulario dentro de una tarjeta de contenido usa el relleno de la tarjeta, no el suyo. */
+.tarjeta-contenido .am-formulario{padding:0}
+
+/* ---------- Anuncios y notificaciones (HU-25) ------------------------- */
+.tarjeta-contenido__cuerpo{white-space:pre-line}
+.campo-texto-largo{min-height:calc(var(--toque-minimo) * 3);padding:var(--e-2) var(--e-3);resize:vertical;font:inherit;line-height:var(--alto-corto)}
+.formulario-anuncio .am-campo{max-width:none}
+.opciones-alcance{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.opciones-alcance__opcion{display:flex;align-items:flex-start;gap:var(--e-3);min-height:var(--toque-minimo);padding:var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+/* La opción elegida se marca con neutros: el acento solo va en sus cuatro sitios (maestro §6.1). */
+.opciones-alcance__opcion:has(input:checked){border-color:var(--texto-medio);box-shadow:0 0 0 1px var(--texto-medio)}
+.opciones-alcance__opcion input{margin-top:3px;accent-color:var(--texto-fuerte)}
+.opciones-alcance__opcion > span{display:flex;flex-direction:column;gap:var(--e-1)}
+/* Aviso informativo. Es información, no acción: usa los colores de info, nunca el acento. */
+.aviso-info{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--info-fondo);color:var(--info-texto)}

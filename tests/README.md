@@ -10,3 +10,13 @@ Pruebas del servidor web. Se llama `tests` y no `pruebas` para no confundirla co
 ## Con qué se conecta
 
 - `apps/` y `cliente_api/`. Para probar una vista sin el backend corriendo, la respuesta de la API se simula
+
+## Cómo se corren
+
+Desde la carpeta del proyecto, con el entorno activado y el `.env` en su sitio:
+
+```bash
+python -m pytest -q
+```
+
+No hace falta que la API esté encendida: cada prueba simula la respuesta que necesita. `test_acentos.py` lee `design-system/tokens/` y comprueba el contraste de los ocho acentos (HU-21).

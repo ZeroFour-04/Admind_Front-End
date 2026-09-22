@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.reservas",
     "apps.reglas",
     "apps.anuncios",
+    "apps.notificaciones",
     "apps.triage",
     "apps.unidades",
     "apps.usuarios",
