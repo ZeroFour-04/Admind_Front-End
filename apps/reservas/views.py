@@ -9,12 +9,15 @@ from urllib.parse import urlencode
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format, time_format
 from django.views.decorators.http import require_POST
 
 from apps.areas.views import cargar_areas
 from apps.cuentas.sesion import tiene_permiso
 from cliente_api import reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
+
+from .forms import SolicitudForm
 
 # Cómo se ve cada estado de franja: siempre con texto, nunca solo con color.
 PASTILLA_POR_ESTADO = {
@@ -25,6 +28,12 @@ PASTILLA_POR_ESTADO = {
     "pasada": ("Ya pasó", "am-pastilla--neutro"),
     "propia": ("Tuya", "am-pastilla--info"),
     "no_disponible": ("No disponible", "am-pastilla--neutro"),
+}
+# Lo que el panel de confirmación resalta sin impedir el envío (HU-12). «Alta demanda» llega con PB-24.
+TEXTO_POR_AVISO = {
+    "menos_de_24h": "Empieza en menos de 24 horas.",
+    "limite_de_anticipacion": "Es el último día que se puede reservar con la anticipación permitida.",
+    "otra_solicitud": "Ya tienes otra solicitud apartada o reservada.",
 }
 
 
@@ -116,6 +125,11 @@ def tomar(request):
     return redirect("reservas:solicitud", solicitud_id=solicitud["id"])
 
 
+def hora_en_letras(hora):
+    """«2:00 p. m.», como escribe el maestro §5.1. El formato de Django daría «p.m.»."""
+    return f"{time_format(hora, 'g:i')} {'a. m.' if hora.hour < 12 else 'p. m.'}"
+
+
 def con_fechas(solicitud):
     """La API manda fecha y horas como texto; las plantillas las formatean."""
     return {
@@ -127,7 +141,13 @@ def con_fechas(solicitud):
 
 
 def solicitud(request, solicitud_id):
-    """La solicitud propia. En trámite, con su cuenta regresiva; en otro estado, qué pasó y el camino de vuelta."""
+    return pantalla_de_la_solicitud(request, solicitud_id)
+
+
+def pantalla_de_la_solicitud(request, solicitud_id, formulario=None, error_de_envio=None):
+    """La solicitud propia. En trámite, con su formulario, su cuenta regresiva y el panel de confirmación;
+    en otro estado, qué pasó y el camino de vuelta.
+    """
     try:
         datos = con_fechas(api_reservas.obtener(request, solicitud_id))
     except ApiNoDisponible:
@@ -135,11 +155,19 @@ def solicitud(request, solicitud_id):
     except ErrorDeApi as error:
         return render(request, "reservas/solicitud.html", {"error": error.mensaje})
     segundos = datos["segundos_restantes"]
+    unidades = datos["unidades_para_solicitar"]
     contexto = {
         "solicitud": datos,
         "en_tramite": datos["estado"] == "EN_SOLICITUD",
         "reloj": f"{segundos // 60}:{segundos % 60:02d}",
         "volver": url_del_calendario(datos["area"]["id"], datos["fecha"]),
+        "formulario": formulario or SolicitudForm(unidades=unidades),
+        "unidades": unidades,
+        "error_de_envio": error_de_envio,
+        # El día de la semana en letras es el punto entero de HU-12: se escribe en el servidor.
+        "fecha_en_letras": date_format(datos["fecha"], r"l j \d\e F \d\e Y").lower(),
+        "horario": f"{hora_en_letras(datos['hora_inicio'])} a {hora_en_letras(datos['hora_fin'])}",
+        "avisos": [TEXTO_POR_AVISO[aviso] for aviso in datos.get("avisos", [])],
     }
     return render(request, "reservas/solicitud.html", contexto)
 

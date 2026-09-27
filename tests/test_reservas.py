@@ -1,6 +1,8 @@
 """Pantallas de reservas (HU-11): franjas del día, tomar el bloqueo y la solicitud en trámite. La API se simula."""
 from unittest import mock
 
+from django.urls import URLResolver, get_resolver
+
 from cliente_api.http import ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
@@ -126,3 +128,61 @@ def test_las_pantallas_sin_javascript_no_cargan_alpine():
         html = cliente_con_sesion().get("/anuncios/").content.decode()
 
     assert "alpine" not in html
+
+
+# Confirmación del contenido (HU-12). Lo que depende del navegador va al guion manual.
+
+
+def ver_solicitud(**cambios):
+    with mock.patch("cliente_api.reservas.obtener", return_value={**EN_TRAMITE, **cambios}):
+        return cliente_con_sesion(permisos=RESIDENTE).get(f"/reservas/solicitudes/{EN_TRAMITE['id']}/").content.decode()
+
+
+def test_el_panel_dice_el_area_el_dia_de_la_semana_en_letras_la_fecha_y_el_horario():
+    html = ver_solicitud()
+
+    assert "Vas a solicitar el <b>Salón comunal</b> para el <b>sábado 26 de diciembre de 2026</b>" in html
+    assert "de <b>2:00 p. m. a 6:00 p. m.</b>, para <b x-text=\"asistentes\"></b> asistentes." in html
+    assert ">Corregir</button>" in html and ">Enviar solicitud</button>" in html
+
+
+def test_los_avisos_se_muestran_con_texto_y_no_deshabilitan_el_envio():
+    html = ver_solicitud(avisos=["menos_de_24h", "limite_de_anticipacion", "otra_solicitud"])
+
+    assert "Empieza en menos de 24 horas." in html
+    assert "Es el último día que se puede reservar con la anticipación permitida." in html
+    assert "Ya tienes otra solicitud apartada o reservada." in html
+    assert '<button class="am-btn am-btn--primario" type="submit" :disabled="vencido">Enviar solicitud</button>' in html
+
+
+def test_revisar_no_pide_nada_al_servidor():
+    html = ver_solicitud()
+
+    assert '<button class="am-btn am-btn--primario" type="button" @click="revisar($el.form)"' in html
+    assert not any("revisar" in ruta for ruta in rutas_del_front(get_resolver().url_patterns))
+
+
+def rutas_del_front(patrones, prefijo=""):
+    for patron in patrones:
+        if isinstance(patron, URLResolver):
+            yield from rutas_del_front(patron.url_patterns, prefijo + str(patron.pattern))
+        else:
+            yield prefijo + str(patron.pattern)
+
+
+def test_con_una_sola_unidad_va_fija_y_con_varias_se_elige():
+    una = ver_solicitud()
+    varias = ver_solicitud(unidades_para_solicitar=[
+        {"id": "7a1b2c3d-0000-4000-8000-000000000101", "nombre": "Torre 1 – 101"},
+        {"id": "7a1b2c3d-0000-4000-8000-000000000102", "nombre": "Torre 1 – 102"},
+    ])
+
+    assert "A nombre de Torre 1 – 101." in una and '<select class="am-campo__control" id="id_unidad"' not in una
+    assert '<select class="am-campo__control" id="id_unidad"' in varias
+
+
+def test_sin_unidades_para_solicitar_no_hay_formulario():
+    html = ver_solicitud(unidades_para_solicitar=[])
+
+    assert "Para reservar necesitas vivir en un apartamento del conjunto." in html
+    assert 'name="motivo"' not in html

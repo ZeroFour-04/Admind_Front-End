@@ -23,6 +23,44 @@
       para enviar la solicitud. Mientras tanto, la franja es solo tuya.
     </p>
     <div class="am-alerta am-alerta--error" role="alert" x-show="vencido" x-cloak>Se venció el tiempo. La franja quedó libre.</div>
+    {% if error_de_envio %}<div class="am-alerta am-alerta--error" role="alert">{{ error_de_envio }}</div>{% endif %}
+
+    {% if unidades %}
+      <form method="post" class="am-formulario" @submit="enviando = true">
+        {% csrf_token %}
+        <div class="am-tarjeta formulario-anuncio" x-show="!revisando">
+          {% include "componentes/errores_formulario.html" %}
+          {% if unidades|length == 1 %}
+            <input type="hidden" name="{{ formulario.unidad.html_name }}" value="{{ unidades.0.id }}">
+            <p class="vista__guia">A nombre de {{ unidades.0.nombre }}.</p>
+          {% else %}
+            <div class="am-campo">
+              <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+              <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}" required>
+                {% for valor, nombre in formulario.fields.unidad.choices %}
+                  <option value="{{ valor }}"{% if formulario.unidad.value|stringformat:"s" == valor|stringformat:"s" %} selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+              </select>
+              {% if formulario.unidad.errors %}<span class="am-campo__error">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+            </div>
+          {% endif %}
+          {% include "componentes/campo.html" with campo=formulario.motivo ayuda="Por ejemplo, «Cumpleaños de mi hija»." %}
+          {% include "componentes/campo.html" with campo=formulario.asistentes tipo="number" modo="numeric" %}
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="{{ formulario.observaciones.id_for_label }}">{{ formulario.observaciones.label }}</label>
+            <textarea class="am-campo__control" id="{{ formulario.observaciones.id_for_label }}" name="{{ formulario.observaciones.html_name }}" rows="3" maxlength="1000"
+                      aria-describedby="{{ formulario.observaciones.id_for_label }}-ayuda">{{ formulario.observaciones.value|default_if_none:'' }}</textarea>
+            <span class="am-campo__ayuda" id="{{ formulario.observaciones.id_for_label }}-ayuda">Opcional.</span>
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--primario" type="button" @click="revisar($el.form)" :disabled="vencido">Revisar solicitud</button>
+          </div>
+        </div>
+        {% include "componentes/confirmacion_de_contenido.html" with area=solicitud.area.nombre fecha=fecha_en_letras horario=horario avisos=avisos asistentes=True %}
+      </form>
+    {% else %}
+      <div class="aviso-info" role="note"><p>Para reservar necesitas vivir en un apartamento del conjunto. Cancela la solicitud para soltar la franja.</p></div>
+    {% endif %}
 
     <form method="post" action="{% url 'reservas:liberar' solicitud.id %}" @submit="enviando = true">
       {% csrf_token %}
