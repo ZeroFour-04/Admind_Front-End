@@ -10,5 +10,7 @@
 </head>
 <body>
   {% block cuerpo %}{% endblock %}
+  {# Solo las pantallas que usan JavaScript lo cargan aquí, con defer (plan P13). #}
+  {% block scripts %}{% endblock %}
 </body>
 </html>
