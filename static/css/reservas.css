@@ -19,3 +19,13 @@
   .calendario__encabezado h2{order:-1;flex-basis:100%;text-align:center}
   .calendario__encabezado .am-btn{flex:1}
 }
+
+/* Selector de área y franjas del día (HU-11). El estado va en una pastilla con texto. */
+.selector-area{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--e-3);margin-bottom:var(--e-4)}
+.franjas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2);max-width:640px}
+.franjas__item{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-3);min-height:var(--toque-minimo);padding:var(--e-2) var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control)}
+.franjas__item form{margin-left:auto}
+
+/* Solicitud en trámite: la cuenta regresiva va en cifras tabulares. */
+.reloj-solicitud{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-2)}
+[x-cloak]{display:none}

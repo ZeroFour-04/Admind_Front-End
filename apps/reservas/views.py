@@ -1,8 +1,31 @@
-import calendar
-from datetime import date
+"""Zonas comunes (HU-11): el calendario con las franjas de un área, tomar el bloqueo y la solicitud en trámite.
 
-from django.shortcuts import render
+Si una franja está libre o si un bloqueo venció lo decide la API; aquí solo se muestra.
+"""
+import calendar
+from datetime import date, time
+from urllib.parse import urlencode
+
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from apps.areas.views import cargar_areas
+from apps.cuentas.sesion import tiene_permiso
+from cliente_api import reservas as api_reservas
+from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
+
+# Cómo se ve cada estado de franja: siempre con texto, nunca solo con color.
+PASTILLA_POR_ESTADO = {
+    "libre": ("Libre", "am-pastilla--confirmado"),
+    "en_solicitud": ("En trámite", "am-pastilla--tramite"),
+    "apartada": ("Apartada", "am-pastilla--tramite"),
+    "reservada": ("Reservada", "am-pastilla--neutro"),
+    "pasada": ("Ya pasó", "am-pastilla--neutro"),
+    "propia": ("Tuya", "am-pastilla--info"),
+    "no_disponible": ("No disponible", "am-pastilla--neutro"),
+}
 
 
 def _mes_pedido(texto, hoy):
@@ -30,19 +53,102 @@ def _mes_vecino(mes, paso):
     return date(indice // 12, indice % 12 + 1, 1)
 
 
-def calendario(request):
-    """
-    Maqueta del calendario de zonas comunes. Se arma en el servidor: cambiar de mes o elegir
-    un día es un enlace y una recarga, sin JavaScript. Todavía no muestra franjas: la
-    disponibilidad la decidirá la API (HU-11).
-    """
+def url_del_calendario(area_id, dia):
+    """Vuelve al calendario con el área y el día a la vista. Ninguno de los dos es un dato personal."""
+    consulta = {"area": area_id, "mes": dia.strftime("%Y-%m"), "dia": dia.isoformat()}
+    return f"{reverse('reservas:calendario')}?{urlencode(consulta)}"
+
+
+def cargar_franjas(request, area_id, dia):
+    try:
+        respuesta = api_reservas.franjas(request, area_id, dia.isoformat())
+    except ApiNoDisponible:
+        return [], MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as error:
+        return [], error.mensaje
+    franjas = []
+    for franja in respuesta["franjas"]:
+        texto, clase = PASTILLA_POR_ESTADO[franja["estado"]]
+        franjas.append({**franja, "texto": texto, "clase": clase})
+    return franjas, None
+
+
+def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
+    """El calendario del mes, se arma en el servidor: cambiar de mes, de día o de área es un enlace."""
     hoy = timezone.localdate()
     mes = _mes_pedido(request.GET.get("mes"), hoy)
+    dia = _dia_pedido(request.GET.get("dia"), mes)
+    areas, error_de_areas = cargar_areas(request)
+    areas = [area for area in areas if area["activo"]]
+    area = next((area for area in areas if area["id"] == request.GET.get("area")), None)
+    franjas, error_de_franjas = cargar_franjas(request, area["id"], dia) if area and dia else ([], None)
     return render(request, "reservas/calendario.html", {
         "hoy": hoy,
         "mes": mes,
         "semanas": calendar.Calendar(firstweekday=calendar.MONDAY).monthdatescalendar(mes.year, mes.month),
-        "dia_elegido": _dia_pedido(request.GET.get("dia"), mes),
+        "dia_elegido": dia,
         "mes_anterior": _mes_vecino(mes, -1),
         "mes_siguiente": _mes_vecino(mes, 1),
+        "areas": areas,
+        "area": area,
+        "franjas": franjas,
+        "error": error or error_de_areas or error_de_franjas,
+        "solicitud_en_curso": solicitud_en_curso,
+        "puede_solicitar": tiene_permiso(request, "reserva.solicitar"),
     })
+
+
+def calendario(request):
+    return pantalla_del_calendario(request)
+
+
+@require_POST
+def tomar(request):
+    """«Reservar» sobre una franja libre: toma el bloqueo y abre la solicitud con su cuenta regresiva."""
+    datos = {campo: request.POST.get(campo) for campo in ("area", "fecha", "hora_inicio")}
+    try:
+        solicitud = api_reservas.tomar(request, datos)
+    except ApiNoDisponible:
+        return pantalla_del_calendario(request, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        mensajes = [mensaje for lista in error.campos.values() for mensaje in lista]
+        return pantalla_del_calendario(request, " ".join(mensajes) or error.mensaje, error.cuerpo.get("solicitud"))
+    return redirect("reservas:solicitud", solicitud_id=solicitud["id"])
+
+
+def con_fechas(solicitud):
+    """La API manda fecha y horas como texto; las plantillas las formatean."""
+    return {
+        **solicitud,
+        "fecha": date.fromisoformat(solicitud["fecha"]),
+        "hora_inicio": time.fromisoformat(solicitud["hora_inicio"]),
+        "hora_fin": time.fromisoformat(solicitud["hora_fin"]),
+    }
+
+
+def solicitud(request, solicitud_id):
+    """La solicitud propia. En trámite, con su cuenta regresiva; en otro estado, qué pasó y el camino de vuelta."""
+    try:
+        datos = con_fechas(api_reservas.obtener(request, solicitud_id))
+    except ApiNoDisponible:
+        return render(request, "reservas/solicitud.html", {"error": MENSAJE_API_NO_DISPONIBLE})
+    except ErrorDeApi as error:
+        return render(request, "reservas/solicitud.html", {"error": error.mensaje})
+    segundos = datos["segundos_restantes"]
+    contexto = {
+        "solicitud": datos,
+        "en_tramite": datos["estado"] == "EN_SOLICITUD",
+        "reloj": f"{segundos // 60}:{segundos % 60:02d}",
+        "volver": url_del_calendario(datos["area"]["id"], datos["fecha"]),
+    }
+    return render(request, "reservas/solicitud.html", contexto)
+
+
+@require_POST
+def liberar(request, solicitud_id):
+    """«Cancelar» y el `sendBeacon` al salir llegan aquí. Si ya no estaba en trámite, no hay nada que soltar."""
+    try:
+        datos = api_reservas.liberar(request, solicitud_id)
+    except (ApiNoDisponible, ErrorDeApi):
+        return redirect("reservas:calendario")
+    return redirect(url_del_calendario(datos["area"]["id"], date.fromisoformat(datos["fecha"])))

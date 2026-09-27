@@ -1,0 +1,60 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Solicitud de reserva{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/reservas.css' %}">{% endblock %}
+{% block titulo_vista %}Solicitud de reserva{% endblock %}
+{% block estado_vista %}{% if solicitud %}<span class="am-pastilla {% if en_tramite %}am-pastilla--tramite{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_nombre }}</span>{% endif %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'reservas:calendario' %}">Volver a las zonas comunes</a>
+  </div>
+{% elif en_tramite %}
+  <div x-data="solicitudDeReserva({{ solicitud.segundos_restantes }}, '{% url 'reservas:liberar' solicitud.id %}')">
+    <p class="vista__guia">
+      {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+    </p>
+    <p class="reloj-solicitud" role="timer" aria-live="off">
+      Tienes
+      <span class="am-pastilla am-pastilla--tramite"><span class="am-pastilla__reloj am-num" x-text="reloj">{{ reloj }}</span></span>
+      para enviar la solicitud. Mientras tanto, la franja es solo tuya.
+    </p>
+    <div class="am-alerta am-alerta--error" role="alert" x-show="vencido" x-cloak>Se venció el tiempo. La franja quedó libre.</div>
+
+    <form method="post" action="{% url 'reservas:liberar' solicitud.id %}" @submit="enviando = true">
+      {% csrf_token %}
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Cancelar</button>
+      </div>
+    </form>
+  </div>
+{% else %}
+  <p class="vista__guia">
+    {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+  </p>
+  <div class="aviso-info" role="status">
+    {% if solicitud.estado == "EXPIRADA" %}
+      <p>Se venció el tiempo sin enviar la solicitud. La franja quedó libre.</p>
+    {% elif solicitud.estado == "LIBERADA" %}
+      <p>Cancelaste esta solicitud. La franja quedó libre.</p>
+    {% elif solicitud.estado == "APARTADA" %}
+      <p>Tu solicitud quedó apartada. La administración la revisará y te avisará.</p>
+    {% else %}
+      <p>Esta solicitud está {{ solicitud.estado_nombre|lower }}.</p>
+    {% endif %}
+  </div>
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{{ volver }}">Volver al calendario</a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if en_tramite %}
+  <script src="{% static 'js/reservas.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endif %}
+{% endblock %}
