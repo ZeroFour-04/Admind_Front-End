@@ -186,3 +186,61 @@ def test_sin_unidades_para_solicitar_no_hay_formulario():
 
     assert "Para reservar necesitas vivir en un apartamento del conjunto." in html
     assert 'name="motivo"' not in html
+
+
+# Envío (HU-13)
+
+ENVIO = {"unidad": "7a1b2c3d-0000-4000-8000-000000000101", "motivo": "Cumpleaños", "asistentes": "40", "observaciones": ""}
+URL_ENVIO = f"/reservas/solicitudes/{EN_TRAMITE['id']}/enviar/"
+
+
+def test_enviar_manda_la_solicitud_a_la_api_y_vuelve_a_la_solicitud():
+    with (
+        mock.patch("cliente_api.reservas.obtener", return_value=EN_TRAMITE),
+        mock.patch("cliente_api.reservas.enviar", return_value={**EN_TRAMITE, "estado": "APARTADA"}) as enviar,
+    ):
+        respuesta = cliente_con_sesion(permisos=RESIDENTE).post(URL_ENVIO, ENVIO)
+
+    assert enviar.call_args.args[2] == {**ENVIO, "asistentes": 40}
+    assert respuesta["Location"] == f"/reservas/solicitudes/{EN_TRAMITE['id']}/"
+    assert f'action="{URL_ENVIO}"' in ver_solicitud()
+
+
+def test_apartada_dice_que_la_administracion_la_revisara():
+    html = ver_solicitud(estado="APARTADA", estado_nombre="Apartada", segundos_restantes=0)
+
+    assert "Tu solicitud quedó apartada. La administración la revisará y te avisará." in html
+
+
+def test_rechazada_por_las_reglas_muestra_todos_los_motivos_y_el_camino_al_calendario():
+    evaluacion = [
+        {"id": None, "tipo": "RESIDE", "cumple": True, "motivo": ""},
+        {"id": "r1", "tipo": "AFORO", "cumple": False, "motivo": "Esta área admite máximo 25 asistentes y la solicitud dice 40."},
+        {"id": "r2", "tipo": "DIAS_NO_RESERVABLES", "cumple": False, "motivo": "Esta área no se reserva ese día."},
+    ]
+    rechazo = ErrorDeApi(400, {"detail": "La solicitud no cumple las reglas del conjunto.", "motivos": ["..."]})
+    with (
+        mock.patch("cliente_api.reservas.obtener", return_value=EN_TRAMITE),
+        mock.patch("cliente_api.reservas.enviar", side_effect=rechazo),
+    ):
+        respuesta = cliente_con_sesion(permisos=RESIDENTE).post(URL_ENVIO, ENVIO)
+    html = ver_solicitud(estado="LIBERADA", estado_nombre="Liberada", motivo_liberacion="reglas",
+                         segundos_restantes=0, evaluacion=evaluacion)
+
+    assert respuesta["Location"] == f"/reservas/solicitudes/{EN_TRAMITE['id']}/"
+    assert "La solicitud no cumple las reglas del conjunto:" in html
+    assert "Esta área admite máximo 25 asistentes y la solicitud dice 40." in html
+    assert "Esta área no se reserva ese día." in html
+    assert "La franja quedó libre." in html and "Volver al calendario" in html
+
+
+def test_un_409_al_enviar_se_muestra_con_su_mensaje():
+    vencida = ErrorDeApi(409, {"detail": "Se venció el tiempo. La franja quedó libre."})
+    with (
+        mock.patch("cliente_api.reservas.obtener",
+                   side_effect=[EN_TRAMITE, {**EN_TRAMITE, "estado": "EXPIRADA", "estado_nombre": "Expirada", "segundos_restantes": 0}]),
+        mock.patch("cliente_api.reservas.enviar", side_effect=vencida),
+    ):
+        html = cliente_con_sesion(permisos=RESIDENTE).post(URL_ENVIO, ENVIO).content.decode()
+
+    assert 'role="alert">Se venció el tiempo. La franja quedó libre.</div>' in html

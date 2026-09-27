@@ -156,6 +156,7 @@ def pantalla_de_la_solicitud(request, solicitud_id, formulario=None, error_de_en
         return render(request, "reservas/solicitud.html", {"error": error.mensaje})
     segundos = datos["segundos_restantes"]
     unidades = datos["unidades_para_solicitar"]
+    motivos = [resultado["motivo"] for resultado in datos.get("evaluacion") or [] if not resultado["cumple"]]
     contexto = {
         "solicitud": datos,
         "en_tramite": datos["estado"] == "EN_SOLICITUD",
@@ -168,8 +169,31 @@ def pantalla_de_la_solicitud(request, solicitud_id, formulario=None, error_de_en
         "fecha_en_letras": date_format(datos["fecha"], r"l j \d\e F \d\e Y").lower(),
         "horario": f"{hora_en_letras(datos['hora_inicio'])} a {hora_en_letras(datos['hora_fin'])}",
         "avisos": [TEXTO_POR_AVISO[aviso] for aviso in datos.get("avisos", [])],
+        # Si las reglas la rechazaron, la lista completa de motivos (HU-13).
+        "motivos": motivos,
     }
     return render(request, "reservas/solicitud.html", contexto)
+
+
+@require_POST
+def enviar(request, solicitud_id):
+    """«Enviar solicitud» del panel. Apartada o rechazada por las reglas, la pantalla de la solicitud dice qué pasó."""
+    try:
+        unidades = api_reservas.obtener(request, solicitud_id)["unidades_para_solicitar"]
+    except (ApiNoDisponible, ErrorDeApi):
+        unidades = []
+    formulario = SolicitudForm(request.POST, unidades=unidades)
+    if not formulario.is_valid():
+        return pantalla_de_la_solicitud(request, solicitud_id, formulario)
+    try:
+        api_reservas.enviar(request, solicitud_id, formulario.cleaned_data)
+    except ApiNoDisponible:
+        return pantalla_de_la_solicitud(request, solicitud_id, formulario, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        if "motivos" not in error.cuerpo:
+            # Un campo mal escrito o un 409 (venció, ya no está en trámite): se dice sin perder lo escrito.
+            return pantalla_de_la_solicitud(request, solicitud_id, formulario, error.mensaje)
+    return redirect("reservas:solicitud", solicitud_id=solicitud_id)
 
 
 @require_POST

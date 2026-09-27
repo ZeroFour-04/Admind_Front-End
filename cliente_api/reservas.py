@@ -24,6 +24,11 @@ def liberar(request, solicitud_id):
     return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/liberar/")
 
 
+def enviar(request, solicitud_id, datos):
+    """POST /reservas/solicitudes/<id>/enviar/ → la solicitud APARTADA, o 400 con todos los `motivos` (la franja queda libre)."""
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/enviar/", datos)
+
+
 def mis_solicitudes(request):
     """GET /reservas/solicitudes/ → las solicitudes propias, la más reciente primero."""
     return pedir(request, "GET", "reservas/solicitudes/")

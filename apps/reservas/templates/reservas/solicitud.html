@@ -7,6 +7,7 @@
 {% block estado_vista %}{% if solicitud %}<span class="am-pastilla {% if en_tramite %}am-pastilla--tramite{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_nombre }}</span>{% endif %}{% endblock %}
 
 {% block contenido %}
+{% if error_de_envio and not en_tramite %}<div class="am-alerta am-alerta--error" role="alert">{{ error_de_envio }}</div>{% endif %}
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
   <div class="acciones">
@@ -26,7 +27,7 @@
     {% if error_de_envio %}<div class="am-alerta am-alerta--error" role="alert">{{ error_de_envio }}</div>{% endif %}
 
     {% if unidades %}
-      <form method="post" class="am-formulario" @submit="enviando = true">
+      <form method="post" action="{% url 'reservas:enviar' solicitud.id %}" class="am-formulario" @submit="enviando = true">
         {% csrf_token %}
         <div class="am-tarjeta formulario-anuncio" x-show="!revisando">
           {% include "componentes/errores_formulario.html" %}
@@ -76,6 +77,10 @@
   <div class="aviso-info" role="status">
     {% if solicitud.estado == "EXPIRADA" %}
       <p>Se venció el tiempo sin enviar la solicitud. La franja quedó libre.</p>
+    {% elif solicitud.estado == "LIBERADA" and motivos %}
+      <p>La solicitud no cumple las reglas del conjunto:</p>
+      <ul>{% for motivo in motivos %}<li>{{ motivo }}</li>{% endfor %}</ul>
+      <p>La franja quedó libre.</p>
     {% elif solicitud.estado == "LIBERADA" %}
       <p>Cancelaste esta solicitud. La franja quedó libre.</p>
     {% elif solicitud.estado == "APARTADA" %}
