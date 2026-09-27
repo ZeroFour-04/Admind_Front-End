@@ -5,6 +5,9 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
 <nav class="am-lateral" aria-label="Secciones del conjunto">
   <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}>Inicio</a>
   <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
+  {% if "area.gestionar" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}>Áreas comunes</a>
+  {% endif %}
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
   <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>

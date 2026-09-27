@@ -1,0 +1,40 @@
+{% comment %}
+Campos del formulario de un área (HU-09). Lo usan el alta, la edición y el paso de áreas del asistente.
+Parámetros: formulario y ayudas (la línea de ayuda de cada clasificación; solo en el alta).
+{% endcomment %}
+{% include "componentes/errores_formulario.html" %}
+{% include "componentes/campo.html" with campo=formulario.nombre ayuda="Como la conoce el conjunto, por ejemplo «Salón comunal»." %}
+<div class="am-campo">
+  <label class="am-campo__etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
+  <textarea class="am-campo__control" id="{{ formulario.descripcion.id_for_label }}" name="{{ formulario.descripcion.html_name }}" rows="3"
+            aria-describedby="{{ formulario.descripcion.id_for_label }}-ayuda">{{ formulario.descripcion.value|default_if_none:'' }}</textarea>
+  <span class="am-campo__ayuda" id="{{ formulario.descripcion.id_for_label }}-ayuda">Opcional.</span>
+</div>
+
+{% if formulario.clasificacion %}
+  <fieldset class="opciones-alcance">
+    <legend class="am-campo__etiqueta">{{ formulario.clasificacion.label }}</legend>
+    {% for valor, nombre in formulario.fields.clasificacion.choices %}
+      <label class="opciones-alcance__opcion">
+        <input type="radio" name="{{ formulario.clasificacion.html_name }}" value="{{ valor }}" required
+               {% if formulario.clasificacion.value == valor %}checked{% endif %}>
+        <span>
+          <b>{{ nombre }}</b>
+          {% for clave, ayuda in ayudas.items %}{% if clave == valor %}<span class="am-campo__ayuda">{{ ayuda }}</span>{% endif %}{% endfor %}
+        </span>
+      </label>
+    {% endfor %}
+    {% if formulario.clasificacion.errors %}<span class="am-campo__error">{{ formulario.clasificacion.errors|join:" " }}</span>{% endif %}
+  </fieldset>
+{% endif %}
+
+{% include "componentes/campo.html" with campo=formulario.hora_apertura tipo="time" %}
+{% include "componentes/campo.html" with campo=formulario.hora_cierre tipo="time" %}
+{% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Las franjas se arman en bloques de esta duración desde la hora de apertura." %}
+
+{% if formulario.en_mantenimiento %}
+  <label class="opciones-alcance__opcion">
+    <input type="checkbox" name="{{ formulario.en_mantenimiento.html_name }}" {% if formulario.en_mantenimiento.value %}checked{% endif %}>
+    <span><b>{{ formulario.en_mantenimiento.label }}</b></span>
+  </label>
+{% endif %}

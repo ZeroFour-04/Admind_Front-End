@@ -1,0 +1,16 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Crear área{% endblock %}
+{% block titulo_vista %}Crear área{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "areas/_campos_area.html" %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'areas:lista' %}">Cancelar</a>
+    <button class="am-btn am-btn--primario" type="submit">Crear área</button>
+  </div>
+</form>
+{% endblock %}

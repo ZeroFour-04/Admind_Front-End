@@ -3,6 +3,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from apps.areas import views as vistas_de_areas
+from apps.areas.forms import AYUDA_POR_CLASIFICACION, AreaForm
 from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import conjuntos as api_conjuntos
@@ -130,8 +132,25 @@ def administracion(request):
 
 
 @require_http_methods(["GET", "POST"])
+def areas(request):
+    """Paso 3: el catálogo de áreas comunes del conjunto activo (HU-09), con su alta."""
+    formulario = AreaForm(request.POST or None)
+    if request.method == "POST" and formulario.is_valid() and vistas_de_areas.crear_desde(request, formulario):
+        return redirect("conjuntos:asistente-areas")
+    lista_de_areas, error = vistas_de_areas.cargar_areas(request)
+    contexto = {
+        "formulario": formulario,
+        "ayudas": AYUDA_POR_CLASIFICACION,
+        "areas": lista_de_areas,
+        "error": error,
+        "paso": 3,
+    }
+    return render(request, "conjuntos/asistente_areas.html", contexto)
+
+
+@require_http_methods(["GET", "POST"])
 def resumen(request):
-    """Paso 3: revisar y, si ya cumple todo, dejarlo operativo."""
+    """Paso 5: revisar y, si ya cumple todo, dejarlo operativo."""
     faltantes = None
     activado = False
     error = None
@@ -153,7 +172,7 @@ def resumen(request):
         "activado": activado,
         "nombre_del_acento": dict(ACENTOS).get((datos_del_resumen or {}).get("conjunto", {}).get("acento")),
         "puede_cambiar_identidad": puede_cambiar_identidad(request),
-        "paso": 3,
+        "paso": 5,
     }
     return render(request, "conjuntos/asistente_resumen.html", contexto)
 

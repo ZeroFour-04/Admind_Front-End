@@ -1,0 +1,51 @@
+{% comment %}
+Tabla de áreas (HU-09). La usan la lista y el paso de áreas del asistente.
+Parámetros: areas y acciones (si se muestran los botones de gestión).
+{% endcomment %}
+<div class="am-tabla-caja">
+  <table class="am-tabla">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Clasificación</th>
+        <th>Horario</th>
+        <th>Estado</th>
+        {% if acciones %}<th>Acciones</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for area in areas %}
+        <tr>
+          <td>{{ area.nombre }}</td>
+          <td>
+            {{ area.clasificacion_nombre }}
+            {% if area.es_esencial %}<span class="am-pastilla am-pastilla--info">Esencial</span>{% endif %}
+          </td>
+          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">franjas de {{ area.duracion_franja_minutos }} min</span></td>
+          <td>
+            {% if not area.activo %}
+              <span class="am-pastilla am-pastilla--neutro">Inactiva</span>
+            {% elif area.en_mantenimiento %}
+              <span class="am-pastilla am-pastilla--tramite">En mantenimiento</span>
+            {% else %}
+              <span class="am-pastilla am-pastilla--confirmado">Disponible</span>
+            {% endif %}
+          </td>
+          {% if acciones %}
+            <td>
+              {% if area.activo %}
+                <div class="acciones">
+                  <a class="am-btn am-btn--secundario" href="{% url 'areas:editar' area.id %}">Editar</a>
+                  <form method="post" action="{% url 'areas:desactivar' area.id %}">
+                    {% csrf_token %}
+                    <button class="am-btn am-btn--texto" type="submit">Desactivar</button>
+                  </form>
+                </div>
+              {% endif %}
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

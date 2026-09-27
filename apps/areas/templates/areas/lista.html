@@ -1,0 +1,31 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Áreas comunes{% endblock %}
+{% block titulo_vista %}Áreas comunes{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if creada %}
+  <div class="aviso-exito" role="status">Área creada.</div>
+{% endif %}
+{% if puede_gestionar and areas %}
+  <div class="vista__acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear área</a>
+  </div>
+{% endif %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if areas %}
+  {% include "areas/_tabla_areas.html" with acciones=puede_gestionar %}
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay áreas comunes</p>
+    <p class="am-vacio__texto">El salón comunal, la piscina o el BBQ: las áreas que se pueden reservar aparecen aquí.</p>
+    {% if puede_gestionar %}
+      <a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear la primera área</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

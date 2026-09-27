@@ -1,5 +1,6 @@
 {% comment %}
-Los tres pasos del asistente de creación (HU-03). Mientras el conjunto no exista, solo el primero es enlace.
+Los cinco pasos del asistente de creación (HU-03). Mientras el conjunto no exista, solo el primero es enlace.
+El paso de reglas queda sin enlace hasta que exista su módulo (HU-10).
 {% endcomment %}
 <nav class="am-pestanas pasos-asistente" aria-label="Pasos para crear el conjunto">
   {% if paso == 1 %}
@@ -17,10 +18,18 @@ Los tres pasos del asistente de creación (HU-03). Mientras el conjunto no exist
     <span class="am-pestana">2. Administración</span>
   {% endif %}
   {% if paso == 3 %}
-    <span class="am-pestana am-es-activa" aria-current="step">3. Resumen</span>
+    <span class="am-pestana am-es-activa" aria-current="step">3. Áreas</span>
   {% elif hay_conjunto %}
-    <a class="am-pestana" href="{% url 'conjuntos:asistente-resumen' %}">3. Resumen</a>
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-areas' %}">3. Áreas</a>
   {% else %}
-    <span class="am-pestana">3. Resumen</span>
+    <span class="am-pestana">3. Áreas</span>
+  {% endif %}
+  <span class="am-pestana" aria-disabled="true">4. Reglas</span>
+  {% if paso == 5 %}
+    <span class="am-pestana am-es-activa" aria-current="step">5. Resumen</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-resumen' %}">5. Resumen</a>
+  {% else %}
+    <span class="am-pestana">5. Resumen</span>
   {% endif %}
 </nav>

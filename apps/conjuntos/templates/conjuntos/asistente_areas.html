@@ -1,0 +1,35 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Áreas comunes del conjunto{% endblock %}
+{% block titulo_vista %}Áreas comunes del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if areas %}
+  {% include "areas/_tabla_areas.html" with acciones=False %}
+{% elif not error %}
+  <p class="vista__guia">Todavía no hay áreas. El conjunto necesita al menos una activa para quedar operativo.</p>
+{% endif %}
+
+<details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or not areas %} open{% endif %}>
+  <summary>Agregar un área</summary>
+  <form method="post" class="am-formulario" novalidate>
+    {% csrf_token %}
+    {% include "areas/_campos_area.html" %}
+    <div class="acciones">
+      <button class="am-btn am-btn--secundario" type="submit">Agregar</button>
+    </div>
+  </form>
+</details>
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-administracion' %}">Volver</a>
+  <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-resumen' %}">Continuar</a>
+</div>
+{% endblock %}

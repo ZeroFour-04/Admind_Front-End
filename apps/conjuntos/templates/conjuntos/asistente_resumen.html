@@ -61,11 +61,11 @@
         </li>
       {% endfor %}
     </ul>
-    <p class="tarjeta-contenido__meta">Las áreas comunes, el reglamento y las reglas beta se configuran en módulos que todavía no existen. Mientras tanto, ningún conjunto puede quedar operativo.</p>
+    <p class="tarjeta-contenido__meta">El reglamento y las reglas beta se configuran en módulos que todavía no existen. Mientras tanto, ningún conjunto puede quedar operativo.</p>
   </section>
 
   <div class="acciones">
-    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-administracion' %}">Volver</a>
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-areas' %}">Volver</a>
     {% if resumen.puede_activar and not resumen.conjunto.operativo %}
       <form method="post">
         {% csrf_token %}
