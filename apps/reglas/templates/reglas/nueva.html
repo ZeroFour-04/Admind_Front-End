@@ -1,0 +1,64 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Agregar regla{% endblock %}
+{% block titulo_vista %}{% if en_asistente %}Reglas de reserva del conjunto{% else %}Agregar regla{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if en_asistente %}
+  {% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if en_asistente %}
+  {% if reglas %}
+    <ul class="lista-simple" role="list">
+      {% for regla in reglas %}<li>{{ regla.area.nombre }}: {{ regla.descripcion }}</li>{% endfor %}
+    </ul>
+  {% elif not error %}
+    <p class="vista__guia">Todavía no hay reglas. El conjunto necesita al menos una vigente para quedar operativo.</p>
+  {% endif %}
+{% endif %}
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  <p class="vista__guia">Paso 1 de 2: elige el área y el tipo de regla.</p>
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.area.id_for_label }}">{{ formulario.area.label }}</label>
+    <select class="am-campo__control" id="{{ formulario.area.id_for_label }}" name="{{ formulario.area.html_name }}"
+            {% if formulario.area.errors %}aria-invalid="true" aria-describedby="{{ formulario.area.id_for_label }}-error"{% endif %}>
+      {% for valor, nombre in formulario.fields.area.choices %}
+        <option value="{{ valor }}"{% if formulario.area.value == valor %} selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    {% if formulario.area.errors %}<span class="am-campo__error" id="{{ formulario.area.id_for_label }}-error">{{ formulario.area.errors|join:" " }}</span>{% endif %}
+  </div>
+  <fieldset class="opciones-alcance">
+    <legend class="am-campo__etiqueta">{{ formulario.tipo.label }}</legend>
+    {% for valor, nombre in formulario.fields.tipo.choices %}
+      <label class="opciones-alcance__opcion">
+        <input type="radio" name="{{ formulario.tipo.html_name }}" value="{{ valor }}" required {% if formulario.tipo.value == valor %}checked{% endif %}>
+        <span><b>{{ nombre }}</b></span>
+      </label>
+    {% endfor %}
+    {% if formulario.tipo.errors %}<span class="am-campo__error">{{ formulario.tipo.errors|join:" " }}</span>{% endif %}
+  </fieldset>
+  <div class="acciones">
+    {% if en_asistente %}
+      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-areas' %}">Volver</a>
+    {% else %}
+      <a class="am-btn am-btn--secundario" href="{% url 'reglas:lista' %}">Cancelar</a>
+    {% endif %}
+    <button class="am-btn am-btn--primario" type="submit">Continuar</button>
+  </div>
+</form>
+
+{% if en_asistente %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-resumen' %}">Ir al resumen</a>
+  </div>
+{% endif %}
+{% endblock %}

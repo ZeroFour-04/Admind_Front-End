@@ -2,33 +2,64 @@
 
 {% block titulo %}Reglas{% endblock %}
 {% block titulo_vista %}Reglas de reserva{% endblock %}
+{% block estado_vista %}{% endblock %}
 
 {% block contenido %}
-<div class="am-tabla-caja tabla-desplazable">
-  <table class="am-tabla">
-    <thead>
-      <tr>
-        <th scope="col">Regla</th>
-        <th scope="col">Zona común</th>
-        <th scope="col">Valor</th>
-        <th scope="col">Vigente desde</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for regla in reglas %}
-        <tr>
-          <td>{{ regla.tipo }}</td>
-          <td>{{ regla.area }}</td>
-          <td class="am-num">{{ regla.valor }}</td>
-          <td class="am-num">{{ regla.desde|date:"l j \d\e F \d\e Y"|lower|capfirst }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% if puede_configurar and reglas %}
+  <div class="vista__acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'reglas:nueva' %}">Agregar regla</a>
+  </div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
 
-<div class="acciones">
-  <button type="button" class="am-btn am-btn--primario">Agregar regla</button>
-  <button type="button" class="am-btn am-btn--secundario">Modificar regla</button>
-</div>
+{% if reglas %}
+  {% regroup reglas by area.nombre as por_area %}
+  {% for grupo in por_area %}
+    <section aria-labelledby="area-{{ forloop.counter }}">
+      <h2 id="area-{{ forloop.counter }}">{{ grupo.grouper }}</h2>
+      <div class="am-tabla-caja tabla-desplazable">
+        <table class="am-tabla">
+          <thead>
+            <tr>
+              <th scope="col">Regla</th>
+              <th scope="col">Vigente desde</th>
+              <th scope="col">Configurada por</th>
+              {% if puede_configurar %}<th scope="col">Acciones</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for regla in grupo.list %}
+              <tr>
+                <td>{{ regla.descripcion }} <span class="am-tabla__secundario">{{ regla.tipo_nombre }}</span></td>
+                <td class="am-num">{{ regla.vigencia_desde|date:"l j \d\e F \d\e Y"|lower|capfirst }}</td>
+                <td>{{ regla.creada_por }}</td>
+                {% if puede_configurar %}
+                  <td>
+                    <div class="acciones">
+                      <a class="am-btn am-btn--secundario" href="{% url 'reglas:editar' regla.id %}">Editar</a>
+                      <form method="post" action="{% url 'reglas:retirar' regla.id %}">
+                        {% csrf_token %}
+                        <button class="am-btn am-btn--texto" type="submit">Retirar</button>
+                      </form>
+                    </div>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endfor %}
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay reglas de reserva</p>
+    <p class="am-vacio__texto">Las reglas salen del reglamento del conjunto: aforo, anticipación, días no reservables. Sin al menos una, el conjunto no queda operativo.</p>
+    {% if puede_configurar %}
+      <a class="am-btn am-btn--primario" href="{% url 'reglas:nueva' %}">Agregar la primera regla</a>
+    {% endif %}
+  </div>
+{% endif %}
 {% endblock %}

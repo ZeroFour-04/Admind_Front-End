@@ -1,0 +1,51 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}{{ tipo_nombre }}{% endblock %}
+{% block titulo_vista %}{% if regla %}Editar regla: {{ tipo_nombre|lower }}{% else %}Nueva regla: {{ tipo_nombre|lower }}{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if en_asistente %}
+  {% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+{% endif %}
+{% if regla %}
+  <div class="aviso-info" role="note"><p>{{ aviso }}</p></div>
+  <p class="vista__guia">{{ regla.area.nombre }}: {{ regla.descripcion }}.</p>
+{% else %}
+  <p class="vista__guia">Paso 2 de 2: los valores de la regla.</p>
+{% endif %}
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% if area_id %}<input type="hidden" name="area" value="{{ area_id }}">{% endif %}
+  {% include "componentes/errores_formulario.html" %}
+  {% for campo in formulario %}
+    {% if campo.field.widget.allow_multiple_selected %}
+      <fieldset class="opciones-alcance">
+        <legend class="am-campo__etiqueta">{{ campo.label }}</legend>
+        {% for valor, nombre in campo.field.choices %}
+          <label class="opciones-alcance__opcion">
+            <input type="checkbox" name="{{ campo.html_name }}" value="{{ valor }}" {% if valor in campo.value %}checked{% endif %}>
+            <span>{{ nombre }}</span>
+          </label>
+        {% endfor %}
+        {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+      </fieldset>
+    {% else %}
+      {% include "componentes/campo.html" with campo=campo tipo=campo.field.widget.input_type ayuda=campo.help_text %}
+    {% endif %}
+  {% empty %}
+    <p class="vista__guia">Esta regla no lleva valores: solo deja solicitar a los apartamentos que estén a paz y salvo.</p>
+  {% endfor %}
+  <div class="acciones">
+    {% if en_asistente %}
+      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-reglas' %}">Volver</a>
+    {% elif regla %}
+      <a class="am-btn am-btn--secundario" href="{% url 'reglas:lista' %}">Cancelar</a>
+    {% else %}
+      <a class="am-btn am-btn--secundario" href="{% url 'reglas:nueva' %}">Volver</a>
+    {% endif %}
+    <button class="am-btn am-btn--primario" type="submit">{% if regla %}Guardar versión nueva{% else %}Guardar regla{% endif %}</button>
+  </div>
+</form>
+{% endblock %}
