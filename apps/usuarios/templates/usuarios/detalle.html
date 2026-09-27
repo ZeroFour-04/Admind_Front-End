@@ -2,11 +2,13 @@
 
 {% block titulo %}Datos del usuario{% endblock %}
 {% block titulo_vista %}Datos del usuario{% endblock %}
+{% block estado_vista %}{% endblock %}
 
 {% block contenido %}
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
-{% elif usuario %}
+{% endif %}
+{% if usuario %}
   <div class="am-tarjeta am-detalle">
     <dl class="am-detalle__lista">
       <div><dt>Nombre completo</dt><dd>{{ usuario.nombre }}</dd></div>
@@ -17,6 +19,43 @@
       <div><dt>Estado</dt><dd>{% if usuario.activo %}Activo{% else %}Inactivo{% endif %}</dd></div>
     </dl>
   </div>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-roles">
+    <h2 id="titulo-roles">Roles en este conjunto</h2>
+    {% if usuario.asignaciones %}
+      <ul class="requisitos" role="list">
+        {% for asignacion in usuario.asignaciones %}
+          <li class="requisitos__item">
+            <span>{{ asignacion.nombre }}</span>
+            {% if puede_asignar %}
+              <form method="post" action="{% url 'usuarios:retirar-rol' usuario.id asignacion.id %}">
+                {% csrf_token %}
+                <button class="am-btn am-btn--secundario" type="submit">Retirar {{ asignacion.nombre }}</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="tarjeta-contenido__meta">No tiene roles vigentes en este conjunto.</p>
+    {% endif %}
+
+    {% if puede_asignar and asignar.fields.rol.choices %}
+      <form method="post" action="{% url 'usuarios:asignar-rol' usuario.id %}" class="am-formulario">
+        {% csrf_token %}
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="id_rol">Asignar rol</label>
+          <select class="am-campo__control" id="id_rol" name="rol" aria-describedby="id_rol-ayuda">
+            {% for valor, nombre in asignar.fields.rol.choices %}<option value="{{ valor }}">{{ nombre }}</option>{% endfor %}
+          </select>
+          <span class="am-campo__ayuda" id="id_rol-ayuda">Sus permisos pasan a ser los de todos sus roles juntos.</span>
+        </div>
+        <div class="acciones">
+          <button class="am-btn am-btn--primario" type="submit">Asignar rol</button>
+        </div>
+      </form>
+    {% endif %}
+  </section>
 {% endif %}
 <div class="acciones">
   <a class="am-btn am-btn--secundario" href="{% url 'usuarios:lista' %}">Volver a usuarios</a>

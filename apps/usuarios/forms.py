@@ -1,17 +1,28 @@
 from django import forms
 
 
+# Los roles de conjunto del catálogo (maestro §5.3). No se crean ni se editan desde la interfaz.
+ROLES_DE_CONJUNTO = [
+    ("administracion", "Administración"),
+    ("consejo", "Consejo"),
+    ("secretaria", "Secretaría"),
+    ("vigilancia", "Vigilancia"),
+    ("residente", "Residente"),
+]
+
+
+class AsignarRolForm(forms.Form):
+    """Solo ofrece los roles de conjunto que la persona todavía no tiene (HU-06)."""
+
+    rol = forms.ChoiceField(label="Rol")
+
+    def __init__(self, *args, roles_actuales=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["rol"].choices = [opcion for opcion in ROLES_DE_CONJUNTO if opcion[0] not in roles_actuales]
+
+
 class UsuarioForm(forms.Form):
-    rol = forms.ChoiceField(
-        label="Rol en el conjunto",
-        choices=[
-            ("administracion", "Administración"),
-            ("consejo", "Consejo"),
-            ("secretaria", "Secretaría"),
-            ("vigilancia", "Vigilancia"),
-            ("residente", "Residente"),
-        ],
-    )
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO)
     tipo_documento = forms.ChoiceField(
         label="Tipo de documento",
         choices=[
