@@ -1,0 +1,119 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}{{ unidad.nombre|default:"Apartamento" }}{% endblock %}
+{% block titulo_vista %}{{ unidad.nombre|default:"Apartamento" }}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if unidad %}
+  <section aria-labelledby="titulo-vigentes">
+    <h2 id="titulo-vigentes">Vigentes</h2>
+    {% if unidad.vigentes %}
+      <div class="am-tabla-caja">
+        <table class="am-tabla">
+          <thead>
+            <tr><th>Persona</th><th>Vínculo</th><th>Residencia</th><th>Desde</th><th>Cerrar</th></tr>
+          </thead>
+          <tbody>
+            {% for vinculo in unidad.vigentes %}
+              <tr>
+                <td>{{ vinculo.persona.nombre }}</td>
+                <td>{{ vinculo.tipo_nombre }}</td>
+                <td>{% if vinculo.reside %}Vive aquí{% else %}No vive aquí{% endif %}</td>
+                <td class="am-num">{{ vinculo.vigencia_desde|date:"j M Y" }}</td>
+                <td>
+                  <form method="post" action="{% url 'unidades:cerrar-vinculo' unidad.id vinculo.id %}" class="acciones">
+                    {% csrf_token %}
+                    <label class="am-campo">
+                      <span class="am-campo__etiqueta">{{ cierre.vigencia_hasta.label }}</span>
+                      <input class="am-campo__control" type="date" name="vigencia_hasta" value="{{ cierre.vigencia_hasta.initial|date:'Y-m-d' }}" required>
+                    </label>
+                    <button class="am-btn am-btn--secundario" type="submit">Cerrar vínculo</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">Este apartamento no tiene vínculos vigentes.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="titulo-historicos">
+    <h2 id="titulo-historicos">Históricos</h2>
+    {% if unidad.historicos %}
+      <div class="am-tabla-caja">
+        <table class="am-tabla">
+          <thead>
+            <tr><th>Persona</th><th>Vínculo</th><th>Residencia</th><th>Desde</th><th>Hasta</th></tr>
+          </thead>
+          <tbody>
+            {% for vinculo in unidad.historicos %}
+              <tr>
+                <td>{{ vinculo.persona.nombre }}</td>
+                <td>{{ vinculo.tipo_nombre }}</td>
+                <td>{% if vinculo.reside %}Vive aquí{% else %}No vive aquí{% endif %}</td>
+                <td class="am-num">{{ vinculo.vigencia_desde|date:"j M Y" }}</td>
+                <td class="am-num">{{ vinculo.vigencia_hasta|date:"j M Y"|default:"Sin cerrar" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">Sin vínculos anteriores.</p>
+    {% endif %}
+  </section>
+
+  <details class="am-tarjeta tarjeta-contenido"{% if formulario.errors %} open{% endif %}>
+    <summary>Agregar vínculo</summary>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ formulario.persona.id_for_label }}">{{ formulario.persona.label }}</label>
+        <select class="am-campo__control" id="{{ formulario.persona.id_for_label }}" name="{{ formulario.persona.html_name }}"
+                aria-describedby="{{ formulario.persona.id_for_label }}-ayuda{% if formulario.persona.errors %} {{ formulario.persona.id_for_label }}-error{% endif %}"
+                {% if formulario.persona.errors %}aria-invalid="true"{% endif %}>
+          {% for valor, nombre in formulario.fields.persona.choices %}
+            <option value="{{ valor }}"{% if formulario.persona.value|stringformat:"s" == valor|stringformat:"s" %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+        <span class="am-campo__ayuda" id="{{ formulario.persona.id_for_label }}-ayuda">Solo aparecen las personas con un rol en el conjunto. A alguien nuevo, regístralo primero en Usuarios.</span>
+        {% if formulario.persona.errors %}<span class="am-campo__error" id="{{ formulario.persona.id_for_label }}-error">{{ formulario.persona.errors|join:" " }}</span>{% endif %}
+      </div>
+      <fieldset class="opciones-alcance">
+        <legend class="am-campo__etiqueta">{{ formulario.tipo.label }}</legend>
+        {% for valor, nombre in formulario.fields.tipo.choices %}
+          <label class="opciones-alcance__opcion">
+            <input type="radio" name="{{ formulario.tipo.html_name }}" value="{{ valor }}" required
+                   {% if formulario.tipo.value == valor %}checked{% endif %}>
+            <span><b>{{ nombre }}</b></span>
+          </label>
+        {% endfor %}
+        {% if formulario.tipo.errors %}<span class="am-campo__error">{{ formulario.tipo.errors|join:" " }}</span>{% endif %}
+      </fieldset>
+      <label class="opciones-alcance__opcion">
+        <input type="checkbox" name="{{ formulario.reside.html_name }}" {% if formulario.reside.value %}checked{% endif %}>
+        <span>
+          <b>{{ formulario.reside.label }}</b>
+          <span class="am-campo__ayuda">Solo quien vive en la unidad puede reservar a su nombre.</span>
+        </span>
+      </label>
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Agregar vínculo</button>
+      </div>
+    </form>
+  </details>
+{% endif %}
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'unidades:lista' %}">Volver a los apartamentos</a>
+</div>
+{% endblock %}

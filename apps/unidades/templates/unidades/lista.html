@@ -1,12 +1,55 @@
 {% extends "base/aplicacion.html" %}
 
-{% block titulo %}Apartamentos y parqueaderos{% endblock %}
-{% block titulo_vista %}Apartamentos y parqueaderos{% endblock %}
+{% block titulo %}Apartamentos{% endblock %}
+{% block titulo_vista %}Apartamentos{% endblock %}
+{% block estado_vista %}{% endblock %}
 
 {% block contenido %}
-<div class="am-vacio">
-  <p class="am-vacio__titulo">Todavía no hay apartamentos registrados</p>
-  <p class="am-vacio__texto">Cuando se carguen las unidades del conjunto, aparecen aquí con sus propietarios, arrendatarios y parqueaderos asignados.</p>
-  <button type="button" class="am-btn am-btn--primario">Registrar apartamento</button>
-</div>
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if unidades %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Apartamento</th>
+          <th class="am-col-num">Vínculos vigentes</th>
+          {% if puede_gestionar %}<th>Acciones</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for unidad in unidades %}
+          <tr>
+            <td>{{ unidad.nombre }}</td>
+            <td class="am-col-num am-num">{{ unidad.vinculos_vigentes }}</td>
+            {% if puede_gestionar %}
+              <td><a class="am-btn am-btn--secundario" href="{% url 'unidades:detalle' unidad.id %}">Ver vínculos</a></td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay apartamentos registrados</p>
+    <p class="am-vacio__texto">Cada apartamento guarda quién es su propietario, quién lo arrienda y quién vive ahí.</p>
+  </div>
+{% endif %}
+
+{% if puede_gestionar %}
+  <details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or not unidades %} open{% endif %}>
+    <summary>Registrar apartamento</summary>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" %}
+      {% include "componentes/campo.html" with campo=formulario.nombre ayuda="Como lo conoce el conjunto, por ejemplo «Torre 1 – 101»." %}
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Registrar apartamento</button>
+      </div>
+    </form>
+  </details>
+{% endif %}
 {% endblock %}
