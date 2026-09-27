@@ -13,6 +13,9 @@ MENSAJES_POR_ESTADO = {
     403: "No tienes permiso para hacer esto en el conjunto activo.",
     # Sin más detalle: un 404 no confirma si el recurso existe en otro conjunto (maestro §5.4).
     404: "No encontrado.",
+    # Conflicto de estado: se muestra el `detail` de la API; esto es solo por si no lo trae.
+    409: "No se pudo hacer porque el estado cambió. Recarga la página e intenta de nuevo.",
+    429: "Hiciste demasiadas búsquedas. Espera un rato e intenta de nuevo.",
 }
 MENSAJE_ERROR_GENERAL = "El servidor de AdMind no pudo atender la petición. Intenta de nuevo en unos minutos."
 

@@ -21,18 +21,30 @@ class AsignarRolForm(forms.Form):
         self.fields["rol"].choices = [opcion for opcion in ROLES_DE_CONJUNTO if opcion[0] not in roles_actuales]
 
 
+TIPOS_DE_DOCUMENTO = [
+    ("CC", "Cédula de ciudadanía"),
+    ("TI", "Tarjeta de identidad"),
+    ("CE", "Cédula de extranjería"),
+    ("PAS", "Pasaporte"),
+    ("PPT", "Permiso por Protección Temporal"),
+]
+
+
+class BuscarPersonaForm(forms.Form):
+    """Paso 1 de registrar persona (HU-07): el documento exacto. Viaja por POST, nunca en la URL."""
+
+    tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
+    numero_documento = forms.CharField(label="Número de documento", max_length=20)
+
+
+class VincularPersonaForm(forms.Form):
+    persona = forms.UUIDField(widget=forms.HiddenInput)
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO)
+
+
 class UsuarioForm(forms.Form):
     rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO)
-    tipo_documento = forms.ChoiceField(
-        label="Tipo de documento",
-        choices=[
-            ("CC", "Cédula de ciudadanía"),
-            ("TI", "Tarjeta de identidad"),
-            ("CE", "Cédula de extranjería"),
-            ("PAS", "Pasaporte"),
-            ("PPT", "Permiso por Protección Temporal"),
-        ],
-    )
+    tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
     numero_documento = forms.CharField(label="Número de documento", max_length=20)
     nombres = forms.CharField(label="Nombres", max_length=80)
     apellidos = forms.CharField(label="Apellidos", max_length=80)

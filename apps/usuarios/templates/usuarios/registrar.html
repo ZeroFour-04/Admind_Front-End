@@ -1,0 +1,75 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Registrar persona{% endblock %}
+{% block titulo_vista %}Registrar persona{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+<p class="vista__guia">Primero busca por documento: si la persona ya existe en AdMind, se vincula a este conjunto sin crearla de nuevo.</p>
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="accion" value="buscar">
+  {% if busqueda.non_field_errors %}
+    <div class="am-alerta am-alerta--error" role="alert">{% for error in busqueda.non_field_errors %}{{ error }} {% endfor %}</div>
+  {% endif %}
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ busqueda.tipo_documento.id_for_label }}">{{ busqueda.tipo_documento.label }}</label>
+    <select class="am-campo__control" id="{{ busqueda.tipo_documento.id_for_label }}" name="{{ busqueda.tipo_documento.html_name }}">
+      {% for valor, nombre in busqueda.fields.tipo_documento.choices %}
+        <option value="{{ valor }}"{% if busqueda.tipo_documento.value == valor %} selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% include "componentes/campo.html" with campo=busqueda.numero_documento autocompletar="off" ayuda="Tal como aparece en el documento. Los puntos y espacios no importan." %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'usuarios:lista' %}">Cancelar</a>
+    <button class="am-btn am-btn--primario" type="submit">Buscar</button>
+  </div>
+</form>
+
+{% if encontrada or vinculo.is_bound %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-encontrada">
+    {% if encontrada %}
+      <h2 id="titulo-encontrada">{{ encontrada.nombre }}</h2>
+      <p class="tarjeta-contenido__meta">
+        {% if encontrada.tiene_cuenta %}
+          <span class="am-pastilla am-pastilla--confirmado">Ya tiene cuenta</span>
+        {% else %}
+          <span class="am-pastilla am-pastilla--neutro">Sin cuenta</span>
+        {% endif %}
+        {% if encontrada.roles_en_el_conjunto %}
+          Aquí ya es: {{ encontrada.roles_en_el_conjunto|join:", " }}.
+        {% else %}
+          Todavía no tiene roles en este conjunto.
+        {% endif %}
+      </p>
+    {% else %}
+      <h2 id="titulo-encontrada">Vincular al conjunto</h2>
+    {% endif %}
+    {% if vinculo.non_field_errors %}
+      <div class="am-alerta am-alerta--error" role="alert">{% for error in vinculo.non_field_errors %}{{ error }} {% endfor %}</div>
+    {% endif %}
+    {% if puede_vincular %}
+      <form method="post" class="am-formulario">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="vincular">
+        <input type="hidden" name="{{ vinculo.persona.html_name }}" value="{{ vinculo.persona.value|default_if_none:'' }}">
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="{{ vinculo.rol.id_for_label }}">{{ vinculo.rol.label }}</label>
+          <select class="am-campo__control" id="{{ vinculo.rol.id_for_label }}" name="{{ vinculo.rol.html_name }}">
+            {% for valor, nombre in vinculo.fields.rol.choices %}
+              <option value="{{ valor }}"{% if vinculo.rol.value == valor %} selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="acciones">
+          <button class="am-btn am-btn--primario" type="submit">Vincular al conjunto</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="tarjeta-contenido__meta">No tienes permiso para vincular personas al conjunto.</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

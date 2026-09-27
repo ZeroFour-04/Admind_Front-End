@@ -2,11 +2,15 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.cuentas.sesion import tiene_permiso
-
+from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import cuentas as api_cuentas
+from cliente_api import personas as api_personas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import AsignarRolForm, UsuarioForm
+from .forms import AsignarRolForm, BuscarPersonaForm, UsuarioForm, VincularPersonaForm
+
+# El documento buscado pasa al alta por la sesión: nunca por la URL (maestro §5.2, plan P4).
+CLAVE_DOCUMENTO_BUSCADO = "documento_buscado"
 
 
 def lista(request):
@@ -44,6 +48,50 @@ def detalle(request, usuario_id, error_de_accion=None):
     return render(request, "usuarios/detalle.html", contexto)
 
 
+# Registrar persona (HU-07): buscar por documento exacto; si existe, vincularla; si no, darla de alta.
+
+
+@require_http_methods(["GET", "POST"])
+def registrar(request):
+    if not tiene_permiso(request, "persona.buscar"):
+        return redirect("usuarios:lista")
+    busqueda = BuscarPersonaForm(request.POST if request.POST.get("accion") == "buscar" else None)
+    vinculo = VincularPersonaForm(request.POST if request.POST.get("accion") == "vincular" else None)
+    encontrada = None
+
+    if busqueda.is_bound and busqueda.is_valid():
+        try:
+            resultado = api_personas.buscar(request, busqueda.cleaned_data)
+        except ApiNoDisponible:
+            busqueda.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(busqueda, error)
+        else:
+            if not resultado["encontrada"]:
+                request.session[CLAVE_DOCUMENTO_BUSCADO] = busqueda.cleaned_data
+                return redirect("usuarios:nuevo")
+            encontrada = resultado["persona"]
+            vinculo = VincularPersonaForm(initial={"persona": encontrada["id"]})
+
+    if vinculo.is_bound and vinculo.is_valid():
+        try:
+            api_personas.vincular(request, {**vinculo.cleaned_data, "persona": str(vinculo.cleaned_data["persona"])})
+        except ApiNoDisponible:
+            vinculo.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(vinculo, error)
+        else:
+            return redirect("usuarios:lista")
+
+    contexto = {
+        "busqueda": busqueda,
+        "encontrada": encontrada,
+        "vinculo": vinculo,
+        "puede_vincular": tiene_permiso(request, "persona.vincular"),
+    }
+    return render(request, "usuarios/registrar.html", contexto)
+
+
 # Roles en el conjunto activo (HU-06). Los errores de la API se muestran como alerta en el detalle.
 
 
@@ -75,7 +123,9 @@ def retirar_rol(request, usuario_id, asignacion_id):
 
 @require_http_methods(["GET", "POST"])
 def nuevo(request):
-    formulario = UsuarioForm(request.POST or None)
+    # Si viene de una búsqueda sin resultado, el documento se precarga y se borra de la sesión.
+    documento = request.session.pop(CLAVE_DOCUMENTO_BUSCADO, None) if request.method == "GET" else None
+    formulario = UsuarioForm(request.POST or None, initial=documento or {})
     if request.method == "POST" and formulario.is_valid():
         try:
             api_cuentas.crear_usuario(request, formulario.cleaned_data)

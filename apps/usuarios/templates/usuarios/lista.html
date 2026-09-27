@@ -2,10 +2,11 @@
 
 {% block titulo %}Usuarios{% endblock %}
 {% block titulo_vista %}Usuarios{% endblock %}
+{% block estado_vista %}{% endblock %}
 
 {% block contenido %}
 <div class="vista__acciones">
-  <a class="am-btn am-btn--primario" href="{% url 'usuarios:nuevo' %}">Añadir usuario</a>
+  <a class="am-btn am-btn--primario" href="{% url 'usuarios:registrar' %}">Registrar persona</a>
 </div>
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
