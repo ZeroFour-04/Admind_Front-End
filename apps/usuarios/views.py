@@ -92,7 +92,7 @@ def registrar(request):
     return render(request, "usuarios/registrar.html", contexto)
 
 
-# Roles en el conjunto activo (HU-06). Los errores de la API se muestran como alerta en el detalle.
+# Rol en el conjunto activo (HU-06): uno solo por persona. Los errores de la API se muestran como alerta en el detalle.
 
 
 @require_POST
@@ -103,6 +103,20 @@ def asignar_rol(request, usuario_id):
         return detalle(request, usuario_id, "Elige uno de los roles del catálogo.")
     try:
         api_cuentas.asignar_rol(request, usuario_id, formulario.cleaned_data["rol"])
+    except ApiNoDisponible:
+        return detalle(request, usuario_id, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return detalle(request, usuario_id, error.mensaje)
+    return redirect("usuarios:detalle", usuario_id=usuario_id)
+
+
+@require_POST
+def cambiar_rol(request, usuario_id, asignacion_id):
+    formulario = AsignarRolForm(request.POST)
+    if not formulario.is_valid():
+        return detalle(request, usuario_id, "Elige uno de los roles del catálogo.")
+    try:
+        api_cuentas.cambiar_rol(request, usuario_id, asignacion_id, formulario.cleaned_data["rol"])
     except ApiNoDisponible:
         return detalle(request, usuario_id, MENSAJE_API_NO_DISPONIBLE)
     except ErrorDeApi as error:

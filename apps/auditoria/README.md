@@ -6,7 +6,7 @@ Consulta del registro de auditoría. Solo lectura: desde la interfaz no hay form
 
 ## Qué va aquí
 
-- Consulta con `auditoria.ver` (Administración, Consejo)
+- Consulta con `auditoria.ver` (Administración)
 - Auditoría técnica con `auditoria_tecnica.ver` (Superusuario)
 - Los registros anulados se ven tachados, con su motivo a la vista
 

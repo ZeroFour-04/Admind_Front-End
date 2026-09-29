@@ -33,8 +33,16 @@ def obtener_perfil(request):
 
 
 def asignar_rol(request, usuario_id, rol):
-    """POST /auth/usuarios/<id>/roles/ → el usuario con el rol nuevo. 409 si ya lo tiene (HU-06)."""
+    """POST /auth/usuarios/<id>/roles/ → el usuario con su rol. 409 si ya tiene uno en el conjunto (HU-06)."""
     return pedir(request, "POST", f"auth/usuarios/{usuario_id}/roles/", {"rol": rol})
+
+
+def cambiar_rol(request, usuario_id, asignacion_id, rol):
+    """POST /auth/usuarios/<id>/roles/<asignacion>/cambiar/ → el usuario con el rol nuevo en lugar del anterior.
+
+    400 si es el mismo rol; 409 si dejaría el conjunto sin administración.
+    """
+    return pedir(request, "POST", f"auth/usuarios/{usuario_id}/roles/{asignacion_id}/cambiar/", {"rol": rol})
 
 
 def retirar_rol(request, usuario_id, asignacion_id):

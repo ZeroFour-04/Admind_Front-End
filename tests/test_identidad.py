@@ -40,7 +40,7 @@ def test_el_lateral_muestra_usuarios_y_apartamentos_solo_a_roles_autorizados(rol
     assert ">Apartamentos y parqueaderos</a>" in html
 
 
-@pytest.mark.parametrize("rol", ["Residente", "Consejo", "Vigilancia"])
+@pytest.mark.parametrize("rol", ["Residente", "Vigilancia"])
 def test_el_lateral_oculta_usuarios_y_apartamentos_a_los_demas_roles(rol):
     html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
 

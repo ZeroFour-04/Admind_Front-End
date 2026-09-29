@@ -4,7 +4,6 @@ from django import forms
 # Los roles de conjunto del catálogo (maestro §5.3). No se crean ni se editan desde la interfaz.
 ROLES_DE_CONJUNTO = [
     ("administracion", "Administración"),
-    ("consejo", "Consejo"),
     ("secretaria", "Secretaría"),
     ("vigilancia", "Vigilancia"),
     ("residente", "Residente"),

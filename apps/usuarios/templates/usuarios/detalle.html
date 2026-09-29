@@ -20,35 +20,35 @@
     </dl>
   </div>
 
+  {# Una persona tiene un solo rol por conjunto: si ya lo tiene, se cambia; si no, se asigna. #}
   <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-roles">
-    <h2 id="titulo-roles">Roles en este conjunto</h2>
-    {% if usuario.asignaciones %}
-      <ul class="requisitos" role="list">
-        {% for asignacion in usuario.asignaciones %}
-          <li class="requisitos__item">
-            <span>{{ asignacion.nombre }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="tarjeta-contenido__meta">No tiene roles vigentes en este conjunto.</p>
-    {% endif %}
+    <h2 id="titulo-roles">Rol en este conjunto</h2>
+    {% with actual=usuario.asignaciones.0 %}
+      {% if actual %}
+        <p><span class="am-pastilla am-pastilla--neutro">{{ actual.nombre }}</span></p>
+      {% else %}
+        <p class="tarjeta-contenido__meta">No tiene rol vigente en este conjunto.</p>
+      {% endif %}
 
-    {% if puede_asignar and asignar.fields.rol.choices %}
-      <form method="post" action="{% url 'usuarios:asignar-rol' usuario.id %}" class="am-formulario">
-        {% csrf_token %}
-        <div class="am-campo">
-          <label class="am-campo__etiqueta" for="id_rol">Asignar rol</label>
-          <select class="am-campo__control" id="id_rol" name="rol" aria-describedby="id_rol-ayuda">
-            {% for valor, nombre in asignar.fields.rol.choices %}<option value="{{ valor }}">{{ nombre }}</option>{% endfor %}
-          </select>
-          <span class="am-campo__ayuda" id="id_rol-ayuda">Sus permisos pasan a ser los de todos sus roles juntos.</span>
-        </div>
-        <div class="acciones">
-          <button class="am-btn am-btn--primario" type="submit">Asignar rol</button>
-        </div>
-      </form>
-    {% endif %}
+      {% if puede_asignar and asignar.fields.rol.choices %}
+        <form method="post" class="am-formulario"
+              action="{% if actual %}{% url 'usuarios:cambiar-rol' usuario.id actual.id %}{% else %}{% url 'usuarios:asignar-rol' usuario.id %}{% endif %}">
+          {% csrf_token %}
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="id_rol">{% if actual %}Cambiar rol{% else %}Asignar rol{% endif %}</label>
+            <select class="am-campo__control" id="id_rol" name="rol" aria-describedby="id_rol-ayuda">
+              {% for valor, nombre in asignar.fields.rol.choices %}<option value="{{ valor }}">{{ nombre }}</option>{% endfor %}
+            </select>
+            <span class="am-campo__ayuda" id="id_rol-ayuda">
+              {% if actual %}El rol nuevo reemplaza al actual: una persona tiene un solo rol por conjunto.{% else %}Una persona tiene un solo rol por conjunto.{% endif %}
+            </span>
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--primario" type="submit">{% if actual %}Cambiar rol{% else %}Asignar rol{% endif %}</button>
+          </div>
+        </form>
+      {% endif %}
+    {% endwith %}
   </section>
 
   {% if puede_asignar and usuario.asignaciones %}

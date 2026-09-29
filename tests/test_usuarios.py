@@ -1,4 +1,4 @@
-"""Pantallas de HU-06: roles del usuario en el conjunto activo. La API se simula."""
+"""Pantallas de HU-06: el rol del usuario en el conjunto activo (uno solo). La API se simula."""
 from unittest import mock
 
 from cliente_api.http import ErrorDeApi
@@ -23,16 +23,19 @@ DETALLE = f"/usuarios/{ANDRES['id']}/"
 ASIGNACION = ANDRES["asignaciones"][0]["id"]
 
 
-def test_con_rol_asignar_se_puede_eliminar_y_solo_se_ofrecen_roles_que_no_tiene():
+def test_con_rol_asignar_se_puede_eliminar_y_cambiar_por_otro_rol():
     with mock.patch("cliente_api.cuentas.obtener_usuario", return_value=ANDRES):
         html = cliente_con_sesion(permisos=["rol.asignar", "usuario.gestionar"]).get(DETALLE).content.decode()
 
-    assert "Roles en este conjunto" in html
+    assert "Rol en este conjunto" in html
+    assert f'action="{DETALLE}roles/{ASIGNACION}/cambiar/"' in html
+    assert "Cambiar rol" in html and "Asignar rol" not in html
     assert "Eliminar usuario" in html
     assert "¿Seguro que quiere eliminar este usuario?" in html
     assert ">Si</button>" in html and ">NO</button>" in html
     assert "Retirar Administración" not in html
-    assert '<option value="consejo">Consejo</option>' in html
+    assert '<option value="secretaria">Secretaría</option>' in html
+    assert 'value="consejo"' not in html
     assert 'value="administracion"' not in html
     assert 'js/usuarios.js' in html
     assert "Maqueta" not in html
@@ -43,14 +46,46 @@ def test_sin_rol_asignar_no_hay_botones():
         html = cliente_con_sesion(permisos=["usuario.gestionar"]).get(DETALLE).content.decode()
 
     assert "Administración" in html
-    assert "Eliminar usuario" not in html and "Asignar rol" not in html
+    assert "Eliminar usuario" not in html and "Cambiar rol" not in html and "Asignar rol" not in html
+
+
+def test_sin_rol_en_el_conjunto_se_ofrece_asignar():
+    sin_rol = {**ANDRES, "roles": [], "asignaciones": []}
+    with mock.patch("cliente_api.cuentas.obtener_usuario", return_value=sin_rol):
+        html = cliente_con_sesion(permisos=["rol.asignar", "usuario.gestionar"]).get(DETALLE).content.decode()
+
+    assert f'action="{DETALLE}roles/"' in html and "Asignar rol" in html
+    assert "Cambiar rol" not in html
+
+
+def test_cambiar_el_rol_manda_la_asignacion_y_el_rol_nuevo():
+    with mock.patch("cliente_api.cuentas.cambiar_rol") as cambiar:
+        respuesta = cliente_con_sesion(permisos=["rol.asignar"]).post(
+            f"{DETALLE}roles/{ASIGNACION}/cambiar/", {"rol": "secretaria"}
+        )
+
+    assert [str(arg) for arg in cambiar.call_args.args[1:]] == [ANDRES["id"], ASIGNACION, "secretaria"]
+    assert respuesta["Location"] == DETALLE
+
+
+def test_el_409_al_cambiar_el_rol_del_ultimo_administrador_se_muestra_como_alerta():
+    ultimo = ErrorDeApi(409, {"detail": "El conjunto no puede quedar sin Administración."})
+    with (
+        mock.patch("cliente_api.cuentas.cambiar_rol", side_effect=ultimo),
+        mock.patch("cliente_api.cuentas.obtener_usuario", return_value=ANDRES),
+    ):
+        html = cliente_con_sesion(permisos=["rol.asignar"]).post(
+            f"{DETALLE}roles/{ASIGNACION}/cambiar/", {"rol": "residente"}
+        ).content.decode()
+
+    assert 'role="alert">El conjunto no puede quedar sin Administración.' in html
 
 
 def test_asignar_un_rol_redirige_al_detalle():
     with mock.patch("cliente_api.cuentas.asignar_rol") as asignar:
-        respuesta = cliente_con_sesion(permisos=["rol.asignar"]).post(f"{DETALLE}roles/", {"rol": "consejo"})
+        respuesta = cliente_con_sesion(permisos=["rol.asignar"]).post(f"{DETALLE}roles/", {"rol": "secretaria"})
 
-    assert [str(arg) for arg in asignar.call_args.args[1:]] == [ANDRES["id"], "consejo"]
+    assert [str(arg) for arg in asignar.call_args.args[1:]] == [ANDRES["id"], "secretaria"]
     assert respuesta["Location"] == DETALLE
 
 
@@ -94,6 +129,14 @@ CARLOS = {"id": "1b2c3d4e-0000-4000-8000-000000000009", "nombre": "Carlos Gómez
 
 def buscar(cliente, numero="1.023.456.789"):
     return cliente.post("/usuarios/registrar/", {"accion": "buscar", "tipo_documento": "CC", "numero_documento": numero})
+
+
+def test_la_lista_muestra_el_rol_de_cada_usuario():
+    with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[ANDRES]):
+        html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
+
+    assert "<th>Rol</th>" in html
+    assert "<td>Administración</td>" in html
 
 
 def test_la_lista_lleva_a_registrar_persona():
