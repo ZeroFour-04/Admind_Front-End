@@ -1,11 +1,17 @@
+{% load conjuntos %}
 {% comment %}
-Los ocho acentos del catálogo (maestro §6.3) como opciones de radio. Parámetros: campo y acentos.
-Cada opción lleva su data-acento, así que la muestra se pinta con su propio color.
+Los ocho acentos del catálogo (maestro §6.3) y el personalizado, como opciones de radio.
+Parámetros: campo (el acento), campo_color (el color propio) y acentos (los ocho).
+Cada opción del catálogo lleva su data-acento, así que la muestra se pinta con su propio color.
+El personalizado se elige con el selector de color del navegador. Si el texto blanco de los
+botones se leería con dificultad sobre ese color, se advierte, pero se puede guardar igual.
+Sin JavaScript todo funciona; solo falta que elegir un color marque "Personalizado" solo y que
+la advertencia cambie antes de guardar.
 {% endcomment %}
-<fieldset class="selector-acento">
+<fieldset class="selector-acento" x-data="selectorDeColor">
   <legend class="am-campo__etiqueta">{{ campo.label }}</legend>
-  <p class="am-campo__ayuda">Colorea la barra y los botones mientras trabajes en este conjunto, para que siempre sepas en cuál estás.</p>
-  <div class="selector-acento__opciones">
+  <p class="am-campo__ayuda">Colorea la barra y los botones mientras trabajes en este conjunto, para que siempre sepas en cuál estás. Si ninguno se parece al de tu conjunto, elige uno propio.</p>
+  <div class="selector-acento__opciones" @change="revisar()">
     {% for valor, nombre in acentos %}
       <label class="selector-acento__opcion" data-acento="{{ valor }}">
         <input type="radio" name="{{ campo.html_name }}" value="{{ valor }}"
@@ -14,6 +20,27 @@ Cada opción lleva su data-acento, así que la muestra se pinta con su propio co
         {{ nombre }}
       </label>
     {% endfor %}
+    <label class="selector-acento__opcion">
+      <input type="radio" name="{{ campo.html_name }}" value="personalizado" x-ref="personalizado"
+             {% if campo.value == "personalizado" %}checked{% endif %}>
+      <span class="selector-acento__muestra" style="background:{{ campo_color.value|color_seguro }}" :style="{ background: color }" aria-hidden="true"></span>
+      Personalizado
+    </label>
   </div>
+
+  <div class="selector-acento__propio">
+    <label class="am-campo__etiqueta" for="{{ campo_color.id_for_label }}">{{ campo_color.label }}</label>
+    <input class="selector-acento__rueda" type="color" id="{{ campo_color.id_for_label }}" name="{{ campo_color.html_name }}"
+           value="{{ campo_color.value|color_seguro }}" x-ref="color" @input="elegir($event.target.value)"
+           aria-describedby="{{ campo_color.id_for_label }}-aviso{% if campo_color.errors %} {{ campo_color.id_for_label }}-error{% endif %}">
+  </div>
+  <p class="aviso-legibilidad" id="{{ campo_color.id_for_label }}-aviso" role="status" x-show="personalizado && pocoLegible"
+     {% if campo.value != "personalizado" or not campo_color.value|poco_legible %}style="display:none"{% endif %}>
+    Con este color, el texto blanco de los botones se lee con dificultad (contraste
+    <span x-text="contraste">{{ campo_color.value|contraste_con_blanco }}</span>:1; lo recomendado es 4.5:1 o más).
+    Puedes usarlo igual.
+  </p>
+
   {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+  {% if campo_color.errors %}<span class="am-campo__error" id="{{ campo_color.id_for_label }}-error">{{ campo_color.errors|join:" " }}</span>{% endif %}
 </fieldset>

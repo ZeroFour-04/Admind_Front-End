@@ -1,6 +1,6 @@
 {% comment %}
 BarraSuperior. Con `sin_conjunto`, solo la marca y Salir (pantalla del selector).
-El nombre, el color y el logo del conjunto activo salen de la sesión. Sin logo, solo el nombre (HU-21).
+El nombre, el color y la foto del conjunto activo salen de la sesión. Sin foto, sus iniciales (HU-21).
 {% endcomment %}
 <header class="am-barra">
   <div class="am-barra__franja" aria-hidden="true"></div>
@@ -8,9 +8,9 @@ El nombre, el color y el logo del conjunto activo salen de la sesión. Sin logo,
     <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos">AdMind</a>
     {% if not sin_conjunto %}
       {% with conjunto=request.session.conjunto_activo %}
-      <div class="am-barra__conjunto{% if conjunto.logo %} barra-conjunto--con-logo{% endif %}">
-        {# alt vacío: el nombre va al lado. Si la imagen no llega, no queda un hueco con texto repetido. #}
-        {% if conjunto.logo %}<img class="barra-conjunto__logo" src="{% url 'conjuntos:logo' conjunto.logo %}" alt="">{% endif %}
+      <div class="am-barra__conjunto{% if conjunto %} barra-conjunto--con-foto{% endif %}">
+        {# Sin alt: el nombre va al lado. Si la imagen no llega, no queda un hueco con texto repetido. #}
+        {% if conjunto %}{% include "conjuntos/_foto.html" with conjunto=conjunto tamano="barra" %}{% endif %}
         <b>{{ conjunto.nombre|default:"Conjunto activo" }}</b>
       </div>
       {% endwith %}

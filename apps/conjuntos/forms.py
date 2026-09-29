@@ -14,32 +14,62 @@ ACENTOS = [
     ("pizarra", "Pizarra"),
 ]
 
+# Si el color del conjunto no está entre los ocho, se elige uno propio con el selector del navegador.
+PERSONALIZADO = "personalizado"
+OPCIONES_DE_COLOR = [*ACENTOS, (PERSONALIZADO, "Personalizado")]
+# Lo que muestra el selector de color propio mientras no se haya elegido ninguno: el verde del catálogo.
+COLOR_PROPIO_INICIAL = "#0e6b5a"
+
 
 # El mismo límite de la API, que es la que decide. Aquí solo evita mandarle un archivo que va a rechazar.
 TAMANO_MAXIMO_LOGO = 512 * 1024  # bytes
 
 
-class ConjuntoForm(forms.Form):
-    """Paso 1 del asistente: datos básicos. Los nombres coinciden con los de la API."""
+class ColorDelConjuntoForm(forms.Form):
+    """El acento y, si es el personalizado, su color. Los nombres coinciden con los de la API."""
+
+    acento = forms.ChoiceField(label="Color del conjunto", choices=OPCIONES_DE_COLOR, initial="verde")
+    color = forms.RegexField(
+        label="Color propio",
+        regex=r"^#[0-9a-fA-F]{6}$",
+        required=False,
+        initial=COLOR_PROPIO_INICIAL,
+        error_messages={"invalid": "Elige un color válido."},
+    )
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get("acento") == PERSONALIZADO:
+            if not datos.get("color"):
+                self.add_error("color", "Elige el color del conjunto.")
+        else:
+            # El selector de color siempre manda un valor: con un acento del catálogo no se usa.
+            datos.pop("color", None)
+        return datos
+
+
+class ConjuntoForm(ColorDelConjuntoForm):
+    """Paso 1 del asistente: datos básicos."""
 
     nombre = forms.CharField(label="Nombre del conjunto", max_length=80)
     direccion = forms.CharField(label="Dirección", max_length=200, required=False)
-    acento = forms.ChoiceField(label="Color del conjunto", choices=ACENTOS, initial="verde")
+
+    field_order = ["nombre", "direccion", "acento", "color"]
 
 
-class AcentoForm(forms.Form):
-    """Identidad visual (HU-21): el color es uno de los ocho del catálogo, sin selector libre."""
-
-    acento = forms.ChoiceField(label="Color del conjunto", choices=ACENTOS)
+class AcentoForm(ColorDelConjuntoForm):
+    """Identidad visual (HU-21): uno de los ocho del catálogo o un color propio."""
 
 
 class LogoForm(forms.Form):
-    archivo = forms.FileField(label="Archivo del logo")
+    """La foto del conjunto. Llega ya cuadrada (1:1) si el navegador la recortó; si no, la API la rechaza."""
+
+    archivo = forms.FileField(label="Foto del conjunto")
 
     def clean_archivo(self):
         archivo = self.cleaned_data["archivo"]
         if archivo.size > TAMANO_MAXIMO_LOGO:
-            raise forms.ValidationError(f"El logo no puede pesar más de {TAMANO_MAXIMO_LOGO // 1024} KB.")
+            raise forms.ValidationError(f"La foto no puede pesar más de {TAMANO_MAXIMO_LOGO // 1024} KB.")
         return archivo
 
 

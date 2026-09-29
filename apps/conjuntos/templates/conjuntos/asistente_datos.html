@@ -1,4 +1,5 @@
 {% extends "base/aplicacion.html" %}
+{% load static %}
 
 {% block titulo %}{% if editando %}Datos del conjunto{% else %}Crear conjunto{% endif %}{% endblock %}
 {% block titulo_vista %}{% if editando %}Datos del conjunto{% else %}Crear conjunto{% endif %}{% endblock %}
@@ -17,12 +18,19 @@
     {% include "componentes/campo.html" with campo=formulario.nombre %}
     {% include "componentes/campo.html" with campo=formulario.direccion autocompletar="street-address" ayuda="Obligatoria para dejarlo operativo." %}
 
-    {% include "conjuntos/_selector_acento.html" with campo=formulario.acento %}
+    {% include "conjuntos/_selector_acento.html" with campo=formulario.acento campo_color=formulario.color %}
 
     <div class="acciones">
       <a class="am-btn am-btn--secundario" href="{% if editando %}{% url 'conjuntos:asistente-resumen' %}{% else %}{% url 'conjuntos:selector' %}{% endif %}">Cancelar</a>
       <button class="am-btn am-btn--primario" type="submit">{% if editando %}Guardar y continuar{% else %}Crear y continuar{% endif %}</button>
     </div>
   </form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not error %}
+  <script src="{% static 'js/identidad.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
 {% endif %}
 {% endblock %}

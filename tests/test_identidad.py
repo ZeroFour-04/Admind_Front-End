@@ -1,4 +1,4 @@
-"""Pantallas de HU-21: el logo en la barra y el selector, y la pantalla de color y logo."""
+"""Pantallas de HU-21: la foto en la barra y el selector, y la pantalla de color y foto."""
 from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -9,28 +9,31 @@ from tests.ayudantes import HUELLA, TORRES, cliente_con_sesion
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 CON_LOGO = {**TORRES, "logo": HUELLA}
+MARCADOR = 'foto-conjunto--vacia" aria-hidden="true">TR</span>'
 
 
-# Sin logo, el nombre; nunca un espacio roto
+# Sin foto, un marcador con las iniciales; nunca un espacio roto
 
 
-def test_sin_logo_la_barra_muestra_el_nombre_y_ninguna_imagen():
+def test_sin_foto_la_barra_muestra_las_iniciales_y_el_nombre_sin_ninguna_imagen():
     respuesta = cliente_con_sesion().get("/inicio/")
 
     html = respuesta.content.decode()
     assert "<b>Torres del Río</b>" in html
+    assert MARCADOR in html
     assert "<img" not in html
 
 
-def test_con_logo_la_barra_muestra_el_logo_y_tambien_el_nombre():
+def test_con_foto_la_barra_muestra_la_foto_y_tambien_el_nombre():
     respuesta = cliente_con_sesion(conjunto_activo=CON_LOGO).get("/inicio/")
 
     html = respuesta.content.decode()
     assert f'src="/conjuntos/logo/{HUELLA}/"' in html
     assert "<b>Torres del Río</b>" in html
+    assert "foto-conjunto--vacia" not in html
 
 
-def test_el_selector_muestra_el_logo_solo_de_los_conjuntos_que_lo_tienen():
+def test_el_selector_muestra_la_foto_o_el_marcador_de_cada_conjunto():
     conjuntos = [
         {**CON_LOGO, "direccion": ""},
         {"id": "5d6e1f7a-0000-4000-8000-000000000002", "nombre": "Mirador", "acento": "vino", "logo": None, "direccion": ""},
@@ -38,7 +41,8 @@ def test_el_selector_muestra_el_logo_solo_de_los_conjuntos_que_lo_tienen():
     with mock.patch("cliente_api.cuentas.listar_conjuntos", return_value=conjuntos):
         html = cliente_con_sesion(conjunto_activo=None).get("/conjuntos/").content.decode()
 
-    assert html.count('class="tarjeta-conjunto__logo"') == 1
+    assert html.count('class="foto-conjunto foto-conjunto--tarjeta"') == 1
+    assert 'foto-conjunto--tarjeta foto-conjunto--vacia" aria-hidden="true">M</span>' in html
     assert "Mirador" in html and "Torres del Río" in html
 
 
@@ -97,7 +101,7 @@ def test_un_logo_demasiado_pesado_no_se_manda_a_la_api():
         respuesta = cliente.post("/conjuntos/identidad/", {"accion": "logo", "archivo": archivo})
 
     subir.assert_not_called()
-    assert "El logo no puede pesar más de 512 KB." in respuesta.content.decode()
+    assert "La foto no puede pesar más de 512 KB." in respuesta.content.decode()
 
 
 def test_el_rechazo_de_la_api_por_tipo_real_se_muestra_junto_al_archivo():
@@ -123,9 +127,83 @@ def test_cambiar_el_color_cambia_el_de_toda_la_pagina():
         cliente.post("/conjuntos/identidad/", {"accion": "color", "acento": "vino"})
         pagina = cliente.get("/conjuntos/identidad/?guardado=1").content.decode()
 
-    cambiar.assert_called_once_with(mock.ANY, "vino")
+    cambiar.assert_called_once_with(mock.ANY, "vino", None)
     assert '<html lang="es-CO" data-acento="vino">' in pagina
     assert "Cambios guardados." in pagina
+
+
+# Color propio
+
+
+PROPIO = {**TORRES, "acento": "personalizado", "color": "#1a8fe3"}
+
+
+def test_un_color_propio_se_manda_con_el_acento_personalizado_y_pinta_toda_la_pagina():
+    cliente = cliente_con_sesion(permisos=["conjunto.branding"])
+    with (
+        mock.patch("cliente_api.conjuntos.identidad", return_value=TORRES),
+        mock.patch("cliente_api.conjuntos.cambiar_acento", return_value=PROPIO) as cambiar,
+    ):
+        cliente.post("/conjuntos/identidad/", {"accion": "color", "acento": "personalizado", "color": "#1a8fe3"})
+        pagina = cliente.get("/conjuntos/identidad/").content.decode()
+
+    cambiar.assert_called_once_with(mock.ANY, "personalizado", "#1a8fe3")
+    assert cliente.session["conjunto_activo"]["color"] == "#1a8fe3"
+    # Sin bloque en colores.css: los tonos van en línea sobre el mismo elemento.
+    assert '<html lang="es-CO" data-acento="personalizado" style="--acento-50:#e8f4fc;--acento-600:#1a8fe3;' in pagina
+
+
+def test_con_un_acento_del_catalogo_no_se_manda_el_color_del_selector():
+    cliente = cliente_con_sesion(permisos=["conjunto.branding"])
+    with (
+        mock.patch("cliente_api.conjuntos.identidad", return_value=TORRES),
+        mock.patch("cliente_api.conjuntos.cambiar_acento", return_value=TORRES) as cambiar,
+    ):
+        # El selector de color del navegador siempre manda su valor, aunque no se haya elegido.
+        cliente.post("/conjuntos/identidad/", {"accion": "color", "acento": "ocre", "color": "#1a8fe3"})
+
+    cambiar.assert_called_once_with(mock.ANY, "ocre", None)
+
+
+def test_personalizado_sin_color_no_se_manda_a_la_api():
+    cliente = cliente_con_sesion(permisos=["conjunto.branding"])
+    with (
+        mock.patch("cliente_api.conjuntos.identidad", return_value=TORRES),
+        mock.patch("cliente_api.conjuntos.cambiar_acento") as cambiar,
+    ):
+        respuesta = cliente.post("/conjuntos/identidad/", {"accion": "color", "acento": "personalizado", "color": ""})
+
+    cambiar.assert_not_called()
+    assert "Elige el color del conjunto." in respuesta.content.decode()
+
+
+def test_un_color_muy_claro_se_guarda_y_solo_se_advierte():
+    claro = {**TORRES, "acento": "personalizado", "color": "#fff8c4"}
+    with mock.patch("cliente_api.conjuntos.identidad", return_value=claro):
+        html = cliente_con_sesion(conjunto_activo=claro, permisos=["conjunto.branding"]).get("/conjuntos/identidad/").content.decode()
+
+    assert "el texto blanco de los botones se lee con dificultad" in html
+    assert '<span x-text="contraste">1.1</span>' in html
+    aviso = html.split('class="aviso-legibilidad"')[1].split(">")[0]
+    assert "display:none" not in aviso
+
+
+def test_un_color_propio_oscuro_no_muestra_la_advertencia():
+    oscuro = {**TORRES, "acento": "personalizado", "color": "#0b4f8a"}
+    with mock.patch("cliente_api.conjuntos.identidad", return_value=oscuro):
+        html = cliente_con_sesion(permisos=["conjunto.branding"]).get("/conjuntos/identidad/").content.decode()
+
+    aviso = html.split('class="aviso-legibilidad"')[1].split(">")[0]
+    assert "display:none" in aviso
+
+
+def test_el_asistente_crea_el_conjunto_con_un_color_propio():
+    cliente = cliente_con_sesion(permisos=["conjunto.crear"])
+    datos = {"nombre": "Mirador", "direccion": "", "acento": "personalizado", "color": "#7a3cc2"}
+    with mock.patch("cliente_api.conjuntos.crear", return_value={"conjunto_activo": PROPIO}) as crear:
+        cliente.post("/conjuntos/nuevo/", datos)
+
+    assert crear.call_args.args[1] == datos
 
 
 def test_sin_conjunto_branding_la_api_responde_403_y_la_pantalla_lo_dice():

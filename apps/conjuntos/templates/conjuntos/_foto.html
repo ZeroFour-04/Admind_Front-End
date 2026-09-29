@@ -1,0 +1,5 @@
+{% load conjuntos %}{% comment %}
+Foto del conjunto (HU-21), siempre cuadrada. Sin foto, un marcador con sus iniciales.
+Parámetros: conjunto, tamano (barra, tarjeta, resumen o grande) y alt. Sin alt, la imagen es
+decorativa: se usa cuando el nombre del conjunto ya va al lado.
+{% endcomment %}{% if conjunto.logo %}<img class="foto-conjunto foto-conjunto--{{ tamano }}" src="{% url 'conjuntos:logo' conjunto.logo %}" alt="{{ alt|default:'' }}">{% else %}<span class="foto-conjunto foto-conjunto--{{ tamano }} foto-conjunto--vacia"{% if alt %} role="img" aria-label="{{ alt }}"{% else %} aria-hidden="true"{% endif %}>{{ conjunto.nombre|iniciales }}</span>{% endif %}

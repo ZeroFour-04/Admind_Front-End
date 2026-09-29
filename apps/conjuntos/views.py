@@ -11,16 +11,34 @@ from cliente_api import conjuntos as api_conjuntos
 from cliente_api import cuentas as api_cuentas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import ACENTOS, AcentoForm, AdministradorForm, ConjuntoForm, LogoForm
+from .forms import (
+    ACENTOS,
+    COLOR_PROPIO_INICIAL,
+    OPCIONES_DE_COLOR,
+    AcentoForm,
+    AdministradorForm,
+    ConjuntoForm,
+    LogoForm,
+)
 
 # Los únicos tipos que la API acepta como logo. Cualquier otra cosa no se le entrega al navegador.
 TIPOS_DE_LOGO = {"image/png", "image/jpeg", "image/webp"}
 
 
 def actualizar_conjunto_activo(request, conjunto):
-    """El nombre, el color y el logo de la barra salen de la sesión: se actualizan al cambiarlos."""
-    activo = {clave: conjunto.get(clave) for clave in ("id", "nombre", "acento", "logo")}
+    """El nombre, el color y la foto de la barra salen de la sesión: se actualizan al cambiarlos."""
+    activo = {clave: conjunto.get(clave) for clave in ("id", "nombre", "acento", "color", "logo")}
     guardar_estado(request, {"conjunto_activo": activo})
+
+
+def color_inicial(conjunto):
+    """El acento guardado y, para el selector de color propio, el color guardado o uno de partida."""
+    return {"acento": conjunto["acento"], "color": conjunto.get("color") or COLOR_PROPIO_INICIAL}
+
+
+def nombre_del_color(conjunto):
+    nombre = dict(OPCIONES_DE_COLOR).get(conjunto.get("acento"))
+    return f"{nombre} ({conjunto['color']})" if conjunto.get("color") else nombre
 
 
 def puede_cambiar_identidad(request):
@@ -97,7 +115,7 @@ def datos(request):
     conjunto = resumen["conjunto"]
     formulario = ConjuntoForm(
         request.POST or None,
-        initial={"nombre": conjunto["nombre"], "direccion": conjunto["direccion"], "acento": conjunto["acento"]},
+        initial={"nombre": conjunto["nombre"], "direccion": conjunto["direccion"], **color_inicial(conjunto)},
     )
     if request.method == "POST" and formulario.is_valid():
         try:
@@ -170,19 +188,19 @@ def resumen(request):
         "error": error or error_al_cargar,
         "faltantes": faltantes,
         "activado": activado,
-        "nombre_del_acento": dict(ACENTOS).get((datos_del_resumen or {}).get("conjunto", {}).get("acento")),
+        "nombre_del_acento": nombre_del_color((datos_del_resumen or {}).get("conjunto", {})),
         "puede_cambiar_identidad": puede_cambiar_identidad(request),
         "paso": 5,
     }
     return render(request, "conjuntos/asistente_resumen.html", contexto)
 
 
-# Identidad visual (HU-21): el color, uno de los ocho del catálogo, y el logo.
+# Identidad visual (HU-21): el color, uno de los ocho del catálogo o uno propio, y la foto 1:1.
 
 
 @require_http_methods(["GET", "POST"])
 def identidad(request):
-    """Color y logo del conjunto activo. Cada formulario de la pantalla manda su `accion`."""
+    """Color y foto del conjunto activo. Cada formulario de la pantalla manda su `accion`."""
     try:
         conjunto = api_conjuntos.identidad(request)
     except ApiNoDisponible:
@@ -191,14 +209,16 @@ def identidad(request):
         return render(request, "conjuntos/identidad.html", {"error": error.mensaje})
 
     accion = request.POST.get("accion")
-    color = AcentoForm(request.POST if accion == "color" else None, initial={"acento": conjunto["acento"]})
+    color = AcentoForm(request.POST if accion == "color" else None, initial=color_inicial(conjunto))
     logo = LogoForm(request.POST if accion == "logo" else None, request.FILES if accion == "logo" else None)
     # Los errores de quitar el logo se muestran junto al logo.
     formulario = color if accion == "color" else logo
     if accion in ("color", "logo", "quitar_logo") and (accion == "quitar_logo" or formulario.is_valid()):
         try:
             if accion == "color":
-                conjunto = api_conjuntos.cambiar_acento(request, color.cleaned_data["acento"])
+                conjunto = api_conjuntos.cambiar_acento(
+                    request, color.cleaned_data["acento"], color.cleaned_data.get("color")
+                )
             elif accion == "logo":
                 conjunto = api_conjuntos.subir_logo(request, logo.cleaned_data["archivo"])
             else:

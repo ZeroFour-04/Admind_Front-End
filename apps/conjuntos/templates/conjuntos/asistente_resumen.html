@@ -1,4 +1,5 @@
 {% extends "base/aplicacion.html" %}
+{% load conjuntos %}
 
 {% block titulo %}Resumen del conjunto{% endblock %}
 {% block titulo_vista %}Resumen del conjunto{% endblock %}
@@ -32,15 +33,21 @@
       <dt>Nombre</dt><dd>{{ resumen.conjunto.nombre }}</dd>
       <dt>Dirección</dt><dd>{{ resumen.conjunto.direccion|default:"Sin dirección" }}</dd>
       <dt>Color</dt>
-      <dd><span class="muestra-acento" data-acento="{{ resumen.conjunto.acento }}" aria-hidden="true"></span> {{ nombre_del_acento }}</dd>
-      <dt>Logo</dt>
-      <dd>{% if resumen.conjunto.logo %}<img class="resumen-logo" src="{% url 'conjuntos:logo' resumen.conjunto.logo %}" alt="Logo de {{ resumen.conjunto.nombre }}">{% else %}Sin logo: se muestra el nombre{% endif %}</dd>
+      <dd><span class="muestra-acento"{% atributos_de_acento resumen.conjunto %} aria-hidden="true"></span> {{ nombre_del_acento }}</dd>
+      <dt>Foto</dt>
+      <dd class="resumen-foto">
+        {% if resumen.conjunto.logo %}
+          {% include "conjuntos/_foto.html" with conjunto=resumen.conjunto tamano="resumen" alt="Foto de "|add:resumen.conjunto.nombre %}
+        {% else %}
+          {% include "conjuntos/_foto.html" with conjunto=resumen.conjunto tamano="resumen" %} Sin foto: se muestran sus iniciales
+        {% endif %}
+      </dd>
       <dt>Administración</dt>
       <dd>{% for persona in resumen.administradores %}{{ persona.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Nadie todavía{% endfor %}</dd>
     </dl>
     {% if puede_cambiar_identidad %}
       <div class="acciones">
-        <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:identidad' %}">Cambiar color y logo</a>
+        <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:identidad' %}">Cambiar color y foto</a>
       </div>
     {% endif %}
   </section>

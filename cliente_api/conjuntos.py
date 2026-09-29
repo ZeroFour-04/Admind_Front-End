@@ -30,9 +30,13 @@ def identidad(request):
     return pedir(request, "GET", "conjuntos/actual/identidad/")
 
 
-def cambiar_acento(request, acento):
-    """PATCH /conjuntos/actual/identidad/ → la identidad con el color nuevo."""
-    return pedir(request, "PATCH", "conjuntos/actual/identidad/", {"acento": acento})
+def cambiar_acento(request, acento, color=None):
+    """PATCH /conjuntos/actual/identidad/ → la identidad con el color nuevo.
+
+    `color` solo va con el acento personalizado: es el hex elegido en el selector del navegador.
+    """
+    datos = {"acento": acento, **({"color": color} if color else {})}
+    return pedir(request, "PATCH", "conjuntos/actual/identidad/", datos)
 
 
 def subir_logo(request, archivo):

@@ -93,3 +93,43 @@ def test_el_color_del_texto_sobre_el_acento_es_el_que_da_la_luminancia(slug):
 
 def test_un_color_muy_claro_pediria_texto_oscuro():
     assert texto_por_luminancia("#FAF0DF") == raiz("texto-fuerte")
+
+
+# Color propio (HU-21): su paleta se calcula, no está en los tokens
+
+
+@pytest.mark.parametrize("color", ["#1a8fe3", "#7a3cc2", "#e34b1a", "#fff8c4", "#101010", "#00ff00"])
+def test_la_rampa_de_un_color_propio_mantiene_legible_la_navegacion_activa(color):
+    from apps.conjuntos.colores import rampa
+
+    tonos = rampa(color)
+
+    assert tonos["acento-600"] == color
+    assert contraste(tonos["acento-900"].upper(), tonos["acento-50"].upper()) >= CONTRASTE_MINIMO
+
+
+def test_un_color_propio_claro_se_marca_como_poco_legible_y_uno_oscuro_no():
+    from apps.conjuntos.colores import poco_legible
+
+    assert poco_legible("#fff8c4")
+    assert poco_legible("#1a8fe3")  # un azul medio: 3.5:1
+    assert not poco_legible("#0b4f8a")
+    assert not poco_legible("no-es-un-color")
+
+
+def test_un_color_que_no_es_hex_nunca_llega_al_style():
+    from apps.conjuntos.templatetags.conjuntos import atributos_de_acento
+
+    assert atributos_de_acento({"acento": "personalizado", "color": "red;background:url(x)"}) == ' data-acento="personalizado"'
+    assert atributos_de_acento({"acento": "vino", "color": None}) == ' data-acento="vino"'
+    assert atributos_de_acento(None) == ""
+
+
+@pytest.mark.parametrize(
+    ("nombre", "esperado"),
+    [("Torres del Río", "TR"), ("Mirador", "M"), ("Conjunto de la Sabana", "CS"), ("", "?")],
+)
+def test_las_iniciales_saltan_las_palabras_de_union(nombre, esperado):
+    from apps.conjuntos.templatetags.conjuntos import iniciales
+
+    assert iniciales(nombre) == esperado
