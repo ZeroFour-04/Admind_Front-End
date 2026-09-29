@@ -30,6 +30,13 @@ ul[role="list"]{list-style:none;margin:0;padding:0}
 /* ---------- Barra superior: que sus partes bajen de línea en pantallas angostas */
 .am-barra__fila{flex-wrap:wrap;row-gap:var(--e-2)}
 .am-barra__derecha form{margin:0}
+.am-barra__tipo-usuario{font-size:var(--tipo-meta);color:var(--texto-medio);white-space:nowrap}
+.am-barra__perfil{display:inline-flex;align-items:center;justify-content:center;flex:none;width:var(--toque-minimo);height:var(--toque-minimo);border:1px solid var(--borde-fuerte);border-radius:50%;background:var(--superficie-tarjeta);color:var(--texto-medio);text-decoration:none}
+.am-barra__perfil:hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
+.am-barra__perfil svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.confirmacion-eliminar{width:min(100% - var(--e-6),460px);padding:0;border:1px solid var(--borde);border-radius:var(--radio-caja);background:var(--superficie-tarjeta);color:var(--texto-fuerte);box-shadow:var(--sombra-flotante)}
+.confirmacion-eliminar::backdrop{background:var(--tinta-a28)}
+.confirmacion-eliminar .am-modal__pie{margin:0}
 
 /* ---------- Aplicación: lateral y vista ------------------------------- */
 .aplicacion{display:grid;grid-template-columns:auto minmax(0,1fr);min-height:calc(100vh - 65px)}

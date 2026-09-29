@@ -1,0 +1,38 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Mi perfil{% endblock %}
+{% block titulo_vista %}Mi perfil{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if usuario %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-datos-personales">
+    <h2 id="titulo-datos-personales">Datos personales</h2>
+    <dl class="am-detalle__lista">
+      <div><dt>Nombre completo</dt><dd>{{ usuario.nombre }}</dd></div>
+      <div><dt>Correo electrónico</dt><dd>{{ usuario.correo }}</dd></div>
+      <div><dt>Tipo de documento</dt><dd>{{ usuario.tipo_documento }}</dd></div>
+      <div><dt>Número de documento</dt><dd>{{ usuario.documento }}</dd></div>
+      <div><dt>Teléfono</dt><dd>{{ usuario.telefono|default:"No registrado" }}</dd></div>
+      <div><dt>Estado</dt><dd>{% if usuario.activo %}Activo{% else %}Inactivo{% endif %}</dd></div>
+    </dl>
+  </section>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-tipo-usuario">
+    <h2 id="titulo-tipo-usuario">Tipo de usuario</h2>
+    {% if usuario.roles %}
+      <ul class="lista-simple" role="list">
+        {% for rol in usuario.roles %}<li>{{ rol }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="tarjeta-contenido__meta">No tiene roles vigentes.</p>
+    {% endif %}
+  </section>
+{% endif %}
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'paneles:inicio' %}">Volver al inicio</a>
+</div>
+{% endblock %}

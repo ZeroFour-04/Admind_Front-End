@@ -27,6 +27,11 @@ def obtener_usuario(request, usuario_id):
     return pedir(request, "GET", f"auth/usuarios/{usuario_id}/")
 
 
+def obtener_perfil(request):
+    """GET /auth/usuarios/perfil/ → datos de la cuenta autenticada."""
+    return pedir(request, "GET", "auth/usuarios/perfil/")
+
+
 def asignar_rol(request, usuario_id, rol):
     """POST /auth/usuarios/<id>/roles/ → el usuario con el rol nuevo. 409 si ya lo tiene (HU-06)."""
     return pedir(request, "POST", f"auth/usuarios/{usuario_id}/roles/", {"rol": rol})
@@ -35,6 +40,11 @@ def asignar_rol(request, usuario_id, rol):
 def retirar_rol(request, usuario_id, asignacion_id):
     """POST /auth/usuarios/<id>/roles/<asignacion>/retirar/ → el usuario sin ese rol. 409 si es el último administrador."""
     return pedir(request, "POST", f"auth/usuarios/{usuario_id}/roles/{asignacion_id}/retirar/")
+
+
+def retirar_usuario_del_conjunto(request, usuario_id):
+    """POST /auth/usuarios/<id>/eliminar/ → retira todos sus roles vigentes del conjunto activo."""
+    return pedir(request, "POST", f"auth/usuarios/{usuario_id}/eliminar/")
 
 
 def listar_conjuntos(request):

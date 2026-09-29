@@ -15,7 +15,12 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
   {% if "conjunto.editar" in request.session.permisos or "conjunto.activar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'conjuntos' %} am-es-activo{% endif %}" href="{% url 'conjuntos:asistente-resumen' %}"{% if actual == 'conjuntos' %} aria-current="page"{% endif %}>Conjunto</a>
   {% endif %}
-  <a class="am-lateral__item{% if actual == 'usuarios' %} am-es-activo{% endif %}" href="{% url 'usuarios:lista' %}"{% if actual == 'usuarios' %} aria-current="page"{% endif %}>Usuarios</a>
-  <a class="am-lateral__item{% if actual == 'unidades' %} am-es-activo{% endif %}" href="{% url 'unidades:lista' %}"{% if actual == 'unidades' %} aria-current="page"{% endif %}>Apartamentos y parqueaderos</a>
+  {% if request.session.roles %}
+    {% if "Superusuario" in request.session.roles or "Administrador" in request.session.roles or "Secretaría" in request.session.roles %}
+      {% include "componentes/_enlaces_gestion.html" %}
+    {% endif %}
+  {% elif request.session.tipo_usuario == "Superusuario" or request.session.tipo_usuario == "Administrador" or request.session.tipo_usuario == "Secretaría" %}
+    {% include "componentes/_enlaces_gestion.html" %}
+  {% endif %}
 </nav>
 {% endwith %}

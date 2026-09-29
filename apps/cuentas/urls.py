@@ -7,6 +7,7 @@ app_name = "cuentas"
 urlpatterns = [
     path("", views.ingreso, name="ingreso"),
     path("salir/", views.salir, name="salir"),
+    path("perfil/", views.perfil, name="perfil"),
     path("recuperar-contrasena/", views.recuperar_contrasena, name="recuperar-contrasena"),
     path(
         "restablecer-contrasena/<str:uid>/<str:token>/",

@@ -23,14 +23,18 @@ DETALLE = f"/usuarios/{ANDRES['id']}/"
 ASIGNACION = ANDRES["asignaciones"][0]["id"]
 
 
-def test_con_rol_asignar_se_puede_retirar_y_solo_se_ofrecen_los_roles_que_no_tiene():
+def test_con_rol_asignar_se_puede_eliminar_y_solo_se_ofrecen_roles_que_no_tiene():
     with mock.patch("cliente_api.cuentas.obtener_usuario", return_value=ANDRES):
         html = cliente_con_sesion(permisos=["rol.asignar", "usuario.gestionar"]).get(DETALLE).content.decode()
 
     assert "Roles en este conjunto" in html
-    assert "Retirar Administración" in html
+    assert "Eliminar usuario" in html
+    assert "¿Seguro que quiere eliminar este usuario?" in html
+    assert ">Si</button>" in html and ">NO</button>" in html
+    assert "Retirar Administración" not in html
     assert '<option value="consejo">Consejo</option>' in html
     assert 'value="administracion"' not in html
+    assert 'js/usuarios.js' in html
     assert "Maqueta" not in html
 
 
@@ -39,7 +43,7 @@ def test_sin_rol_asignar_no_hay_botones():
         html = cliente_con_sesion(permisos=["usuario.gestionar"]).get(DETALLE).content.decode()
 
     assert "Administración" in html
-    assert "Retirar" not in html and "Asignar rol" not in html
+    assert "Eliminar usuario" not in html and "Asignar rol" not in html
 
 
 def test_asignar_un_rol_redirige_al_detalle():
@@ -57,6 +61,26 @@ def test_el_409_del_ultimo_administrador_se_muestra_como_alerta():
         mock.patch("cliente_api.cuentas.obtener_usuario", return_value=ANDRES),
     ):
         html = cliente_con_sesion(permisos=["rol.asignar"]).post(f"{DETALLE}roles/{ASIGNACION}/retirar/").content.decode()
+
+    assert 'role="alert">El conjunto no puede quedar sin Administración.' in html
+
+
+def test_eliminar_usuario_del_conjunto_redirige_a_la_lista():
+    with mock.patch("cliente_api.cuentas.retirar_usuario_del_conjunto") as eliminar:
+        respuesta = cliente_con_sesion(permisos=["rol.asignar"]).post(f"{DETALLE}eliminar/")
+
+    eliminar.assert_called_once()
+    assert str(eliminar.call_args.args[1]) == ANDRES["id"]
+    assert respuesta["Location"] == "/usuarios/"
+
+
+def test_no_se_elimina_usuario_si_la_api_rechaza_el_ultimo_administrador():
+    ultimo = ErrorDeApi(409, {"detail": "El conjunto no puede quedar sin Administración."})
+    with (
+        mock.patch("cliente_api.cuentas.retirar_usuario_del_conjunto", side_effect=ultimo),
+        mock.patch("cliente_api.cuentas.obtener_usuario", return_value=ANDRES),
+    ):
+        html = cliente_con_sesion(permisos=["rol.asignar"]).post(f"{DETALLE}eliminar/").content.decode()
 
     assert 'role="alert">El conjunto no puede quedar sin Administración.' in html
 

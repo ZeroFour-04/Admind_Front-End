@@ -7,7 +7,9 @@ from cliente_api.http import CLAVE_TOKEN, token_de
 
 CLAVE_CONJUNTO_ACTIVO = "conjunto_activo"
 CLAVE_PERMISOS = "permisos"
+CLAVE_ROLES = "roles"
 CLAVE_DOS_FACTORES = "dos_factores"
+CLAVE_TIPO_USUARIO = "tipo_usuario"
 
 
 def publica(vista):
@@ -41,7 +43,7 @@ def guardar_estado(request, estado):
     La API sigue siendo quien decide en cada petición; esto solo le sirve a las pantallas para
     saber qué mostrar.
     """
-    for clave in (CLAVE_CONJUNTO_ACTIVO, CLAVE_PERMISOS, CLAVE_DOS_FACTORES):
+    for clave in (CLAVE_CONJUNTO_ACTIVO, CLAVE_PERMISOS, CLAVE_ROLES, CLAVE_TIPO_USUARIO, CLAVE_DOS_FACTORES):
         if clave in estado:
             request.session[clave] = estado[clave]
     request.session.modified = True

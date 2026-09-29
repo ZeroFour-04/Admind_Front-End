@@ -121,6 +121,17 @@ def retirar_rol(request, usuario_id, asignacion_id):
     return redirect("usuarios:detalle", usuario_id=usuario_id)
 
 
+@require_POST
+def eliminar(request, usuario_id):
+    try:
+        api_cuentas.retirar_usuario_del_conjunto(request, usuario_id)
+    except ApiNoDisponible:
+        return detalle(request, usuario_id, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return detalle(request, usuario_id, error.mensaje)
+    return redirect("usuarios:lista")
+
+
 @require_http_methods(["GET", "POST"])
 def nuevo(request):
     # Si viene de una búsqueda sin resultado, el documento se precarga y se borra de la sesión.

@@ -27,12 +27,6 @@
         {% for asignacion in usuario.asignaciones %}
           <li class="requisitos__item">
             <span>{{ asignacion.nombre }}</span>
-            {% if puede_asignar %}
-              <form method="post" action="{% url 'usuarios:retirar-rol' usuario.id asignacion.id %}">
-                {% csrf_token %}
-                <button class="am-btn am-btn--secundario" type="submit">Retirar {{ asignacion.nombre }}</button>
-              </form>
-            {% endif %}
           </li>
         {% endfor %}
       </ul>
@@ -56,8 +50,31 @@
       </form>
     {% endif %}
   </section>
+
+  {% if puede_asignar and usuario.asignaciones %}
+    <div class="acciones">
+      <button class="am-btn am-btn--peligro" type="button" data-abrir-confirmacion>
+        Eliminar usuario
+      </button>
+    </div>
+    <dialog class="confirmacion-eliminar" id="confirmar-eliminar-usuario" aria-labelledby="titulo-confirmar-eliminar">
+      <div class="am-modal__cuerpo">
+        <h2 class="am-modal__titulo" id="titulo-confirmar-eliminar">¿Seguro que quiere eliminar este usuario?</h2>
+        <form method="post" action="{% url 'usuarios:eliminar' usuario.id %}" class="am-modal__pie">
+          {% csrf_token %}
+          <button class="am-btn am-btn--peligro" type="submit">Si</button>
+          <button class="am-btn am-btn--secundario" type="button" data-cerrar-confirmacion>NO</button>
+        </form>
+      </div>
+    </dialog>
+  {% endif %}
 {% endif %}
 <div class="acciones">
   <a class="am-btn am-btn--secundario" href="{% url 'usuarios:lista' %}">Volver a usuarios</a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% load static %}
+<script src="{% static 'js/usuarios.js' %}" defer></script>
 {% endblock %}

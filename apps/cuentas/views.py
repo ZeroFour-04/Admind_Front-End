@@ -59,6 +59,22 @@ def salir(request):
     return redirect("cuentas:ingreso")
 
 
+@antes_del_segundo_factor
+@require_http_methods(["GET"])
+def perfil(request):
+    try:
+        usuario = api_cuentas.obtener_perfil(request)
+    except ApiNoDisponible:
+        usuario = None
+        error = MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as api_error:
+        usuario = None
+        error = api_error.mensaje
+    else:
+        error = None
+    return render(request, "cuentas/perfil.html", {"usuario": usuario, "error": error})
+
+
 # Recuperación de contraseña (HU-01)
 
 

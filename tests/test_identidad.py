@@ -1,6 +1,7 @@
 """Pantallas de HU-21: la foto en la barra y el selector, y la pantalla de color y foto."""
 from unittest import mock
 
+import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.conjuntos.forms import TAMANO_MAXIMO_LOGO
@@ -22,6 +23,29 @@ def test_sin_foto_la_barra_muestra_las_iniciales_y_el_nombre_sin_ninguna_imagen(
     assert "<b>Torres del Río</b>" in html
     assert MARCADOR in html
     assert "<img" not in html
+
+
+def test_la_barra_muestra_el_tipo_de_usuario_y_el_enlace_al_perfil():
+    html = cliente_con_sesion(tipo_usuario="Administrador").get("/inicio/").content.decode()
+
+    assert "Administrador" in html
+    assert 'href="/perfil/" aria-label="Ver perfil del usuario"' in html
+
+
+@pytest.mark.parametrize("rol", ["Superusuario", "Administrador", "Secretaría"])
+def test_el_lateral_muestra_usuarios_y_apartamentos_solo_a_roles_autorizados(rol):
+    html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
+
+    assert ">Usuarios</a>" in html
+    assert ">Apartamentos y parqueaderos</a>" in html
+
+
+@pytest.mark.parametrize("rol", ["Residente", "Consejo", "Vigilancia"])
+def test_el_lateral_oculta_usuarios_y_apartamentos_a_los_demas_roles(rol):
+    html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
+
+    assert ">Usuarios</a>" not in html
+    assert ">Apartamentos y parqueaderos</a>" not in html
 
 
 def test_con_foto_la_barra_muestra_la_foto_y_tambien_el_nombre():
