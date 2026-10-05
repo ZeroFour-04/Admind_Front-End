@@ -1,9 +1,10 @@
-"""El tablón del conjunto activo (HU-25): leer, publicar con alcance y editar el texto."""
+"""El tablón del conjunto activo (HU-25): leer, publicar con alcance y con fotos, y editar el texto."""
 from datetime import datetime
 
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.cuentas.sesion import tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
@@ -16,6 +17,9 @@ from .forms import AnuncioForm, EditarAnuncioForm
 # Dos permisos separados: dirigir a una vivienda no viene incluido en publicar. Los exige la API;
 # aquí solo sirven para no ofrecer lo que la persona no puede hacer.
 PERMISO_POR_ALCANCE = {"conjunto": "anuncio.publicar", "vivienda": "anuncio.dirigir"}
+
+# Los únicos tipos que la API guarda como foto. Cualquier otra cosa no se le entrega al navegador.
+TIPOS_DE_FOTO = {"image/png", "image/jpeg", "image/webp"}
 
 
 def alcances_permitidos(request):
@@ -61,10 +65,13 @@ def nuevo(request):
         except ErrorDeApi as api_error:
             error = api_error.mensaje
 
-    formulario = AnuncioForm(request.POST or None, alcances=alcances, unidades=unidades)
+    formulario = AnuncioForm(request.POST or None, request.FILES or None, alcances=alcances, unidades=unidades)
     if request.method == "POST" and formulario.is_valid():
+        # Las fotos van aparte de los datos: son archivos, no campos del anuncio.
+        datos = dict(formulario.cleaned_data)
+        fotos = datos.pop("fotos")
         try:
-            api_anuncios.publicar(request, formulario.cleaned_data)
+            api_anuncios.publicar(request, datos, fotos)
         except ApiNoDisponible:
             formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
         except ErrorDeApi as api_error:
@@ -104,3 +111,21 @@ def editar(request, anuncio_id):
             return redirect("anuncios:lista")
 
     return render(request, "anuncios/editar.html", {"anuncio": anuncio, "formulario": formulario})
+
+
+@require_GET
+def foto(request, anuncio_id, foto_id):
+    """La imagen de una foto. La pide este servidor con el token de la sesión: el navegador no habla con la API.
+
+    Las fotos de un anuncio no cambian, así que lo que hay en una URL es siempre lo mismo y el
+    navegador lo puede guardar. Si la API no la entrega (no existe o la persona no ve ese anuncio), 404.
+    """
+    try:
+        contenido, tipo = api_anuncios.foto(request, anuncio_id, foto_id)
+    except (ApiNoDisponible, ErrorDeApi):
+        raise Http404
+    if tipo not in TIPOS_DE_FOTO:
+        raise Http404
+    respuesta = HttpResponse(contenido, content_type=tipo)
+    respuesta["Cache-Control"] = "private, max-age=31536000, immutable"
+    return respuesta

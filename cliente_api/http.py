@@ -68,7 +68,8 @@ def token_de(request):
 def pedir(request, metodo, ruta, datos=None, archivos=None):
     """Llama a la API en nombre del usuario de `request` y devuelve el JSON de la respuesta.
 
-    Con `archivos` ({campo: (nombre, contenido, tipo)}) la petición va como formulario multipart.
+    Con `archivos` la petición va como formulario multipart: {campo: (nombre, contenido, tipo)}, o
+    una lista de pares (campo, (nombre, contenido, tipo)) cuando un campo se repite.
     """
     respuesta = enviar(request, metodo, ruta, {"Accept": "application/json"}, datos, archivos)
     return cuerpo_json(respuesta)

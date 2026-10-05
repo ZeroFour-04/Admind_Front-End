@@ -9,11 +9,23 @@
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}
 
-<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+<form method="post" enctype="multipart/form-data" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
   {% csrf_token %}
   {% include "componentes/errores_formulario.html" %}
   {% include "componentes/campo.html" with campo=formulario.titulo %}
   {% include "anuncios/_campo_cuerpo.html" with campo=formulario.cuerpo %}
+
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.fotos.id_for_label }}">{{ formulario.fotos.label }}</label>
+    <input class="am-campo__control campo-archivo" type="file" id="{{ formulario.fotos.id_for_label }}" name="{{ formulario.fotos.html_name }}"
+           accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple
+           aria-describedby="{{ formulario.fotos.id_for_label }}-ayuda {{ formulario.fotos.id_for_label }}-datos{% if formulario.fotos.errors %} {{ formulario.fotos.id_for_label }}-error{% endif %}"
+           {% if formulario.fotos.errors %}aria-invalid="true"{% endif %}>
+    <span class="am-campo__ayuda" id="{{ formulario.fotos.id_for_label }}-ayuda">Opcional. Hasta 4 fotos PNG, JPG o WebP, de hasta 5 MB cada una. Después de publicar no se pueden cambiar.</span>
+    {# Ley 1581: el sistema no puede saber qué muestra una foto; lo advierte a quien la sube. #}
+    <span class="am-campo__ayuda" id="{{ formulario.fotos.id_for_label }}-datos">Una foto donde se reconoce a una persona es un dato personal: publícala solo con su permiso.</span>
+    {% if formulario.fotos.errors %}<span class="am-campo__error" id="{{ formulario.fotos.id_for_label }}-error">{{ formulario.fotos.errors|join:" " }}</span>{% endif %}
+  </div>
 
   <fieldset class="opciones-alcance">
     <legend class="am-campo__etiqueta">{{ formulario.alcance.label }}</legend>

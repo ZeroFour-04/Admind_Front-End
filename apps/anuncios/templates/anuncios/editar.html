@@ -13,8 +13,9 @@
 {% else %}
   <p class="vista__guia">
     {% if anuncio.unidad %}Para la vivienda {{ anuncio.unidad.nombre }}{% else %}Para todo el conjunto{% endif %}.
-    Solo cambia el texto: a quién va no se cambia, y guardar no vuelve a avisar.
+    Solo cambia el texto: a quién va y las fotos no se cambian, y guardar no vuelve a avisar.
   </p>
+  {% include "anuncios/_fotos.html" %}
   <form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
     {% csrf_token %}
     {% include "componentes/errores_formulario.html" %}

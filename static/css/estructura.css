@@ -136,3 +136,8 @@ details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-me
 .opciones-alcance__opcion > span{display:flex;flex-direction:column;gap:var(--e-1)}
 /* Aviso informativo. Es información, no acción: usa los colores de info, nunca el acento. */
 .aviso-info{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--info-fondo);color:var(--info-texto)}
+/* Fotos de un anuncio: miniaturas recortadas a la misma proporción. Nunca menos de dos por fila,
+   para que en un teléfono no ocupen una pantalla cada una. La foto completa se abre aparte. */
+.fotos-anuncio{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(calc(var(--toque-minimo) * 4),calc(50% - var(--e-1))),1fr));gap:var(--e-2);list-style:none;margin:0;padding:0}
+.fotos-anuncio__enlace{display:block;border-radius:var(--radio-control)}
+.fotos-anuncio img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-hundida)}

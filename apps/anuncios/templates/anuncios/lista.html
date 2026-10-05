@@ -27,6 +27,7 @@
           {% if anuncio.editado_en %}· editado el {{ anuncio.editado_en|date:"j \d\e F"|lower }}{% endif %}
         </p>
         <p class="tarjeta-contenido__cuerpo">{{ anuncio.cuerpo }}</p>
+        {% include "anuncios/_fotos.html" %}
         {% if anuncio.puede_editar %}
           <div class="acciones">
             <a class="am-btn am-btn--secundario" href="{% url 'anuncios:editar' anuncio.id %}">Editar texto</a>

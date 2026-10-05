@@ -1,0 +1,14 @@
+{% comment %}
+Miniaturas de las fotos de un anuncio. Cada una abre la foto completa en otra pestaña. Parámetro: anuncio.
+{% endcomment %}
+{% if anuncio.fotos %}
+  <ul class="fotos-anuncio" role="list">
+    {% for foto in anuncio.fotos %}
+      <li>
+        <a class="fotos-anuncio__enlace" href="{% url 'anuncios:foto' anuncio.id foto %}" target="_blank" rel="noopener">
+          <img src="{% url 'anuncios:foto' anuncio.id foto %}" alt="Foto {{ forloop.counter }} de {{ anuncio.fotos|length }} del anuncio {{ anuncio.titulo }}" loading="lazy">
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

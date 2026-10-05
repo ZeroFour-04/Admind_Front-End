@@ -7,12 +7,32 @@ ALCANCES = [
     ("vivienda", "Una vivienda"),
 ]
 
+# Los mismos topes de la API. Aquí solo ahorran un viaje: quien decide es ella.
+MAXIMO_DE_FOTOS = 4
+TAMANO_MAXIMO_FOTO = 5 * 1024 * 1024  # bytes
+
+
+class VariosArchivos(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class CampoDeFotos(forms.FileField):
+    """Un campo que recibe varios archivos. Entrega siempre una lista, vacía si no se eligió ninguno."""
+
+    widget = VariosArchivos
+
+    def clean(self, data, initial=None):
+        limpiar_uno = super().clean
+        archivos = data if isinstance(data, (list, tuple)) else [data]
+        return [limpiar_uno(archivo, initial) for archivo in archivos if archivo]
+
 
 class AnuncioForm(forms.Form):
     """Los nombres coinciden con los de la API. Solo se ofrecen los alcances que la persona puede usar."""
 
     titulo = forms.CharField(label="Título", max_length=120)
     cuerpo = forms.CharField(label="Texto del anuncio", max_length=4000, widget=forms.Textarea(attrs={"rows": 6}))
+    fotos = CampoDeFotos(label="Fotos", required=False)
     alcance = forms.ChoiceField(label="¿Para quién es?", choices=ALCANCES, initial="conjunto")
     unidad = forms.ChoiceField(label="Vivienda", required=False)
 
@@ -23,6 +43,16 @@ class AnuncioForm(forms.Form):
         self.fields["unidad"].choices = [("", "Elige la vivienda")] + [
             (unidad["id"], unidad["nombre"]) for unidad in unidades
         ]
+
+    def clean_fotos(self):
+        # Si de verdad son imágenes lo decide la API, que lee la firma de cada archivo.
+        fotos = self.cleaned_data["fotos"]
+        if len(fotos) > MAXIMO_DE_FOTOS:
+            raise forms.ValidationError(f"Un anuncio lleva hasta {MAXIMO_DE_FOTOS} fotos.")
+        for foto in fotos:
+            if foto.size > TAMANO_MAXIMO_FOTO:
+                raise forms.ValidationError(f"«{foto.name}» pesa más de {TAMANO_MAXIMO_FOTO // (1024 * 1024)} MB.")
+        return fotos
 
     def clean(self):
         datos = super().clean()
