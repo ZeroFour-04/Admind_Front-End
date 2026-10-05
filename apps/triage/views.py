@@ -1,6 +1,57 @@
 from django.shortcuts import render
 
+from apps.cuentas.sesion import tiene_permiso
+from cliente_api import reservas as api_reservas
+from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
+
+ESTADO_PARA_RESIDENTE = {
+    "APARTADA": "En revisión",
+    "RESERVADA": "Aprobada",
+    "RECHAZADA": "Rechazada",
+    "EN_SOLICITUD": "En trámite",
+    "CANCELADA": "Cancelada",
+    "EXPIRADA": "Expirada",
+    "LIBERADA": "Liberada",
+}
+
 
 def bandeja(request):
-    """Maqueta de la bandeja de solicitudes (HU-22). Sin datos: muestra su estado vacío."""
-    return render(request, "triage/bandeja.html")
+    """La administración ve las reservas del conjunto; cada residente ve solo su historial."""
+    puede_ver_reservas = any(
+        tiene_permiso(request, permiso)
+        for permiso in ("reserva.ver_todas", "reserva.aprobar", "reserva.rechazar")
+    )
+    es_residente = not puede_ver_reservas and tiene_permiso(request, "reserva.solicitar")
+    solicitudes, error = [], None
+    if puede_ver_reservas:
+        try:
+            solicitudes = api_reservas.solicitudes_para_bandeja(request)
+        except ApiNoDisponible:
+            error = MENSAJE_API_NO_DISPONIBLE
+        except ErrorDeApi as api_error:
+            error = api_error.mensaje
+    elif es_residente:
+        try:
+            solicitudes = api_reservas.mis_solicitudes(request)
+        except ApiNoDisponible:
+            error = MENSAJE_API_NO_DISPONIBLE
+        except ErrorDeApi as api_error:
+            error = api_error.mensaje
+
+    solicitudes = [
+        {
+            **solicitud,
+            "estado_visible": (
+                ESTADO_PARA_RESIDENTE.get(solicitud["estado"], solicitud["estado_nombre"])
+                if es_residente
+                else solicitud["estado_nombre"]
+            ),
+        }
+        for solicitud in solicitudes
+    ]
+    return render(request, "triage/bandeja.html", {
+        "solicitudes": solicitudes,
+        "error": error,
+        "puede_ver_reservas": puede_ver_reservas,
+        "es_residente": es_residente,
+    })

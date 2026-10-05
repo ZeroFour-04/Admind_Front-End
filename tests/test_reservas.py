@@ -6,7 +6,13 @@ from django.urls import URLResolver, get_resolver
 from cliente_api.http import ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
-SALON = {"id": "3c4d5e6f-0000-4000-8000-000000000001", "nombre": "Salón comunal", "activo": True}
+SALON = {
+    "id": "3c4d5e6f-0000-4000-8000-000000000001",
+    "nombre": "Salón comunal",
+    "hora_apertura": "08:00",
+    "hora_cierre": "22:00",
+    "activo": True,
+}
 FRANJAS = {
     "area": {"id": SALON["id"], "nombre": "Salón comunal"},
     "fecha": "2026-12-26",
@@ -14,7 +20,7 @@ FRANJAS = {
         {"hora_inicio": "08:00", "hora_fin": "12:00", "estado": "libre"},
         {"hora_inicio": "12:00", "hora_fin": "16:00", "estado": "en_solicitud"},
         {"hora_inicio": "16:00", "hora_fin": "20:00", "estado": "apartada"},
-        {"hora_inicio": "20:00", "hora_fin": "22:00", "estado": "propia"},
+        {"hora_inicio": "20:00", "hora_fin": "22:00", "estado": "reservada"},
     ],
 }
 EN_TRAMITE = {
@@ -53,8 +59,11 @@ def test_las_franjas_muestran_su_estado_en_texto():
     html, franjas = ver_franjas()
 
     assert franjas.call_args.args[1:] == (SALON["id"], "2026-12-26")
-    for texto in ("Libre", "En trámite", "Apartada", "Tuya"):
+    assert "Horario para reservas: 08:00 a 22:00." in html
+    for texto in ("Libre", "En trámite", "Apartada", "Reservada"):
         assert f"{texto}</span>" in html
+    assert 'class="am-pastilla am-pastilla--error">Apartada</span>' in html
+    assert 'class="am-pastilla am-pastilla--error">Reservada</span>' in html
     assert "sábado 26 de diciembre de 2026" in html
     assert html.count(">Reservar</button>") == 1
     assert "Maqueta" not in html
@@ -65,6 +74,50 @@ def test_sin_reserva_solicitar_no_se_ofrece_reservar():
 
     assert "Libre</span>" in html
     assert "Reservar</button>" not in html
+
+
+def test_bandeja_muestra_solicitud_del_residente_y_acciones_con_motivo():
+    solicitud_enviada = {
+        **EN_TRAMITE,
+        "estado": "APARTADA",
+        "estado_nombre": "Apartada",
+        "residente": {"id": "8a9b0c1d-0000-4000-8000-000000000001", "nombre": "Pedro Gómez"},
+        "unidad": {"id": "7a1b2c3d-0000-4000-8000-000000000101", "nombre": "Torre 1 – 101"},
+        "motivo": "Cumpleaños",
+        "asistentes": 20,
+        "observaciones": "Celebración familiar",
+        "motivo_decision": "",
+        "decidida_por": None,
+        "decidida_en": None,
+    }
+    permisos = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[solicitud_enviada]) as listar,
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        html = cliente_con_sesion(permisos=permisos).get(
+            f"/reservas/areas/{SALON['id']}/solicitudes/"
+        ).content.decode()
+
+    assert str(listar.call_args.args[1]) == SALON["id"]
+    assert "Pedro Gómez" in html and "Cumpleaños" in html and "Celebración familiar" in html
+    assert 'name="motivo"' in html
+    assert 'name="decision" value="RESERVADA">Aceptar</button>' in html
+    assert 'name="decision" value="RECHAZADA">Rechazar</button>' in html
+
+
+def test_decidir_solicitud_envia_motivo_y_regresa_a_la_zona():
+    id_solicitud = EN_TRAMITE["id"]
+    motivo = "Se verificó la disponibilidad."
+    with mock.patch("cliente_api.reservas.decidir") as decidir:
+        respuesta = cliente_con_sesion(permisos=["reserva.aprobar"]).post(
+            f"/reservas/solicitudes/{id_solicitud}/decision/",
+            {"area": SALON["id"], "decision": "RESERVADA", "motivo": motivo},
+        )
+
+    assert str(decidir.call_args.args[1]) == id_solicitud
+    assert decidir.call_args.args[2] == {"decision": "RESERVADA", "motivo": motivo}
+    assert respuesta["Location"] == f"/reservas/areas/{SALON['id']}/solicitudes/?actualizada=1"
 
 
 def test_reservar_toma_el_bloqueo_y_abre_la_solicitud():

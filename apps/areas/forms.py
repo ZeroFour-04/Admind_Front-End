@@ -7,7 +7,12 @@ class AreaForm(forms.Form):
     descripcion = forms.CharField(label="Descripción", required=False, widget=forms.Textarea(attrs={"rows": 3}))
     hora_apertura = forms.TimeField(label="Abre a las")
     hora_cierre = forms.TimeField(label="Cierra a las")
-    duracion_franja_minutos = forms.IntegerField(label="Duración de cada franja, en minutos", min_value=1, max_value=1440)
+    duracion_franja_minutos = forms.IntegerField(
+        label="Duración de cada franja, en minutos",
+        min_value=120,
+        max_value=1440,
+        help_text="Cada reserva debe durar al menos 2 horas.",
+    )
 
     def clean(self):
         datos = super().clean()

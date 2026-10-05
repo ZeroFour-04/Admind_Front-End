@@ -1,0 +1,72 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Solicitudes de zona común{% endblock %}
+{% block titulo_vista %}Solicitudes de zona común{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if actualizada %}
+  <div class="aviso-exito" role="status">La decisión quedó guardada.</div>
+{% endif %}
+
+{% if area %}
+  <p class="vista__guia">Solicitudes para {{ area.nombre }}.</p>
+  {% for solicitud in solicitudes %}
+    <article class="am-tarjeta tarjeta-contenido">
+      <header class="acciones">
+        <h2>{{ solicitud.residente.nombre }}</h2>
+        <span class="am-pastilla {% if solicitud.estado == 'APARTADA' %}am-pastilla--tramite{% elif solicitud.estado == 'RESERVADA' %}am-pastilla--confirmado{% else %}am-pastilla--error{% endif %}">{{ solicitud.estado_nombre }}</span>
+      </header>
+      <dl>
+        <dt>Fecha y horario</dt>
+        <dd>{{ solicitud.fecha }} · {{ solicitud.hora_inicio }} a {{ solicitud.hora_fin }}</dd>
+        <dt>Unidad</dt>
+        <dd>{% if solicitud.unidad %}{{ solicitud.unidad.nombre }}{% else %}No indicada{% endif %}</dd>
+        <dt>Motivo del residente</dt>
+        <dd>{{ solicitud.motivo }}</dd>
+        <dt>Asistentes</dt>
+        <dd>{{ solicitud.asistentes|default:"No indicados" }}</dd>
+        {% if solicitud.observaciones %}
+          <dt>Observaciones</dt>
+          <dd>{{ solicitud.observaciones }}</dd>
+        {% endif %}
+        {% if solicitud.motivo_decision %}
+          <dt>Motivo de la decisión</dt>
+          <dd>{{ solicitud.motivo_decision }}</dd>
+          {% if solicitud.decidida_por %}
+            <dt>Decidida por</dt>
+            <dd>{{ solicitud.decidida_por.nombre }} · {{ solicitud.decidida_en|date:"d/m/Y H:i" }}</dd>
+          {% endif %}
+        {% endif %}
+      </dl>
+      {% if solicitud.estado == "APARTADA" %}
+        <form method="post" action="{% url 'reservas:decidir' solicitud.id %}" class="am-formulario">
+          {% csrf_token %}
+          <input type="hidden" name="area" value="{{ area.id }}">
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="motivo-{{ solicitud.id }}">Motivo de la decisión</label>
+            <textarea class="am-campo__control" id="motivo-{{ solicitud.id }}" name="motivo" rows="3" maxlength="1000" required></textarea>
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--primario" type="submit" name="decision" value="RESERVADA">Aceptar</button>
+            <button class="am-btn am-btn--secundario" type="submit" name="decision" value="RECHAZADA">Rechazar</button>
+          </div>
+        </form>
+      {% endif %}
+    </article>
+  {% empty %}
+    {% if not error_de_solicitudes %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">No hay solicitudes para esta zona común</p>
+      <p class="am-vacio__texto">Las solicitudes enviadas por los residentes aparecerán aquí.</p>
+    </div>
+    {% endif %}
+  {% endfor %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'areas:lista' %}">Volver a áreas comunes</a>
+  </div>
+{% endif %}
+{% endblock %}

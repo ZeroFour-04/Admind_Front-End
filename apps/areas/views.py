@@ -40,6 +40,10 @@ def lista(request, error_de_accion=None):
         "areas": areas,
         "error": error_de_accion or error,
         "puede_gestionar": tiene_permiso(request, "area.gestionar"),
+        "puede_ver_solicitudes": any(
+            tiene_permiso(request, permiso)
+            for permiso in ("reserva.ver_todas", "reserva.aprobar", "reserva.rechazar")
+        ),
         "creada": request.GET.get("creada") == "1",
     }
     return render(request, "areas/lista.html", contexto)

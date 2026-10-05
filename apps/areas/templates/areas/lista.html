@@ -18,7 +18,7 @@
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}
 {% if areas %}
-  {% include "areas/_tabla_areas.html" with acciones=puede_gestionar %}
+  {% include "areas/_tabla_areas.html" with acciones=puede_gestionar ver_solicitudes=puede_ver_solicitudes %}
 {% elif not error %}
   <div class="am-vacio">
     <p class="am-vacio__titulo">Todavía no hay áreas comunes</p>
