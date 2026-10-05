@@ -15,7 +15,8 @@ MENSAJES_POR_ESTADO = {
     404: "No encontrado.",
     # Conflicto de estado: se muestra el `detail` de la API; esto es solo por si no lo trae.
     409: "No se pudo hacer porque el estado cambió. Recarga la página e intenta de nuevo.",
-    429: "Hiciste demasiadas búsquedas. Espera un rato e intenta de nuevo.",
+    # Cada límite explica lo suyo en el `detail` de la API; esto es solo por si no lo trae.
+    429: "Hiciste demasiados intentos. Espera un rato e intenta de nuevo.",
 }
 MENSAJE_ERROR_GENERAL = "El servidor de AdMind no pudo atender la petición. Intenta de nuevo en unos minutos."
 
@@ -50,6 +51,9 @@ class ErrorDeApi(Exception):
                 self.mensaje = cuerpo["detail"]
         elif estado == 401 and "detail" in cuerpo:
             # El login responde aquí su mensaje genérico, que no revela si el correo existe (HU-01).
+            self.mensaje = cuerpo["detail"]
+        elif estado == 429 and "detail" in cuerpo:
+            # Búsquedas de persona, enlaces de recuperación: cada límite trae su propio texto.
             self.mensaje = cuerpo["detail"]
 
 
