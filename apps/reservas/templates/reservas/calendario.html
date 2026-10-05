@@ -76,6 +76,7 @@
 {% if area and dia_elegido %}
   <section aria-labelledby="titulo-franjas">
     <h2 id="titulo-franjas">{{ area.nombre }}, {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower }}</h2>
+    <p class="vista__guia">Horario para reservas: {{ area.hora_apertura }} a {{ area.hora_cierre }}.</p>
     <ul class="franjas" role="list">
       {% for franja in franjas %}
         <li class="franjas__item">

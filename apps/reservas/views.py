@@ -23,8 +23,8 @@ from .forms import SolicitudForm
 PASTILLA_POR_ESTADO = {
     "libre": ("Libre", "am-pastilla--confirmado"),
     "en_solicitud": ("En trámite", "am-pastilla--tramite"),
-    "apartada": ("Apartada", "am-pastilla--tramite"),
-    "reservada": ("Reservada", "am-pastilla--neutro"),
+    "apartada": ("Apartada", "am-pastilla--error"),
+    "reservada": ("Reservada", "am-pastilla--error"),
     "pasada": ("Ya pasó", "am-pastilla--neutro"),
     "propia": ("Tuya", "am-pastilla--info"),
     "no_disponible": ("No disponible", "am-pastilla--neutro"),
@@ -109,6 +109,52 @@ def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
 
 def calendario(request):
     return pantalla_del_calendario(request)
+
+
+def cargar_solicitudes_area(request, area_id):
+    try:
+        return api_reservas.solicitudes_del_area(request, area_id), None
+    except ApiNoDisponible:
+        return [], MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as error:
+        return [], error.mensaje
+
+
+def pantalla_solicitudes_area(request, area_id, error=None):
+    solicitudes, error_de_solicitudes = cargar_solicitudes_area(request, area_id)
+    areas, error_de_areas = cargar_areas(request)
+    area = next((area for area in areas if area["id"] == str(area_id)), None)
+    if area is None and not error_de_areas:
+        error_de_areas = "No se encontró esta zona común."
+    return render(request, "reservas/solicitudes_area.html", {
+        "area": area,
+        "solicitudes": solicitudes,
+        "error": error or error_de_areas or error_de_solicitudes,
+        "actualizada": request.GET.get("actualizada") == "1",
+        "error_de_solicitudes": error_de_solicitudes,
+    })
+
+
+def solicitudes_area(request, area_id):
+    return pantalla_solicitudes_area(request, area_id)
+
+
+@require_POST
+def decidir(request, solicitud_id):
+    decision = request.POST.get("decision")
+    motivo = request.POST.get("motivo", "").strip()
+    area_id = request.POST.get("area")
+    if decision not in ("RESERVADA", "RECHAZADA") or not motivo:
+        return pantalla_solicitudes_area(
+            request, area_id, "Selecciona aceptar o rechazar y escribe el motivo de la decisión."
+        )
+    try:
+        api_reservas.decidir(request, solicitud_id, {"decision": decision, "motivo": motivo})
+    except ApiNoDisponible:
+        return pantalla_solicitudes_area(request, area_id, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return pantalla_solicitudes_area(request, area_id, error.mensaje)
+    return redirect(f"{reverse('reservas:solicitudes-area', kwargs={'area_id': area_id})}?actualizada=1")
 
 
 @require_POST

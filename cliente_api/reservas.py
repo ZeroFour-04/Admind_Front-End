@@ -32,3 +32,18 @@ def enviar(request, solicitud_id, datos):
 def mis_solicitudes(request):
     """GET /reservas/solicitudes/ → las solicitudes propias, la más reciente primero."""
     return pedir(request, "GET", "reservas/solicitudes/")
+
+
+def solicitudes_del_area(request, area_id):
+    """GET /reservas/areas/<id>/solicitudes/ → solicitudes enviadas de una zona e historial de decisiones."""
+    return pedir(request, "GET", f"reservas/areas/{area_id}/solicitudes/")
+
+
+def solicitudes_para_bandeja(request):
+    """GET /reservas/bandeja/ → reservas enviadas, aceptadas o rechazadas del conjunto activo."""
+    return pedir(request, "GET", "reservas/bandeja/")
+
+
+def decidir(request, solicitud_id, datos):
+    """POST /reservas/solicitudes/<id>/decision/ → acepta o rechaza una solicitud con motivo."""
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/decision/", datos)

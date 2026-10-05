@@ -85,6 +85,12 @@
       <p>Cancelaste esta solicitud. La franja quedó libre.</p>
     {% elif solicitud.estado == "APARTADA" %}
       <p>Tu solicitud quedó apartada. La administración la revisará y te avisará.</p>
+    {% elif solicitud.estado == "RESERVADA" %}
+      <p>Tu solicitud fue aceptada y la zona común quedó reservada.</p>
+      {% if solicitud.motivo_decision %}<p>Comentario de la administración: {{ solicitud.motivo_decision }}</p>{% endif %}
+    {% elif solicitud.estado == "RECHAZADA" %}
+      <p>Tu solicitud fue rechazada. La franja quedó libre.</p>
+      {% if solicitud.motivo_decision %}<p>Comentario de la administración: {{ solicitud.motivo_decision }}</p>{% endif %}
     {% else %}
       <p>Esta solicitud está {{ solicitud.estado_nombre|lower }}.</p>
     {% endif %}

@@ -9,7 +9,7 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
         <th>Nombre</th>
         <th>Horario</th>
         <th>Estado</th>
-        {% if acciones %}<th>Acciones</th>{% endif %}
+        {% if acciones or ver_solicitudes %}<th>Acciones</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -26,17 +26,20 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
               <span class="am-pastilla am-pastilla--confirmado">Disponible</span>
             {% endif %}
           </td>
-          {% if acciones %}
+          {% if acciones or ver_solicitudes %}
             <td>
-              {% if area.activo %}
-                <div class="acciones">
+              <div class="acciones">
+                {% if ver_solicitudes %}
+                  <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitudes-area' area.id %}">Solicitudes</a>
+                {% endif %}
+                {% if acciones and area.activo %}
                   <a class="am-btn am-btn--secundario" href="{% url 'areas:editar' area.id %}">Editar</a>
                   <form method="post" action="{% url 'areas:desactivar' area.id %}">
                     {% csrf_token %}
                     <button class="am-btn am-btn--texto" type="submit">Desactivar</button>
                   </form>
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </td>
           {% endif %}
         </tr>

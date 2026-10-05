@@ -1,6 +1,7 @@
 """Pantallas de HU-09: catálogo de áreas comunes y paso de áreas del asistente. La API se simula."""
 from unittest import mock
 
+from apps.areas.forms import AreaForm
 from cliente_api.http import ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
@@ -39,6 +40,17 @@ def test_sin_area_gestionar_no_se_ven_acciones():
     assert "Desactivar" not in html and "Editar" not in html
 
 
+def test_secretaria_ve_el_boton_solicitudes_sin_acciones_de_edicion():
+    permisos = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
+    with mock.patch("cliente_api.areas.listar", return_value=[SALON]):
+        html = cliente_con_sesion(permisos=permisos).get("/areas/").content.decode()
+
+    assert f'href="/reservas/areas/{SALON["id"]}/solicitudes/"' in html
+    assert ">Solicitudes</a>" in html
+    assert ">Editar</a>" not in html
+    assert ">Desactivar</button>" not in html
+
+
 def test_sin_areas_invita_a_crear_la_primera():
     with mock.patch("cliente_api.areas.listar", return_value=[]):
         html = cliente_con_sesion(permisos=ADMINISTRACION).get("/areas/").content.decode()
@@ -56,6 +68,15 @@ def test_crear_manda_las_horas_como_texto_y_vuelve_a_la_lista():
         "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": 240,
     }
     assert respuesta["Location"] == "/areas/?creada=1"
+
+
+def test_la_duracion_minima_de_la_franja_es_de_dos_horas():
+    menor_al_minimo = AreaForm(data={**DATOS, "duracion_franja_minutos": "119"})
+    minimo = AreaForm(data={**DATOS, "duracion_franja_minutos": "120"})
+
+    assert not menor_al_minimo.is_valid()
+    assert "duracion_franja_minutos" in menor_al_minimo.errors
+    assert minimo.is_valid()
 
 
 def test_un_400_de_la_api_cae_en_su_campo():

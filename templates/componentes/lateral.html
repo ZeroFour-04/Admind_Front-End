@@ -6,7 +6,7 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
   <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}>Inicio</a>
   <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
-  {% if "area.gestionar" in request.session.permisos %}
+  {% if "area.gestionar" in request.session.permisos or "reserva.ver_todas" in request.session.permisos or "reserva.aprobar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}>Áreas comunes</a>
   {% endif %}
   {% endif %}

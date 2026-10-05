@@ -13,7 +13,7 @@ Parámetros: formulario.
 
 {% include "componentes/campo.html" with campo=formulario.hora_apertura tipo="time" %}
 {% include "componentes/campo.html" with campo=formulario.hora_cierre tipo="time" %}
-{% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Las franjas se arman en bloques de esta duración desde la hora de apertura." %}
+{% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Mínimo 120 minutos (2 horas). Las franjas se arman en bloques desde la hora de apertura." %}
 
 {% if formulario.en_mantenimiento %}
   <label class="opciones-alcance__opcion">
