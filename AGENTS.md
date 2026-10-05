@@ -1,0 +1,18 @@
+# Admind_Front-End — router para agentes de IA
+
+Servidor web de AdMind: plantillas de Django + Alpine.js, sin base de datos. Le pide todo a la API (`Admind_Backend`) a través de `cliente_api/`. Rama de trabajo: `desarrollo`.
+
+**La documentación del proyecto no vive en este repositorio.** Vive en el repositorio hermano `Admind_Documentacion`, que en el espacio de trabajo local queda en `../../Documentacion/Admind_Documentacion/`.
+
+Antes de tocar código:
+
+1. Lee su `AGENTS.md` (el router completo, con las reglas que no se saltan) y su `README.md` (el índice).
+2. Abre solo las notas que la tarea necesita. Para ubicar código: `02_Arquitectura/mapa_codigo.md` y `02_Arquitectura/frontend.md`. Antes de crear una pantalla: `03_Reglas/reglas_frontend.md` y `04_Diseno/sistema_visual.md`.
+3. Lee el `README.md` de la carpeta de este repositorio que vas a tocar.
+
+Comandos (Git Bash, desde esta carpeta; la API debe estar corriendo en el puerto 8000):
+
+```bash
+./.venv/Scripts/python.exe -m pytest -q
+./.venv/Scripts/python.exe manage.py runserver 8001
+```
