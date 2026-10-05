@@ -1,4 +1,5 @@
 """Pantallas de reservas (HU-11): franjas del día, tomar el bloqueo y la solicitud en trámite. La API se simula."""
+from datetime import date
 from unittest import mock
 
 from django.urls import URLResolver, get_resolver
@@ -53,6 +54,42 @@ def ver_franjas(permisos=RESIDENTE):
     ):
         html = cliente_con_sesion(permisos=permisos).get(DIA).content.decode()
     return html, franjas
+
+
+def test_el_calendario_no_enlaza_dias_anteriores_a_hoy():
+    with (
+        mock.patch("apps.reservas.views.timezone.localdate", return_value=date(2026, 10, 5)),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        html = cliente_con_sesion().get("/reservas/?mes=2026-10").content.decode()
+
+    assert 'href="?area=&amp;mes=2026-10&amp;dia=2026-10-04"' not in html
+    assert 'href="?area=&amp;mes=2026-10&amp;dia=2026-10-05"' in html
+    assert "no disponible" not in html
+
+
+def test_al_cambiar_el_area_se_envia_el_formulario_sin_boton_ver_franjas():
+    with mock.patch("cliente_api.areas.listar", return_value=[SALON]):
+        html = cliente_con_sesion().get("/reservas/?mes=2026-10").content.decode()
+
+    assert 'name="area" data-envio-al-cambiar' in html
+    assert "Ver franjas" not in html
+    assert 'js/calendario-reservas.js' in html
+    assert html.index("selector-area") < html.index('class="am-tarjeta calendario"')
+
+
+def test_el_calendario_ignora_fecha_pasada_enviada_directamente():
+    with (
+        mock.patch("apps.reservas.views.timezone.localdate", return_value=date(2026, 10, 5)),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+        mock.patch("cliente_api.reservas.franjas") as franjas,
+    ):
+        html = cliente_con_sesion().get(
+            f"/reservas/?area={SALON['id']}&mes=2026-10&dia=2026-10-04"
+        ).content.decode()
+
+    franjas.assert_not_called()
+    assert "Día elegido:" not in html
 
 
 def test_las_franjas_muestran_su_estado_en_texto():

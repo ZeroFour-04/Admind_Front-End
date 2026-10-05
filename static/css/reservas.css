@@ -1,6 +1,7 @@
 /* RESERVAS — calendario de zonas comunes. Solo variables de design-system/.
    El día elegido no usa el acento: no es uno de sus cuatro sitios (maestro §6.1). */
 
+.calendario-reservas{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,480px);align-items:start;gap:var(--e-4)}
 .calendario{width:100%;max-width:480px;padding:var(--e-5)}
 .calendario__encabezado{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--e-3);margin-bottom:var(--e-4)}
 
@@ -9,10 +10,15 @@
 .calendario__tabla abbr{text-decoration:none}
 .calendario__tabla td{padding:1px;height:var(--toque-minimo)}
 
-.calendario__dia{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:var(--toque-minimo);border:1px solid transparent;border-radius:var(--radio-control);color:var(--texto-fuerte);line-height:1.1;text-decoration:none;transition:background var(--transicion),border-color var(--transicion)}
-.calendario__dia:hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
-.calendario__dia--elegido{background:var(--superficie-hundida);border-color:var(--texto-fuerte);font-weight:var(--peso-texto-medio)}
+.calendario__dia{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:var(--toque-minimo);border:1px solid transparent;border-radius:var(--radio-control);line-height:1.1;text-decoration:none;transition:background var(--transicion),border-color var(--transicion)}
+a.calendario__dia{background:var(--acento-50);color:var(--acento-900)}
+a.calendario__dia:hover{border-color:var(--acento-600)}
+.calendario__dia--elegido{border-color:var(--acento-700);font-weight:var(--peso-texto-medio)}
 .calendario__hoy{font-size:var(--tipo-meta);color:var(--texto-medio)}
+
+@media (max-width:480px){
+  .calendario-reservas{grid-template-columns:minmax(0,1fr)}
+}
 
 @media (max-width:480px){
   .calendario{padding:var(--e-2)}
@@ -21,7 +27,8 @@
 }
 
 /* Selector de área y franjas del día (HU-11). El estado va en una pastilla con texto. */
-.selector-area{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--e-3);margin-bottom:var(--e-4)}
+.selector-area{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--e-3);max-width:none;margin:0}
+.selector-area .am-campo{width:100%}
 .franjas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2);max-width:640px}
 .franjas__item{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-3);min-height:var(--toque-minimo);padding:var(--e-2) var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control)}
 .franjas__item form{margin-left:auto}
