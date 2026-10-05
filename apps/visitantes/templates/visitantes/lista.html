@@ -1,0 +1,112 @@
+{% extends "base/aplicacion.html" %}
+{% load static tz %}
+
+{% block titulo %}{% if es_vigilante %}Visitante{% else %}Historial de visitantes{% endif %}{% endblock %}
+{% block titulo_vista %}{% if es_vigilante %}Visitante{% else %}Historial de visitantes{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+  {% if registrado %}
+    <div class="am-alerta" role="status">Ingreso de visitante registrado.</div>
+  {% endif %}
+  {% if error %}
+    <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+{% if es_vigilante %}
+  <form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" with formulario=formulario %}
+    {% include "componentes/campo.html" with campo=formulario.cedula modo="numeric" %}
+    {% include "componentes/campo.html" with campo=formulario.nombre %}
+    <fieldset class="am-campo" data-vehiculo-selector>
+      <legend class="am-campo__etiqueta">{{ formulario.ingresa_con_vehiculo.label }}</legend>
+      {% for opcion in formulario.ingresa_con_vehiculo %}
+        <label class="am-opcion">
+          {{ opcion.tag }} {{ opcion.choice_label }}
+        </label>
+      {% endfor %}
+      {% if formulario.ingresa_con_vehiculo.errors %}
+        <span class="am-campo__error" role="alert">{{ formulario.ingresa_con_vehiculo.errors|join:" " }}</span>
+      {% endif %}
+    </fieldset>
+    <div data-vehiculo-campos{% if formulario.ingresa_con_vehiculo.value != "si" %} hidden{% endif %}>
+      {% include "componentes/campo.html" with campo=formulario.placa_vehiculo %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ formulario.tipo_vehiculo.id_for_label }}">
+          {{ formulario.tipo_vehiculo.label }}
+        </label>
+        <select class="am-campo__control" id="{{ formulario.tipo_vehiculo.id_for_label }}"
+                name="{{ formulario.tipo_vehiculo.html_name }}">
+          <option value="">Selecciona Auto o Moto</option>
+          {% for valor, etiqueta in formulario.tipo_vehiculo.field.choices %}
+            <option value="{{ valor }}"{% if formulario.tipo_vehiculo.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+          {% endfor %}
+        </select>
+        {% if formulario.tipo_vehiculo.errors %}
+          <span class="am-campo__error" role="alert">{{ formulario.tipo_vehiculo.errors|join:" " }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.apartamento_visitado.id_for_label }}">
+        {{ formulario.apartamento_visitado.label }}
+      </label>
+      <select class="am-campo__control" id="{{ formulario.apartamento_visitado.id_for_label }}"
+              name="{{ formulario.apartamento_visitado.html_name }}" required
+              {% if formulario.apartamento_visitado.errors %}aria-invalid="true"{% endif %}>
+        {% for valor, etiqueta in formulario.apartamento_visitado.field.choices %}
+          <option value="{{ valor }}"{% if formulario.apartamento_visitado.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      {% if formulario.apartamento_visitado.errors %}
+        <span class="am-campo__error" role="alert">{{ formulario.apartamento_visitado.errors|join:" " }}</span>
+      {% endif %}
+    </div>
+    <p class="am-campo__ayuda">La hora de ingreso se asigna automáticamente con la hora de Colombia.</p>
+    <div class="acciones">
+      <button class="am-btn am-btn--primario" type="submit">Registrar ingreso</button>
+    </div>
+  </form>
+
+{% endif %}
+{% if es_vigilante or puede_ver_historico %}
+  {% if visitantes %}
+    <div class="am-tabla-caja">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th>CC</th>
+            <th>Nombre</th>
+            <th>Placa vehículo</th>
+            <th>Tipo vehículo</th>
+            <th>Hora ingreso</th>
+            <th>Apartamento a visitar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for visitante in visitantes %}
+            <tr>
+              <td>{{ visitante.cedula }}</td>
+              <td>{{ visitante.nombre }}</td>
+              <td>{{ visitante.placa_vehiculo|default:"—" }}</td>
+              <td>{{ visitante.tipo_vehiculo|default:"—" }}</td>
+              <td>{{ visitante.hora_entrada|localtime|date:"d/m/Y H:i" }}</td>
+              <td>{{ visitante.apartamento_visitado }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% elif not error %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">
+        {% if es_vigilante %}No hay visitantes registrados hoy{% else %}No hay visitantes en el historial{% endif %}
+      </p>
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if es_vigilante %}<script src="{% static 'js/visitantes.js' %}" defer></script>{% endif %}
+{% endblock %}

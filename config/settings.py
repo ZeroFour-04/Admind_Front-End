@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.triage",
     "apps.unidades",
     "apps.usuarios",
+    "apps.visitantes",
 ]
 
 MIDDLEWARE = [
