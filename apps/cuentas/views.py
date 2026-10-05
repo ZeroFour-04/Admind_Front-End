@@ -43,7 +43,11 @@ def ingreso(request):
             abrir_sesion(request, datos)
             return destino_despues_de_entrar(request)
 
-    contexto = {"formulario": formulario, "restablecida": "restablecida" in request.GET}
+    contexto = {
+        "formulario": formulario,
+        "restablecida": "restablecida" in request.GET,
+        "segundo_factor_restablecido": "segundo_factor_restablecido" in request.GET,
+    }
     return render(request, "cuentas/ingreso.html", contexto)
 
 
@@ -173,6 +177,44 @@ def verificar_segundo_factor(request):
             guardar_estado(request, estado)
             return destino_despues_de_entrar(request)
     return render(request, "cuentas/verificar_segundo_factor.html", {"formulario": formulario})
+
+
+@antes_del_segundo_factor
+@require_http_methods(["GET", "POST"])
+def problemas_segundo_factor(request):
+    """Sin la aplicación ni los códigos de respaldo: pide el enlace que quita el segundo factor."""
+    if not segundo_factor_pendiente(request):
+        return destino_despues_de_entrar(request)
+    enviado = error = None
+    if request.method == "POST":
+        try:
+            respuesta = api_cuentas.solicitar_restablecer_dos_factores(request)
+        except ApiNoDisponible:
+            error = MENSAJE_API_NO_DISPONIBLE
+        except ErrorDeApi as api_error:
+            error = api_error.mensaje
+        else:
+            enviado = respuesta["detail"]
+    return render(request, "cuentas/problemas_segundo_factor.html", {"enviado": enviado, "error": error})
+
+
+@publica
+@require_http_methods(["GET", "POST"])
+def restablecer_segundo_factor(request, uid, token):
+    """El enlace del correo. Abrirlo no quita nada: hay que confirmarlo con el botón."""
+    error = None
+    if request.method == "POST":
+        try:
+            api_cuentas.restablecer_dos_factores(request, uid, token)
+        except ApiNoDisponible:
+            error = MENSAJE_API_NO_DISPONIBLE
+        except ErrorDeApi as api_error:
+            error = api_error.mensaje
+        else:
+            # La API cerró todas las sesiones de esa cuenta: esta también.
+            cerrar_sesion(request)
+            return redirect(f"{reverse('cuentas:ingreso')}?segundo_factor_restablecido=1")
+    return render(request, "cuentas/restablecer_segundo_factor.html", {"error": error})
 
 
 @antes_del_segundo_factor

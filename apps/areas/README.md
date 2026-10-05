@@ -6,7 +6,7 @@ El catálogo de zonas comunes del conjunto.
 
 ## Qué va aquí
 
-- Listado y edición de áreas, con su clasificación
+- Listado y edición de áreas, identificadas por nombre
 - Plantilla de condiciones del alquiler por área
 
 ## Con qué se conecta

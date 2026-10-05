@@ -11,7 +11,6 @@
     <a class="am-btn am-btn--secundario" href="{% url 'areas:lista' %}">Volver a las áreas</a>
   </div>
 {% else %}
-  <p class="vista__guia">Clasificación: {{ area.clasificacion_nombre }}. No se cambia después de crear el área.</p>
   <form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
     {% csrf_token %}
     {% include "areas/_campos_area.html" %}

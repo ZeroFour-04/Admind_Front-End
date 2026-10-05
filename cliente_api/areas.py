@@ -8,7 +8,7 @@ def listar(request):
 
 
 def crear(request, datos):
-    """POST /areas/ → el área creada. La clasificación es obligatoria."""
+    """POST /areas/ → el área creada."""
     return pedir(request, "POST", "areas/", datos)
 
 

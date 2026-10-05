@@ -8,6 +8,9 @@
 {% if restablecida %}
   <div class="aviso-exito" role="status">Tu contraseña cambió. Inicia sesión con la nueva.</div>
 {% endif %}
+{% if segundo_factor_restablecido %}
+  <div class="aviso-exito" role="status">Quitamos la verificación en dos pasos. Inicia sesión y configúrala de nuevo.</div>
+{% endif %}
 
 <form method="post" action="{% url 'cuentas:ingreso' %}" class="formulario" novalidate>
   {% csrf_token %}

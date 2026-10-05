@@ -86,12 +86,12 @@ def test_guardar_manda_area_tipo_parametros_y_vigencia():
 
 
 def test_el_400_de_la_api_cae_en_su_campo():
-    rechazo = ErrorDeApi(400, {"parametros": ["Un área común esencial no se puede restringir por mora."]})
+    rechazo = ErrorDeApi(400, {"parametros": ["Indica al menos un día de la semana o una fecha."]})
     with mock.patch("cliente_api.reglas.crear", side_effect=rechazo):
         html = cliente_con_sesion(permisos=ADMINISTRACION).post(
             "/reglas/nueva/REQUIERE_PAZ_Y_SALVO/", {"area": SALON["id"], "vigencia_desde": "2026-10-01"}
         ).content.decode()
-    assert "Un área común esencial no se puede restringir por mora." in html
+    assert "Indica al menos un día de la semana o una fecha." in html
 
     rechazo = ErrorDeApi(400, {"maximo": ["Debe ser mayor o igual a 1."]})
     with mock.patch("cliente_api.reglas.crear", side_effect=rechazo):

@@ -8,7 +8,7 @@ from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import areas as api_areas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import AYUDA_POR_CLASIFICACION, AreaForm, EditarAreaForm
+from .forms import AreaForm, EditarAreaForm
 
 
 def cargar_areas(request):
@@ -52,7 +52,7 @@ def nueva(request):
     formulario = AreaForm(request.POST or None)
     if request.method == "POST" and formulario.is_valid() and crear_desde(request, formulario):
         return redirect(f"{reverse('areas:lista')}?creada=1")
-    return render(request, "areas/nueva.html", {"formulario": formulario, "ayudas": AYUDA_POR_CLASIFICACION})
+    return render(request, "areas/nueva.html", {"formulario": formulario})
 
 
 @require_http_methods(["GET", "POST"])

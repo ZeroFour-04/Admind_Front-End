@@ -120,7 +120,7 @@ class DiasNoReservablesForm(ParametrosForm):
 
 
 class RequierePazYSalvoForm(ParametrosForm):
-    """Sin parámetros. La API la rechaza sobre un área común esencial."""
+    """Sin parámetros."""
 
 
 FORMULARIO_POR_TIPO = {

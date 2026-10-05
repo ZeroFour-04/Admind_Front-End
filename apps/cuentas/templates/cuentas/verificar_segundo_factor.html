@@ -13,6 +13,10 @@
   <button type="submit" class="am-btn am-btn--primario formulario__envio">Verificar</button>
 </form>
 
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:problemas-segundo-factor' %}">¿Problemas con la verificación en dos pasos?</a>
+</p>
+
 <form method="post" action="{% url 'cuentas:salir' %}" class="tarjeta-sin-sesion__pie">
   {% csrf_token %}
   <button type="submit" class="am-btn am-btn--texto">Salir</button>

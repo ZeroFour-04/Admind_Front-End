@@ -1,0 +1,21 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Quitar la verificación en dos pasos{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Quitar la verificación en dos pasos</h1>
+<p class="tarjeta-sin-sesion__texto">Tu aplicación de autenticación y tus códigos de respaldo dejan de servir, y se cierran todas tus sesiones abiertas, en cualquier equipo. Cuando vuelvas a entrar configuras la verificación en dos pasos otra vez.</p>
+
+{% if error %}
+  <div class="aviso-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="formulario">
+  {% csrf_token %}
+  <button type="submit" class="am-btn am-btn--peligro formulario__envio">Quitar la verificación en dos pasos</button>
+</form>
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:ingreso' %}">Volver a iniciar sesión</a>
+</p>
+{% endblock %}

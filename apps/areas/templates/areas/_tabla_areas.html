@@ -7,7 +7,6 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
     <thead>
       <tr>
         <th>Nombre</th>
-        <th>Clasificación</th>
         <th>Horario</th>
         <th>Estado</th>
         {% if acciones %}<th>Acciones</th>{% endif %}
@@ -17,10 +16,6 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
       {% for area in areas %}
         <tr>
           <td>{{ area.nombre }}</td>
-          <td>
-            {{ area.clasificacion_nombre }}
-            {% if area.es_esencial %}<span class="am-pastilla am-pastilla--info">Esencial</span>{% endif %}
-          </td>
           <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">franjas de {{ area.duracion_franja_minutos }} min</span></td>
           <td>
             {% if not area.activo %}

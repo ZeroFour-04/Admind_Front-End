@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.areas import views as vistas_de_areas
-from apps.areas.forms import AYUDA_POR_CLASIFICACION, AreaForm
+from apps.areas.forms import AreaForm
 from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import conjuntos as api_conjuntos
@@ -158,7 +158,6 @@ def areas(request):
     lista_de_areas, error = vistas_de_areas.cargar_areas(request)
     contexto = {
         "formulario": formulario,
-        "ayudas": AYUDA_POR_CLASIFICACION,
         "areas": lista_de_areas,
         "error": error,
         "paso": 3,

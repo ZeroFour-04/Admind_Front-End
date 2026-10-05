@@ -94,3 +94,13 @@ def activar_dos_factores(request, codigo):
 def verificar_dos_factores(request, codigo):
     """POST /auth/dos-factores/verificar/ → estado de la sesión."""
     return pedir(request, "POST", "auth/dos-factores/verificar/", {"codigo": codigo})
+
+
+def solicitar_restablecer_dos_factores(request):
+    """POST /auth/dos-factores/restablecer/ → 202 con el aviso de que el enlace va al correo de la cuenta."""
+    return pedir(request, "POST", "auth/dos-factores/restablecer/")
+
+
+def restablecer_dos_factores(request, uid, token):
+    """POST /auth/dos-factores/restablecer/confirmar/ → 204. Quita el segundo factor y cierra las sesiones."""
+    return pedir(request, "POST", "auth/dos-factores/restablecer/confirmar/", {"uid": uid, "token": token})

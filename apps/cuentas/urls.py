@@ -16,5 +16,11 @@ urlpatterns = [
     ),
     path("segundo-factor/configurar/", views.configurar_segundo_factor, name="configurar-segundo-factor"),
     path("segundo-factor/verificar/", views.verificar_segundo_factor, name="verificar-segundo-factor"),
+    path("segundo-factor/problemas/", views.problemas_segundo_factor, name="problemas-segundo-factor"),
+    path(
+        "segundo-factor/restablecer/<str:uid>/<str:token>/",
+        views.restablecer_segundo_factor,
+        name="restablecer-segundo-factor",
+    ),
     path("segundo-factor/continuar/", views.continuar, name="continuar"),
 ]

@@ -8,6 +8,7 @@ Las pantallas de entrada.
 
 - Ingreso y salida
 - Verificación del 2FA TOTP y su activación para quien tiene permisos sensibles
+- "¿Problemas con la verificación en dos pasos?": pedir por correo el enlace que quita el 2FA y la pantalla que lo confirma
 - Recuperación de contraseña
 
 ## Con qué se conecta
