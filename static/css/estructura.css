@@ -117,6 +117,7 @@ details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-me
 .campo-archivo{padding:var(--e-2) var(--e-3)}
 /* Recortador: el cuadro muestra lo que quedará en la foto. La imagen se mueve por debajo. */
 .recortador{display:flex;flex-direction:column;gap:var(--e-2);max-width:256px}
+.recortador[hidden]{display:none}
 .recortador__marco{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);cursor:grab;touch-action:none}
 .recortador__marco:active{cursor:grabbing}
 .recortador__marco img{position:absolute;top:0;left:0;max-width:none;pointer-events:none;user-select:none}

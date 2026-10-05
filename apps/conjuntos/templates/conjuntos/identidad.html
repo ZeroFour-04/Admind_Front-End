@@ -51,7 +51,8 @@
         {% if logo.archivo.errors %}<span class="am-campo__error" id="{{ logo.archivo.id_for_label }}-error">{{ logo.archivo.errors|join:" " }}</span>{% endif %}
       </div>
 
-      <div class="recortador" x-show="lista" style="display:none">
+      {# Se muestra con hidden y no con x-show: x-show lo deja para el siguiente cuadro de animación, y el recortador mediría el cuadro antes, todavía oculto. #}
+      <div class="recortador" hidden :hidden="!lista">
         <p class="am-campo__etiqueta" id="recortador-titulo">Encuadre</p>
         <div class="recortador__marco" x-ref="marco" tabindex="0" role="group" aria-labelledby="recortador-titulo" aria-describedby="recortador-ayuda"
              @pointerdown="empezar" @pointermove="arrastrar" @pointerup="soltar" @pointercancel="soltar"

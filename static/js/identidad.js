@@ -82,6 +82,8 @@ document.addEventListener("alpine:init", () => {
         this.zoom = 1;
         this.url = url;
         this.lista = true;
+        // El cuadro se mide ya visible: `lista` lo muestra con :hidden, que Alpine aplica antes de
+        // $nextTick. Oculto mediría 0, la imagen quedaría de 0 px y el recorte saldría vacío.
         this.$nextTick(() => {
           this.marco = this.$refs.marco.clientWidth;
           this.x = (this.marco - this.ancho * this.escala) / 2;
@@ -145,7 +147,8 @@ document.addEventListener("alpine:init", () => {
 
     // Dibuja lo que está dentro del cuadro en un lienzo cuadrado y lo pone en el campo del archivo.
     async enviar(evento) {
-      if (!this.lista) return;
+      // Sin la medida del cuadro no hay recorte que dibujar: la foto sube tal cual, como sin JavaScript.
+      if (!this.lista || !this.marco) return;
       evento.preventDefault();
       this.enviando = true;
       const lienzo = document.createElement("canvas");
