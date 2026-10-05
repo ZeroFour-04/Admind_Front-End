@@ -3,6 +3,7 @@ from unittest import mock
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client
 
 from apps.conjuntos.forms import TAMANO_MAXIMO_LOGO
 from cliente_api.http import ErrorDeApi
@@ -251,3 +252,26 @@ def test_el_logo_viaja_a_la_api_como_formulario_multipart():
     assert argumentos["files"] == {"archivo": ("logo.png", PNG, "image/png")}
     assert "json" not in argumentos
     assert argumentos["headers"]["Authorization"] == "Token token-de-prueba"
+
+
+# Ícono de la pestaña del navegador
+
+
+def test_sin_foto_la_pestana_usa_el_icono_de_admind():
+    html = cliente_con_sesion().get("/inicio/").content.decode()
+
+    assert 'rel="icon" href="/static/img/favicon.ico"' in html
+    assert "/conjuntos/logo/" not in html.split("</head>")[0]
+
+
+def test_con_foto_la_pestana_usa_la_foto_del_conjunto():
+    head = cliente_con_sesion(conjunto_activo=CON_LOGO).get("/inicio/").content.decode().split("</head>")[0]
+
+    assert f'rel="icon" href="/conjuntos/logo/{HUELLA}/"' in head
+    assert "/static/img/favicon" not in head
+
+
+def test_sin_sesion_la_pestana_usa_el_icono_de_admind():
+    html = Client().get("/").content.decode()
+
+    assert 'rel="icon" href="/static/img/favicon.ico"' in html

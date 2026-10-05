@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}{% endblock %} · AdMind</title>
+  {# Ícono de la pestaña: la foto del conjunto activo si tiene; si no, el de AdMind. #}
+  {% if request.session.conjunto_activo.logo %}
+  <link rel="icon" href="{% url 'conjuntos:logo' request.session.conjunto_activo.logo %}">
+  <link rel="apple-touch-icon" href="{% url 'conjuntos:logo' request.session.conjunto_activo.logo %}">
+  {% else %}
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="48x48">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}" sizes="192x192">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  {% endif %}
   <link rel="stylesheet" href="{% static 'design-system/styles.css' %}">
   <link rel="stylesheet" href="{% static 'css/estructura.css' %}">
   {% block estilos %}{% endblock %}
