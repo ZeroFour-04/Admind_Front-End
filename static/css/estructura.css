@@ -64,15 +64,40 @@ a.am-btn--primario,a.am-btn--secundario{text-decoration:none}
 a.am-btn--primario:hover{color:var(--acento-tinta)}
 a.am-btn--secundario:hover{color:var(--texto-fuerte)}
 
-/* Bajo 900px el lateral pasa arriba del contenido y sus ítems se acomodan en filas. */
+/* Piezas del menú en pantallas angostas: fuera de ese ancho no se ven. */
+.am-barra__menu,.am-lateral__cerrar{display:none;align-items:center;justify-content:center;flex:none;width:var(--toque-minimo);height:var(--toque-minimo);padding:0;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-tarjeta);color:var(--texto-medio);cursor:pointer}
+.am-barra__menu:hover,.am-lateral__cerrar:hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
+.am-barra__menu svg,.am-lateral__cerrar svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.am-lateral__cerrar{border-color:transparent}
+.am-lateral__cabeza,.am-lateral__pie,.velo-lateral{display:none}
+
+/* Bajo 900px el lateral es un panel que sale desde la izquierda, sobre un velo. Lo abre el botón
+   de la barra superior (static/js/lateral.js pone y quita `am-es-abierto`). */
 @media (max-width:900px){
   .aplicacion{grid-template-columns:minmax(0,1fr)}
-  .am-lateral{flex-direction:row;flex-wrap:wrap;min-width:0;border-right:0;border-bottom:1px solid var(--borde)}
+  .am-barra__menu,.am-lateral__cerrar{display:inline-flex}
+  /* La barra en una sola fila: lo que no cabe está en el pie del lateral, y el nombre del conjunto se recorta. */
+  .am-barra__fila{flex-wrap:nowrap;column-gap:var(--e-3)}
+  .am-barra__marca,.am-barra__derecha{flex:none}
+  .am-barra--con-menu .am-barra__cambiar,.am-barra--con-menu .am-barra__tipo-usuario{display:none}
+  .am-barra__conjunto{min-width:0}
+  .am-barra__conjunto b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .am-lateral{position:fixed;inset:0 auto 0 0;z-index:20;width:min(280px,calc(100vw - var(--e-9)));min-width:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--sombra-flotante);transform:translateX(-100%);visibility:hidden;transition:transform var(--transicion),visibility var(--transicion)}
+  /* Al abrir, la visibilidad cambia de inmediato: así el foco puede entrar al panel sin esperar. */
+  .am-lateral.am-es-abierto{transform:none;visibility:visible;transition:transform var(--transicion)}
+  .am-lateral__cabeza{display:flex;align-items:center;justify-content:space-between;gap:var(--e-3);padding-left:var(--e-3);margin-bottom:var(--e-2);font-weight:var(--peso-texto-medio);color:var(--texto-fuerte)}
+  .am-lateral__pie{display:flex;flex-direction:column;gap:2px;margin-top:auto;border-top:1px solid var(--borde)}
+  .velo-lateral{display:block;position:fixed;inset:0;z-index:19;background:var(--tinta-a28);opacity:0;visibility:hidden;transition:opacity var(--transicion),visibility var(--transicion)}
+  .am-lateral.am-es-abierto + .velo-lateral{opacity:1;visibility:visible}
+  /* Con el menú abierto la página de atrás no se desplaza. */
+  html:has(.am-lateral.am-es-abierto){overflow:hidden}
   .vista{padding:var(--e-6) var(--e-4)}
 }
 @media (max-width:480px){
   .am-barra__fila{padding-inline:var(--e-4)}
   .am-barra__conjunto{padding-left:0;border-left:0}
+  /* Con menú, la marca está en la cabeza del lateral: aquí el ancho es para el conjunto. */
+  .am-barra--con-menu .am-barra__marca{display:none}
   .tarjeta-sin-sesion{padding:var(--e-6) var(--e-4)}
   .vista{padding-inline:var(--e-3)}
 }

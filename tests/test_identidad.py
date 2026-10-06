@@ -33,6 +33,23 @@ def test_la_barra_muestra_el_tipo_de_usuario_y_el_enlace_al_perfil():
     assert 'href="/perfil/" aria-label="Ver perfil del usuario"' in html
 
 
+def test_la_barra_trae_el_boton_que_abre_el_lateral_en_pantallas_angostas():
+    html = cliente_con_sesion().get("/inicio/").content.decode()
+
+    assert 'aria-controls="menu-lateral" aria-expanded="false" data-abrir-menu' in html
+    assert '<nav class="am-lateral" id="menu-lateral"' in html
+    assert "js/lateral.js" in html
+
+
+def test_el_lateral_trae_en_el_pie_lo_que_la_barra_oculta_en_pantallas_angostas():
+    html = cliente_con_sesion(tipo_usuario="Secretaría").get("/inicio/").content.decode()
+    pie = html.split('<div class="am-lateral__pie">', 1)[1].split("</div>", 1)[0]
+
+    assert '<header class="am-barra am-barra--con-menu">' in html
+    assert ">Secretaría</span>" in pie
+    assert 'href="/conjuntos/">Cambiar de conjunto</a>' in pie
+
+
 @pytest.mark.parametrize("rol", ["Superusuario", "Administrador", "Secretaría"])
 def test_el_lateral_muestra_usuarios_y_apartamentos_solo_a_roles_autorizados(rol):
     html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()

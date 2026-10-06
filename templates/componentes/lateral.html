@@ -1,8 +1,19 @@
 {% comment %}
 Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista tiene que avisarlo.
+Bajo 900px es un panel que sale desde la izquierda: lo abre el botón de la barra superior y lo
+cierran la cabeza, el velo o Escape (`static/js/lateral.js`). En ese ancho trae además lo que la barra
+superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario y «Cambiar de conjunto».
 {% endcomment %}
 {% with actual=request.resolver_match.app_name %}
-<nav class="am-lateral" aria-label="Secciones del conjunto">
+<nav class="am-lateral" id="menu-lateral" aria-label="Secciones del conjunto">
+  <div class="am-lateral__cabeza">
+    <span class="am-barra__marca">AdMind</span>
+    <button type="button" class="am-lateral__cerrar" aria-label="Cerrar el menú de secciones" data-cerrar-menu>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+        <path d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
+  </div>
   <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}>Inicio</a>
   <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
@@ -33,5 +44,9 @@ Lateral. El ítem activo se toma del espacio de nombres de la URL: ninguna vista
     {% include "componentes/_enlaces_gestion.html" %}
   {% endif %}
   {% endif %}
+  <div class="am-lateral__pie">
+    <span class="am-lateral__grupo">{{ request.session.tipo_usuario|default:"Usuario" }}</span>
+    <a class="am-lateral__item" href="{% url 'conjuntos:selector' %}">Cambiar de conjunto</a>
+  </div>
 </nav>
 {% endwith %}
