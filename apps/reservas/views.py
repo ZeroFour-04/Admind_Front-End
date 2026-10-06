@@ -87,6 +87,8 @@ def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
     hoy = timezone.localdate()
     mes = _mes_pedido(request.GET.get("mes"), hoy)
     dia = _dia_pedido(request.GET.get("dia"), mes)
+    if dia and dia < hoy:
+        dia = None
     areas, error_de_areas = cargar_areas(request)
     areas = [area for area in areas if area["activo"]]
     area = next((area for area in areas if area["id"] == request.GET.get("area")), None)

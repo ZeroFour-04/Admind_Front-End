@@ -6,12 +6,15 @@
 {% block titulo_vista %}Zonas comunes{% endblock %}
 {% block estado_vista %}{% endblock %}
 
+{% block scripts %}<script src="{% static 'js/calendario-reservas.js' %}" defer></script>{% endblock %}
+
 {% block contenido %}
+<div class="calendario-reservas">
 {% if areas %}
   <form method="get" class="am-formulario selector-area">
     <div class="am-campo">
       <label class="am-campo__etiqueta" for="area">Área común</label>
-      <select class="am-campo__control" id="area" name="area">
+      <select class="am-campo__control" id="area" name="area" data-envio-al-cambiar>
         <option value="">Elige el área</option>
         {% for opcion in areas %}
           <option value="{{ opcion.id }}"{% if opcion.id == area.id %} selected{% endif %}>{{ opcion.nombre }}</option>
@@ -20,7 +23,6 @@
     </div>
     <input type="hidden" name="mes" value="{{ mes|date:'Y-m' }}">
     {% if dia_elegido %}<input type="hidden" name="dia" value="{{ dia_elegido|date:'Y-m-d' }}">{% endif %}
-    <button class="am-btn am-btn--secundario" type="submit">Ver franjas</button>
   </form>
 {% elif not error %}
   <div class="am-vacio">
@@ -50,13 +52,15 @@
           {% for fecha in semana %}
             <td>
               {% if fecha.month == mes.month %}
-                <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
-                   href="?area={{ area.id|default:'' }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
-                   aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
-                   {% if fecha == hoy %}aria-current="date"{% endif %}>
-                  <span class="am-num">{{ fecha.day }}</span>
-                  {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
-                </a>
+                {% if fecha >= hoy %}
+                  <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
+                     href="?area={{ area.id|default:'' }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
+                     aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
+                     {% if fecha == hoy %}aria-current="date"{% endif %}>
+                    <span class="am-num">{{ fecha.day }}</span>
+                    {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
+                  </a>
+                {% endif %}
               {% endif %}
             </td>
           {% endfor %}
@@ -65,6 +69,7 @@
     </tbody>
   </table>
 </section>
+</div>
 
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">
