@@ -87,7 +87,7 @@ def lista(request, error_de_accion=None, en_asistente=False):
         "puede_gestionar_areas": tiene_permiso(request, "area.gestionar"),
         "en_asistente": en_asistente,
         "volver": "asistente" if en_asistente else "",
-        "paso": 4,
+        "paso": 5,
     }
     return render(request, "reglas/lista.html", contexto)
 
@@ -122,7 +122,7 @@ def definir(request, tipo):
         "tipo": tipo_del_catalogo(request, tipo),
         "area_id": area_id,
         "volver": request.POST.get("volver") or request.GET.get("volver") or "",
-        "paso": 4,
+        "paso": 5,
     }
     return render(request, "reglas/parametros.html", contexto)
 
@@ -157,7 +157,7 @@ def editar(request, regla_id):
         "tipo": tipo_del_catalogo(request, regla["tipo"]),
         "aviso": AVISO_DE_VERSION,
         "volver": request.POST.get("volver") or request.GET.get("volver") or "",
-        "paso": 4,
+        "paso": 5,
     }
     return render(request, "reglas/parametros.html", contexto)
 
@@ -213,7 +213,7 @@ def agregar_dia(request, area_id):
         "formulario": formulario,
         "tipo": tipo_del_catalogo(request, DIAS_QUE_NO_ABRE),
         "volver": request.POST.get("volver") or request.GET.get("volver") or "",
-        "paso": 4,
+        "paso": 5,
     }
     return render(request, "reglas/dia.html", contexto)
 

@@ -1,5 +1,16 @@
 from django import forms
 
+# Valores de partida de las áreas más comunes. No son reglas de nadie: se cambian antes de guardar.
+PLANTILLAS_DE_AREA = {
+    "salon": {"nombre": "Salón comunal", "hora_apertura": "08:00", "hora_cierre": "22:00",
+              "duracion_franja_minutos": 240, "aforo_maximo": 50},
+    "bbq": {"nombre": "BBQ", "hora_apertura": "10:00", "hora_cierre": "22:00",
+            "duracion_franja_minutos": 240, "aforo_maximo": 15},
+    "cancha": {"nombre": "Cancha múltiple", "hora_apertura": "06:00", "hora_cierre": "22:00",
+               "duracion_franja_minutos": 120, "aforo_maximo": 20},
+}
+
+
 class AreaForm(forms.Form):
     """Los nombres coinciden con los de la API."""
 

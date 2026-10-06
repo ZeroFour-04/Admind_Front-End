@@ -73,6 +73,25 @@ class LogoForm(forms.Form):
         return archivo
 
 
+# El mismo límite de la API, que es la que decide. Aquí solo evita mandarle un archivo que va a rechazar.
+TAMANO_MAXIMO_REGLAMENTO = 10 * 1024 * 1024  # bytes
+
+
+class ReglamentoForm(forms.Form):
+    """El reglamento del conjunto. Que de verdad sea un PDF lo decide la API, por la firma del archivo."""
+
+    archivo = forms.FileField(label="Reglamento, en PDF")
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data["archivo"]
+        if archivo.size > TAMANO_MAXIMO_REGLAMENTO:
+            megas = TAMANO_MAXIMO_REGLAMENTO // (1024 * 1024)
+            raise forms.ValidationError(f"El reglamento no puede pesar más de {megas} MB.")
+        if not archivo.name.lower().endswith(".pdf"):
+            raise forms.ValidationError("El reglamento debe ser un archivo PDF.")
+        return archivo
+
+
 class AdministradorForm(UsuarioForm):
     """Paso 2 del asistente: la cuenta de quien administra. El rol es siempre Administración."""
 

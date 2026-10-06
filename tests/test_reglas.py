@@ -279,12 +279,12 @@ def test_el_paso_de_reglas_del_asistente_es_el_mismo_tablero():
         )
         retirada = cliente.post(f"/reglas/{MAXIMA['id']}/retirar/", {"volver": "asistente"})
 
-    assert 'aria-current="step">4. Reglas' in html
+    assert 'aria-current="step">5. Reglas' in html
     assert "Reglas del conjunto</h2>" in html and "Lunes: Limpieza" in html
     assert f"/reglas/{MAXIMA['id']}/editar/?volver=asistente" in html
     assert f"/reglas/dias/{SALON['id']}/agregar/?volver=asistente" in html
     assert f"/reglas/definir/CUPO_POR_UNIDAD/?area={SALON['id']}&amp;volver=asistente" in html
     assert 'name="volver" value="asistente"' in html
-    assert 'aria-current="step">4. Reglas' in formulario and 'name="volver" value="asistente"' in formulario
+    assert 'aria-current="step">5. Reglas' in formulario and 'name="volver" value="asistente"' in formulario
     assert guardada["Location"] == "/conjuntos/asistente/reglas/"
     assert retirada["Location"] == "/conjuntos/asistente/reglas/"

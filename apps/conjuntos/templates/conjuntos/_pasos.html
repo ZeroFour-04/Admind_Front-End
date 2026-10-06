@@ -1,5 +1,5 @@
 {% comment %}
-Los cinco pasos del asistente de creación (HU-03). Mientras el conjunto no exista, solo el primero es enlace.
+Los siete pasos del asistente de creación (HU-03). Mientras el conjunto no exista, solo el primero es enlace.
 {% endcomment %}
 <nav class="am-pestanas pasos-asistente" aria-label="Pasos para crear el conjunto">
   {% if paso == 1 %}
@@ -10,31 +10,45 @@ Los cinco pasos del asistente de creación (HU-03). Mientras el conjunto no exis
     <span class="am-pestana">1. Datos básicos</span>
   {% endif %}
   {% if paso == 2 %}
-    <span class="am-pestana am-es-activa" aria-current="step">2. Administración</span>
+    <span class="am-pestana am-es-activa" aria-current="step">2. Viviendas</span>
   {% elif hay_conjunto %}
-    <a class="am-pestana" href="{% url 'conjuntos:asistente-administracion' %}">2. Administración</a>
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-viviendas' %}">2. Viviendas</a>
   {% else %}
-    <span class="am-pestana">2. Administración</span>
+    <span class="am-pestana">2. Viviendas</span>
   {% endif %}
   {% if paso == 3 %}
-    <span class="am-pestana am-es-activa" aria-current="step">3. Áreas</span>
+    <span class="am-pestana am-es-activa" aria-current="step">3. Administración</span>
   {% elif hay_conjunto %}
-    <a class="am-pestana" href="{% url 'conjuntos:asistente-areas' %}">3. Áreas</a>
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-administracion' %}">3. Administración</a>
   {% else %}
-    <span class="am-pestana">3. Áreas</span>
+    <span class="am-pestana">3. Administración</span>
   {% endif %}
   {% if paso == 4 %}
-    <span class="am-pestana am-es-activa" aria-current="step">4. Reglas</span>
+    <span class="am-pestana am-es-activa" aria-current="step">4. Áreas</span>
   {% elif hay_conjunto %}
-    <a class="am-pestana" href="{% url 'conjuntos:asistente-reglas' %}">4. Reglas</a>
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-areas' %}">4. Áreas</a>
   {% else %}
-    <span class="am-pestana">4. Reglas</span>
+    <span class="am-pestana">4. Áreas</span>
   {% endif %}
   {% if paso == 5 %}
-    <span class="am-pestana am-es-activa" aria-current="step">5. Resumen</span>
+    <span class="am-pestana am-es-activa" aria-current="step">5. Reglas</span>
   {% elif hay_conjunto %}
-    <a class="am-pestana" href="{% url 'conjuntos:asistente-resumen' %}">5. Resumen</a>
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-reglas' %}">5. Reglas</a>
   {% else %}
-    <span class="am-pestana">5. Resumen</span>
+    <span class="am-pestana">5. Reglas</span>
+  {% endif %}
+  {% if paso == 6 %}
+    <span class="am-pestana am-es-activa" aria-current="step">6. Reglamento</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-reglamento' %}">6. Reglamento</a>
+  {% else %}
+    <span class="am-pestana">6. Reglamento</span>
+  {% endif %}
+  {% if paso == 7 %}
+    <span class="am-pestana am-es-activa" aria-current="step">7. Resumen</span>
+  {% elif hay_conjunto %}
+    <a class="am-pestana" href="{% url 'conjuntos:asistente-resumen' %}">7. Resumen</a>
+  {% else %}
+    <span class="am-pestana">7. Resumen</span>
   {% endif %}
 </nav>

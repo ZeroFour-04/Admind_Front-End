@@ -127,14 +127,14 @@ def test_desactivar_llama_a_la_api_y_un_409_se_muestra():
     assert "El área ya está inactiva." in html
 
 
-def test_el_asistente_tiene_cinco_pasos_y_el_de_areas_crea_en_el_conjunto_activo():
+def test_el_asistente_tiene_siete_pasos_y_el_de_areas_crea_en_el_conjunto_activo():
     cliente = cliente_con_sesion(permisos=ADMINISTRACION + ["conjunto.editar"])
     with mock.patch("cliente_api.areas.listar", return_value=[]):
         html = cliente.get("/conjuntos/asistente/areas/").content.decode()
     with mock.patch("cliente_api.areas.crear", return_value=SALON) as crear:
         respuesta = cliente.post("/conjuntos/asistente/areas/", DATOS)
 
-    assert "3. Áreas" in html and "4. Reglas" in html and "5. Resumen" in html
+    assert "4. Áreas" in html and "5. Reglas" in html and "6. Reglamento" in html and "7. Resumen" in html
     assert "conjunto" not in crear.call_args.args[1]
     assert respuesta["Location"] == "/conjuntos/asistente/areas/"
 
@@ -146,3 +146,21 @@ def test_el_lateral_muestra_areas_comunes_solo_con_area_gestionar():
 
     assert ">Áreas comunes</a>" in con_permiso
     assert ">Áreas comunes</a>" not in sin_permiso
+
+
+def test_un_area_tipica_llena_el_formulario_del_asistente_sin_guardar_nada():
+    cliente = cliente_con_sesion(permisos=ADMINISTRACION + ["conjunto.editar"])
+    with (
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+        mock.patch("cliente_api.areas.crear") as crear,
+    ):
+        # Los atributos de cada campo van en varias líneas: se dejan en una para buscarlos.
+        html = " ".join(cliente.get("/conjuntos/asistente/areas/?plantilla=bbq").content.decode().split())
+        sin_plantilla = " ".join(cliente.get("/conjuntos/asistente/areas/?plantilla=piscina").content.decode().split())
+
+    assert 'name="nombre" value="BBQ"' in html and 'name="aforo_maximo" value="15"' in html
+    assert 'name="hora_apertura" value="10:00"' in html
+    assert '<details class="am-tarjeta tarjeta-contenido" open>' in html
+    assert 'href="?plantilla=cancha"' in html
+    assert 'name="nombre" value=""' in sin_plantilla
+    crear.assert_not_called()

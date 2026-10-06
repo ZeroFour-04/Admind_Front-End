@@ -68,11 +68,10 @@
         </li>
       {% endfor %}
     </ul>
-    <p class="tarjeta-contenido__meta">El reglamento se configura en un módulo que todavía no existe. Mientras tanto, ningún conjunto puede quedar operativo.</p>
   </section>
 
   <div class="acciones">
-    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-reglas' %}">Volver</a>
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-reglamento' %}">Volver</a>
     {% if resumen.puede_activar and not resumen.conjunto.operativo %}
       <form method="post">
         {% csrf_token %}

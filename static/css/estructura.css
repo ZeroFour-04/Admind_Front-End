@@ -142,3 +142,14 @@ details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-me
 .fotos-anuncio{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(calc(var(--toque-minimo) * 4),calc(50% - var(--e-1))),1fr));gap:var(--e-2);list-style:none;margin:0;padding:0}
 .fotos-anuncio__enlace{display:block;border-radius:var(--radio-control)}
 .fotos-anuncio img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-hundida)}
+/* Paso «Viviendas» del asistente (HU-39). La opción elegida se marca con neutros: el acento solo va en sus cuatro sitios (maestro §6.1). */
+.opciones-vivienda{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.opciones-vivienda__rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--e-2)}
+.opciones-vivienda__opcion{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo);padding:var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+.opciones-vivienda__opcion:has(input:checked){border-color:var(--texto-medio);box-shadow:0 0 0 1px var(--texto-medio)}
+.opciones-vivienda__opcion input{accent-color:var(--texto-fuerte)}
+.icono-vivienda{flex:none;color:var(--texto-medio);vertical-align:middle}
+.campos-en-fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--e-4)}
+.frase-estructura{margin:0;padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-fuerte);font-weight:var(--peso-texto-medio)}
+.estructura{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--e-2);list-style:none;margin:0;padding:0}
+.estructura__item{display:flex;align-items:center;gap:var(--e-2);padding:var(--e-2) var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control)}

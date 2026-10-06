@@ -1,14 +1,19 @@
+import json
+from datetime import datetime
+
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.areas import views as vistas_de_areas
-from apps.areas.forms import AreaForm
+from apps.areas.forms import PLANTILLAS_DE_AREA, AreaForm
 from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import conjuntos as api_conjuntos
 from cliente_api import cuentas as api_cuentas
+from cliente_api import documentos as api_documentos
+from cliente_api import unidades as api_unidades
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
 from .forms import (
@@ -19,6 +24,7 @@ from .forms import (
     AdministradorForm,
     ConjuntoForm,
     LogoForm,
+    ReglamentoForm,
 )
 
 # Los únicos tipos que la API acepta como logo. Cualquier otra cosa no se le entrega al navegador.
@@ -101,7 +107,7 @@ def nuevo(request):
             errores_de_la_api_al_formulario(formulario, error)
         else:
             guardar_estado(request, respuesta)
-            return redirect("conjuntos:asistente-administracion")
+            return redirect("conjuntos:asistente-viviendas")
     return render(request, "conjuntos/asistente_datos.html", {"formulario": formulario, "acentos": ACENTOS, "paso": 1})
 
 
@@ -126,14 +132,71 @@ def datos(request):
             errores_de_la_api_al_formulario(formulario, error)
         else:
             actualizar_conjunto_activo(request, resumen["conjunto"])
-            return redirect("conjuntos:asistente-administracion")
+            return redirect("conjuntos:asistente-viviendas")
     contexto = {"formulario": formulario, "acentos": ACENTOS, "paso": 1, "editando": True}
     return render(request, "conjuntos/asistente_datos.html", contexto)
 
 
+def leer_json(texto):
+    """El diccionario que viaja en un campo oculto, o None si no es un objeto JSON."""
+    try:
+        dato = json.loads(texto)
+    except (TypeError, ValueError):
+        return None
+    return dato if isinstance(dato, dict) else None
+
+
+@require_http_methods(["GET", "POST"])
+def viviendas(request):
+    """Paso 2: describir cómo es el conjunto y crear sus viviendas de una vez (HU-39).
+
+    El navegador arma la descripción y la manda en un campo oculto. Aquí no se revisa: la valida
+    la API, que también calcula la vista previa. Lo que se crea es lo que se previsualizó.
+    """
+    descripcion = vista_previa = error = None
+    # En un conjunto mixto, después de crear los apartamentos el formulario arranca en las casas.
+    sigue = "casa" if request.GET.get("sigue") == "casa" else ""
+    estado = {"tipo": "casa"} if sigue else None
+    if request.method == "POST":
+        descripcion = leer_json(request.POST.get("especificacion", ""))
+        estado = leer_json(request.POST.get("estado", ""))
+        sigue = "casa" if request.POST.get("sigue") == "casa" else ""
+        if descripcion is None:
+            error = "No se pudo leer la descripción del conjunto. Vuelve a llenarla."
+        else:
+            try:
+                if request.POST.get("accion") == "crear":
+                    creado = api_unidades.generar_estructura(request, descripcion)
+                    destino = f"{reverse('conjuntos:asistente-viviendas')}?creadas={creado['nuevas']}"
+                    return redirect(destino + ("&sigue=casa" if sigue else ""))
+                vista_previa = api_unidades.previsualizar_estructura(request, descripcion)
+            except ApiNoDisponible:
+                error = MENSAJE_API_NO_DISPONIBLE
+            except ErrorDeApi as api_error:
+                error = api_error.mensaje
+    try:
+        existentes = api_unidades.agrupaciones(request)
+    except ApiNoDisponible:
+        existentes, error = None, error or MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as api_error:
+        existentes, error = None, error or api_error.mensaje
+    creadas = request.GET.get("creadas", "")
+    contexto = {
+        "paso": 2,
+        "existentes": existentes,
+        "error": error,
+        "vista_previa": vista_previa,
+        "descripcion_json": json.dumps(descripcion) if vista_previa else "",
+        "estado": estado,
+        "sigue": sigue,
+        "creadas": int(creadas) if creadas.isdigit() else None,
+    }
+    return render(request, "conjuntos/asistente_viviendas.html", contexto)
+
+
 @require_http_methods(["GET", "POST"])
 def administracion(request):
-    """Paso 2: quién administra el conjunto. Se puede agregar una cuenta con rol Administración."""
+    """Paso 3: quién administra el conjunto. Se puede agregar una cuenta con rol Administración."""
     formulario = AdministradorForm(request.POST or None)
     if request.method == "POST" and formulario.is_valid():
         try:
@@ -145,14 +208,16 @@ def administracion(request):
         else:
             return redirect("conjuntos:asistente-administracion")
     resumen, error = cargar_resumen(request)
-    contexto = {"formulario": formulario, "resumen": resumen, "error": error, "paso": 2}
+    contexto = {"formulario": formulario, "resumen": resumen, "error": error, "paso": 3}
     return render(request, "conjuntos/asistente_administracion.html", contexto)
 
 
 @require_http_methods(["GET", "POST"])
 def areas(request):
-    """Paso 3: el catálogo de áreas comunes del conjunto activo (HU-09), con su alta."""
-    formulario = AreaForm(request.POST or None)
+    """Paso 4: el catálogo de áreas comunes del conjunto activo (HU-09), con su alta."""
+    # Un área típica llega como `?plantilla=bbq`: son valores de partida, no datos guardados.
+    plantilla = PLANTILLAS_DE_AREA.get(request.GET.get("plantilla"))
+    formulario = AreaForm(request.POST or None, initial=plantilla)
     if request.method == "POST" and formulario.is_valid() and vistas_de_areas.crear_desde(request, formulario):
         return redirect("conjuntos:asistente-areas")
     lista_de_areas, error = vistas_de_areas.cargar_areas(request)
@@ -160,14 +225,65 @@ def areas(request):
         "formulario": formulario,
         "areas": lista_de_areas,
         "error": error,
-        "paso": 3,
+        "con_plantilla": plantilla is not None,
+        "paso": 4,
     }
     return render(request, "conjuntos/asistente_areas.html", contexto)
 
 
+def con_fecha(reglamento):
+    """La fecha de la API llega como texto: se convierte para escribirla con el día en letras."""
+    if reglamento and reglamento.get("cargado"):
+        return {**reglamento, "subido_en": datetime.fromisoformat(reglamento["subido_en"])}
+    return reglamento
+
+
+@require_http_methods(["GET", "POST"])
+def reglamento(request):
+    """Paso 6: el reglamento del conjunto, en PDF. Sin él no queda operativo (HU-03, HU-33)."""
+    formulario = ReglamentoForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and formulario.is_valid():
+        try:
+            api_documentos.subir_reglamento(request, formulario.cleaned_data["archivo"])
+        except ApiNoDisponible:
+            formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(formulario, error)
+        else:
+            return redirect(f"{reverse('conjuntos:asistente-reglamento')}?subido=1")
+    try:
+        actual, error = con_fecha(api_documentos.reglamento(request)), None
+    except ApiNoDisponible:
+        actual, error = None, MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as api_error:
+        actual, error = None, api_error.mensaje
+    contexto = {
+        "formulario": formulario,
+        "reglamento": actual,
+        "error": error,
+        "subido": request.GET.get("subido") == "1",
+        "paso": 6,
+    }
+    return render(request, "conjuntos/asistente_reglamento.html", contexto)
+
+
+@require_GET
+def reglamento_archivo(request):
+    """El PDF. Lo pide este servidor con el token de la sesión: el navegador no habla con la API."""
+    try:
+        contenido, tipo = api_documentos.archivo_del_reglamento(request)
+    except (ApiNoDisponible, ErrorDeApi):
+        raise Http404
+    if tipo != "application/pdf":
+        raise Http404
+    respuesta = HttpResponse(contenido, content_type="application/pdf")
+    respuesta["Content-Disposition"] = 'inline; filename="reglamento.pdf"'
+    return respuesta
+
+
 @require_http_methods(["GET", "POST"])
 def resumen(request):
-    """Paso 5: revisar y, si ya cumple todo, dejarlo operativo."""
+    """Paso 7: revisar y, si ya cumple todo, dejarlo operativo."""
     faltantes = None
     activado = False
     error = None
@@ -189,7 +305,7 @@ def resumen(request):
         "activado": activado,
         "nombre_del_acento": nombre_del_color((datos_del_resumen or {}).get("conjunto", {})),
         "puede_cambiar_identidad": puede_cambiar_identidad(request),
-        "paso": 5,
+        "paso": 7,
     }
     return render(request, "conjuntos/asistente_resumen.html", contexto)
 

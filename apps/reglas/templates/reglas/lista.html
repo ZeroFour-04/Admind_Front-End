@@ -15,7 +15,7 @@
 {% if tablero %}
   <section aria-labelledby="reglas-del-conjunto">
     <h2 id="reglas-del-conjunto">Reglas del conjunto</h2>
-    <p class="vista__guia">Valen para todas las áreas. Cada una se define una sola vez.</p>
+    <p class="vista__guia">Valen para todas las áreas. Cada una se define una sola vez.{% if en_asistente %} Para quedar operativo, el conjunto necesita la anticipación máxima definida.{% endif %}</p>
     <div class="am-tabla-caja tabla-desplazable">
       <table class="am-tabla">
         <thead>
@@ -65,7 +65,7 @@
 {% if en_asistente %}
   <div class="acciones">
     <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-areas' %}">Volver</a>
-    <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-resumen' %}">Continuar</a>
+    <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-reglamento' %}">Continuar</a>
   </div>
 {% endif %}
 {% endblock %}
