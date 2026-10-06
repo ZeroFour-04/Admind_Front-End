@@ -1,12 +1,13 @@
-"""Reglas beta de reserva del conjunto activo (HU-10). El alta va en dos pasos y sin JavaScript.
+"""Reglas de reserva del conjunto activo (HU-10): un tablero con cada regla posible, por niveles.
 
-El paso de reglas del asistente (HU-03) usa estas mismas vistas con `en_asistente=True`.
+Las reglas alfa son del conjunto; las beta, de un área. Cada una se define una sola vez: lo que
+existe se cambia o se quita. El paso de reglas del asistente (HU-03) es este mismo tablero.
 """
 from datetime import date
 
 from django.http import Http404
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.areas.views import cargar_areas
@@ -15,56 +16,85 @@ from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import reglas as api_reglas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import FORMULARIO_POR_TIPO, TIPOS_DE_REGLA, ElegirTipoForm, iniciales
+from .forms import DIAS_DE_LA_SEMANA, FORMULARIO_POR_TIPO, DiaQueNoAbreForm, iniciales
 
 AVISO_DE_VERSION = "Al guardar se crea una versión nueva; la anterior queda en el historial."
+DIAS_QUE_NO_ABRE = "DIAS_QUE_NO_ABRE"
+
+
+def renglon_para_pantalla(renglon):
+    if "dia_semana" in renglon:
+        return {"dia": dict(DIAS_DE_LA_SEMANA)[str(renglon["dia_semana"])], "motivo": renglon["motivo"]}
+    return {
+        "desde": date.fromisoformat(renglon["desde"]),
+        "hasta": date.fromisoformat(renglon["hasta"]),
+        "motivo": renglon["motivo"],
+    }
 
 
 def con_fechas(regla):
     """La API manda las fechas como texto ISO; las plantillas las formatean como fecha."""
-    return {**regla, "vigencia_desde": date.fromisoformat(regla["vigencia_desde"])}
+    regla = {**regla, "vigencia_desde": date.fromisoformat(regla["vigencia_desde"])}
+    if regla["tipo"] == DIAS_QUE_NO_ABRE:
+        regla["renglones"] = [renglon_para_pantalla(renglon) for renglon in regla["parametros"]["renglones"]]
+    return regla
 
 
-def cargar_reglas(request):
+def cargar_tablero(request):
+    """Cruza el catálogo, las reglas abiertas y las áreas activas: una fila por cada regla posible."""
     try:
-        return [con_fechas(regla) for regla in api_reglas.listar(request)], None
+        catalogo = api_reglas.catalogo(request)
+        reglas = [con_fechas(regla) for regla in api_reglas.listar(request)]
     except ApiNoDisponible:
-        return [], MENSAJE_API_NO_DISPONIBLE
+        return None, MENSAJE_API_NO_DISPONIBLE
     except ErrorDeApi as error:
-        return [], error.mensaje
+        return None, error.mensaje
+    areas, error = cargar_areas(request)
+    definida = {(regla["tipo"], regla["area"]["id"] if regla["area"] else None): regla for regla in reglas}
+
+    def filas(nivel, area_id=None):
+        return [
+            {**tipo, "regla": definida.get((tipo["tipo"], area_id))} for tipo in catalogo if tipo["nivel"] == nivel
+        ]
+
+    tablero = {
+        "alfas": filas("alfa"),
+        "por_area": [{"area": area, "filas": filas("beta", area["id"])} for area in areas if area["activo"]],
+    }
+    return tablero, error
 
 
-def lista(request, error_de_accion=None):
-    reglas, error = cargar_reglas(request)
-    contexto = {"reglas": reglas, "error": error_de_accion or error, "puede_configurar": tiene_permiso(request, "regla.configurar")}
+def volver_a(request):
+    """De vuelta al paso del asistente si de ahí se vino; si no, al tablero (P14)."""
+    viene_de = request.POST.get("volver") or request.GET.get("volver")
+    return "conjuntos:asistente-reglas" if viene_de == "asistente" else "reglas:lista"
+
+
+def tipo_del_catalogo(request, tipo):
+    """Nombre y descripción del tipo, para encabezar su formulario. Vacío si la API no responde."""
+    try:
+        return next((entrada for entrada in api_reglas.catalogo(request) if entrada["tipo"] == tipo), {})
+    except (ApiNoDisponible, ErrorDeApi):
+        return {}
+
+
+def lista(request, error_de_accion=None, en_asistente=False):
+    tablero, error = cargar_tablero(request)
+    contexto = {
+        "tablero": tablero,
+        "error": error_de_accion or error,
+        "puede_configurar": tiene_permiso(request, "regla.configurar"),
+        "puede_gestionar_areas": tiene_permiso(request, "area.gestionar"),
+        "en_asistente": en_asistente,
+        "volver": "asistente" if en_asistente else "",
+        "paso": 4,
+    }
     return render(request, "reglas/lista.html", contexto)
 
 
-def a_donde_volver(en_asistente):
-    return "conjuntos:asistente-reglas" if en_asistente else "reglas:lista"
-
-
 @require_http_methods(["GET", "POST"])
-def nueva(request, en_asistente=False):
-    """Paso 1: el área y el tipo. Lleva al formulario del tipo."""
-    if not tiene_permiso(request, "regla.configurar"):
-        return redirect("reglas:lista")
-    areas, error = cargar_areas(request)
-    areas = [area for area in areas if area["activo"]]
-    formulario = ElegirTipoForm(request.POST or None, areas=areas)
-    if request.method == "POST" and formulario.is_valid():
-        destino = "conjuntos:asistente-reglas-tipo" if en_asistente else "reglas:nueva-tipo"
-        url = reverse(destino, kwargs={"tipo": formulario.cleaned_data["tipo"]})
-        return redirect(f"{url}?area={formulario.cleaned_data['area']}")
-    contexto = {"formulario": formulario, "error": error, "en_asistente": en_asistente, "paso": 4}
-    if en_asistente:
-        contexto["reglas"], contexto["error"] = cargar_reglas(request)
-    return render(request, "reglas/nueva.html", contexto)
-
-
-@require_http_methods(["GET", "POST"])
-def nueva_tipo(request, tipo, en_asistente=False):
-    """Paso 2: los parámetros del tipo y desde cuándo rige."""
+def definir(request, tipo):
+    """Define una regla que todavía no existe: sus valores y desde cuándo rige."""
     if not tiene_permiso(request, "regla.configurar"):
         return redirect("reglas:lista")
     if tipo not in FORMULARIO_POR_TIPO:
@@ -73,11 +103,12 @@ def nueva_tipo(request, tipo, en_asistente=False):
     formulario = FORMULARIO_POR_TIPO[tipo](request.POST or None)
     if request.method == "POST" and formulario.is_valid():
         datos = {
-            "area": area_id,
             "tipo": tipo,
             "parametros": formulario.parametros(),
             "vigencia_desde": formulario.cleaned_data["vigencia_desde"].isoformat(),
         }
+        if area_id:
+            datos["area"] = area_id
         try:
             api_reglas.crear(request, datos)
         except ApiNoDisponible:
@@ -85,12 +116,12 @@ def nueva_tipo(request, tipo, en_asistente=False):
         except ErrorDeApi as error:
             errores_de_la_api_al_formulario(formulario, error)
         else:
-            return redirect(a_donde_volver(en_asistente))
+            return redirect(volver_a(request))
     contexto = {
         "formulario": formulario,
-        "tipo_nombre": dict(TIPOS_DE_REGLA)[tipo],
+        "tipo": tipo_del_catalogo(request, tipo),
         "area_id": area_id,
-        "en_asistente": en_asistente,
+        "volver": request.POST.get("volver") or request.GET.get("volver") or "",
         "paso": 4,
     }
     return render(request, "reglas/parametros.html", contexto)
@@ -106,6 +137,9 @@ def editar(request, regla_id):
         return lista(request, MENSAJE_API_NO_DISPONIBLE)
     except ErrorDeApi as error:
         return lista(request, error.mensaje)
+    # Los días que no abre se agregan y se quitan de a uno; una regla retirada del catálogo no se edita.
+    if regla["tipo"] not in FORMULARIO_POR_TIPO:
+        raise Http404
     clase = FORMULARIO_POR_TIPO[regla["tipo"]]
     formulario = clase(request.POST or None, initial=iniciales(regla["tipo"], regla["parametros"]), con_vigencia=False)
     if request.method == "POST" and formulario.is_valid():
@@ -116,8 +150,15 @@ def editar(request, regla_id):
         except ErrorDeApi as error:
             errores_de_la_api_al_formulario(formulario, error)
         else:
-            return redirect("reglas:lista")
-    contexto = {"formulario": formulario, "regla": regla, "tipo_nombre": regla["tipo_nombre"], "aviso": AVISO_DE_VERSION}
+            return redirect(volver_a(request))
+    contexto = {
+        "formulario": formulario,
+        "regla": regla,
+        "tipo": tipo_del_catalogo(request, regla["tipo"]),
+        "aviso": AVISO_DE_VERSION,
+        "volver": request.POST.get("volver") or request.GET.get("volver") or "",
+        "paso": 4,
+    }
     return render(request, "reglas/parametros.html", contexto)
 
 
@@ -129,4 +170,66 @@ def retirar(request, regla_id):
         return lista(request, MENSAJE_API_NO_DISPONIBLE)
     except ErrorDeApi as error:
         return lista(request, error.mensaje)
-    return redirect("reglas:lista")
+    return redirect(volver_a(request))
+
+
+def regla_de_dias(request, area_id):
+    """La regla abierta de días que no abre de esa área, o None."""
+    return next(
+        (
+            regla for regla in api_reglas.listar(request)
+            if regla["tipo"] == DIAS_QUE_NO_ABRE and regla["area"] and regla["area"]["id"] == str(area_id)
+        ),
+        None,
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def agregar_dia(request, area_id):
+    """Agrega un día que no abre a un área. La lista completa viaja a la API, que la valida."""
+    if not tiene_permiso(request, "regla.configurar"):
+        return redirect("reglas:lista")
+    formulario = DiaQueNoAbreForm(request.POST or None)
+    if request.method == "POST" and formulario.is_valid():
+        try:
+            regla = regla_de_dias(request, area_id)
+            if regla is None:
+                api_reglas.crear(request, {
+                    "area": str(area_id),
+                    "tipo": DIAS_QUE_NO_ABRE,
+                    "parametros": {"renglones": [formulario.renglon()]},
+                    "vigencia_desde": timezone.localdate().isoformat(),
+                })
+            else:
+                renglones = regla["parametros"]["renglones"] + [formulario.renglon()]
+                api_reglas.editar(request, regla["id"], {"renglones": renglones})
+        except ApiNoDisponible:
+            formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(formulario, error)
+        else:
+            return redirect(volver_a(request))
+    contexto = {
+        "formulario": formulario,
+        "tipo": tipo_del_catalogo(request, DIAS_QUE_NO_ABRE),
+        "volver": request.POST.get("volver") or request.GET.get("volver") or "",
+        "paso": 4,
+    }
+    return render(request, "reglas/dia.html", contexto)
+
+
+@require_POST
+def quitar_dia(request, regla_id, indice):
+    """Quita un renglón. Si era el último, retira la regla."""
+    try:
+        renglones = api_reglas.obtener(request, regla_id)["parametros"]["renglones"]
+        restantes = renglones[:indice] + renglones[indice + 1:]
+        if restantes:
+            api_reglas.editar(request, regla_id, {"renglones": restantes})
+        else:
+            api_reglas.retirar(request, regla_id)
+    except ApiNoDisponible:
+        return lista(request, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return lista(request, error.mensaje)
+    return redirect(volver_a(request))

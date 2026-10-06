@@ -14,6 +14,7 @@ Parámetros: formulario.
 {% include "componentes/campo.html" with campo=formulario.hora_apertura tipo="time" %}
 {% include "componentes/campo.html" with campo=formulario.hora_cierre tipo="time" %}
 {% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Mínimo 120 minutos (2 horas). Las franjas se arman en bloques desde la hora de apertura." %}
+{% include "componentes/campo.html" with campo=formulario.aforo_maximo tipo="number" modo="numeric" ayuda="Cuántas personas caben. Es el máximo de asistentes de cada reserva." %}
 
 {% if formulario.en_mantenimiento %}
   <label class="opciones-alcance__opcion">

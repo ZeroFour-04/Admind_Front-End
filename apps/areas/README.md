@@ -8,6 +8,7 @@ El catálogo de zonas comunes del conjunto.
 
 - Listado y edición de áreas, identificadas por nombre
 - La duración de cada franja reservable tiene un mínimo de 2 horas
+- El aforo máximo de cada área es obligatorio
 - Administración, Secretaría y Superusuario pueden abrir las solicitudes de cada área
 - Plantilla de condiciones del alquiler por área
 

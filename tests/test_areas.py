@@ -12,11 +12,15 @@ SALON = {
     "hora_apertura": "08:00",
     "hora_cierre": "22:00",
     "duracion_franja_minutos": 240,
+    "aforo_maximo": 50,
     "en_mantenimiento": False,
     "activo": True,
 }
 PORTERIA = {**SALON, "id": "3c4d5e6f-0000-4000-8000-000000000002", "nombre": "Portería", "en_mantenimiento": True}
-DATOS = {"nombre": "Salón comunal", "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": "240"}
+DATOS = {
+    "nombre": "Salón comunal", "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": "240",
+    "aforo_maximo": "50",
+}
 ADMINISTRACION = ["area.ver", "area.gestionar"]
 
 
@@ -26,7 +30,7 @@ def test_la_lista_muestra_nombre_horario_y_estado():
 
     assert "Salón comunal" in html and "Portería" in html
     assert "Clasificación" not in html
-    assert "08:00 a 22:00" in html
+    assert "08:00 a 22:00" in html and "aforo 50" in html
     assert "En mantenimiento" in html and "Disponible" in html
     assert "Maqueta" not in html
 
@@ -65,7 +69,7 @@ def test_crear_manda_las_horas_como_texto_y_vuelve_a_la_lista():
 
     assert crear.call_args.args[1] == {
         "nombre": "Salón comunal", "descripcion": "",
-        "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": 240,
+        "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": 240, "aforo_maximo": 50,
     }
     assert respuesta["Location"] == "/areas/?creada=1"
 
@@ -77,6 +81,15 @@ def test_la_duracion_minima_de_la_franja_es_de_dos_horas():
     assert not menor_al_minimo.is_valid()
     assert "duracion_franja_minutos" in menor_al_minimo.errors
     assert minimo.is_valid()
+
+
+def test_el_formulario_exige_el_aforo():
+    sin_aforo = AreaForm(data={**DATOS, "aforo_maximo": ""})
+    en_cero = AreaForm(data={**DATOS, "aforo_maximo": "0"})
+
+    assert not sin_aforo.is_valid() and "aforo_maximo" in sin_aforo.errors
+    assert not en_cero.is_valid() and "aforo_maximo" in en_cero.errors
+    assert AreaForm(data=DATOS).is_valid()
 
 
 def test_un_400_de_la_api_cae_en_su_campo():

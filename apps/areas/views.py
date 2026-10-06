@@ -70,7 +70,10 @@ def editar(request, area_id):
     except ErrorDeApi as error:
         return render(request, "areas/editar.html", {"error": error.mensaje})
 
-    campos = ("nombre", "descripcion", "hora_apertura", "hora_cierre", "duracion_franja_minutos", "en_mantenimiento")
+    campos = (
+        "nombre", "descripcion", "hora_apertura", "hora_cierre", "duracion_franja_minutos", "aforo_maximo",
+        "en_mantenimiento",
+    )
     formulario = EditarAreaForm(request.POST or None, initial={campo: area[campo] for campo in campos})
     if request.method == "POST" and formulario.is_valid():
         try:

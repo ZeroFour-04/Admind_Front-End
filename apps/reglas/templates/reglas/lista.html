@@ -1,65 +1,71 @@
 {% extends "base/aplicacion.html" %}
 
 {% block titulo %}Reglas{% endblock %}
-{% block titulo_vista %}Reglas de reserva{% endblock %}
+{% block titulo_vista %}{% if en_asistente %}Reglas de reserva del conjunto{% else %}Reglas de reserva{% endif %}{% endblock %}
 {% block estado_vista %}{% endblock %}
 
 {% block contenido %}
-{% if puede_configurar and reglas %}
-  <div class="vista__acciones">
-    <a class="am-btn am-btn--primario" href="{% url 'reglas:nueva' %}">Agregar regla</a>
-  </div>
+{% if en_asistente %}
+  {% include "conjuntos/_pasos.html" with hay_conjunto=True %}
 {% endif %}
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}
 
-{% if reglas %}
-  {% regroup reglas by area.nombre as por_area %}
-  {% for grupo in por_area %}
+{% if tablero %}
+  <section aria-labelledby="reglas-del-conjunto">
+    <h2 id="reglas-del-conjunto">Reglas del conjunto</h2>
+    <p class="vista__guia">Valen para todas las áreas. Cada una se define una sola vez.</p>
+    <div class="am-tabla-caja tabla-desplazable">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th scope="col">Regla</th>
+            <th scope="col">Hoy</th>
+            {% if puede_configurar %}<th scope="col">Acciones</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in tablero.alfas %}{% include "reglas/_fila.html" with area=None %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% for grupo in tablero.por_area %}
     <section aria-labelledby="area-{{ forloop.counter }}">
-      <h2 id="area-{{ forloop.counter }}">{{ grupo.grouper }}</h2>
+      <h2 id="area-{{ forloop.counter }}">{{ grupo.area.nombre }}</h2>
+      <p class="vista__guia">
+        Abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, en franjas de {{ grupo.area.duracion_franja_minutos }} minutos, con aforo de {{ grupo.area.aforo_maximo }} personas.
+        {% if puede_gestionar_areas %}<a href="{% url 'areas:editar' grupo.area.id %}">Cambiar horario o aforo</a>{% endif %}
+      </p>
       <div class="am-tabla-caja tabla-desplazable">
         <table class="am-tabla">
           <thead>
             <tr>
               <th scope="col">Regla</th>
-              <th scope="col">Vigente desde</th>
-              <th scope="col">Configurada por</th>
+              <th scope="col">Hoy</th>
               {% if puede_configurar %}<th scope="col">Acciones</th>{% endif %}
             </tr>
           </thead>
           <tbody>
-            {% for regla in grupo.list %}
-              <tr>
-                <td>{{ regla.descripcion }} <span class="am-tabla__secundario">{{ regla.tipo_nombre }}</span></td>
-                <td class="am-num">{{ regla.vigencia_desde|date:"l j \d\e F \d\e Y"|lower|capfirst }}</td>
-                <td>{{ regla.creada_por }}</td>
-                {% if puede_configurar %}
-                  <td>
-                    <div class="acciones">
-                      <a class="am-btn am-btn--secundario" href="{% url 'reglas:editar' regla.id %}">Editar</a>
-                      <form method="post" action="{% url 'reglas:retirar' regla.id %}">
-                        {% csrf_token %}
-                        <button class="am-btn am-btn--texto" type="submit">Retirar</button>
-                      </form>
-                    </div>
-                  </td>
-                {% endif %}
-              </tr>
-            {% endfor %}
+            {% for fila in grupo.filas %}{% include "reglas/_fila.html" with area=grupo.area %}{% endfor %}
           </tbody>
         </table>
       </div>
     </section>
+  {% empty %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">Todavía no hay áreas comunes</p>
+      <p class="am-vacio__texto">Las reglas de cada área aparecen aquí cuando el área exista.</p>
+    </div>
   {% endfor %}
-{% elif not error %}
-  <div class="am-vacio">
-    <p class="am-vacio__titulo">Todavía no hay reglas de reserva</p>
-    <p class="am-vacio__texto">Las reglas salen del reglamento del conjunto: aforo, anticipación, días no reservables. Sin al menos una, el conjunto no queda operativo.</p>
-    {% if puede_configurar %}
-      <a class="am-btn am-btn--primario" href="{% url 'reglas:nueva' %}">Agregar la primera regla</a>
-    {% endif %}
+{% endif %}
+
+{% if en_asistente %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-areas' %}">Volver</a>
+    <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-resumen' %}">Continuar</a>
   </div>
 {% endif %}
 {% endblock %}

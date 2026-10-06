@@ -13,6 +13,7 @@ class AreaForm(forms.Form):
         max_value=1440,
         help_text="Cada reserva debe durar al menos 2 horas.",
     )
+    aforo_maximo = forms.IntegerField(label="Aforo máximo", min_value=1, max_value=10000)
 
     def clean(self):
         datos = super().clean()

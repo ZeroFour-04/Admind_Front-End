@@ -16,7 +16,7 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
       {% for area in areas %}
         <tr>
           <td>{{ area.nombre }}</td>
-          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">franjas de {{ area.duracion_franja_minutos }} min</span></td>
+          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">franjas de {{ area.duracion_franja_minutos }} min · aforo {{ area.aforo_maximo }}</span></td>
           <td>
             {% if not area.activo %}
               <span class="am-pastilla am-pastilla--neutro">Inactiva</span>

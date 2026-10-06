@@ -1,14 +1,19 @@
-"""Endpoints de `Admind_Backend/apps/reglas/`: las reglas beta de reserva del conjunto activo (HU-10)."""
+"""Endpoints de `Admind_Backend/apps/reglas/`: las reglas de reserva del conjunto activo, por niveles (HU-10)."""
 from cliente_api.http import pedir
 
 
+def catalogo(request):
+    """GET /reglas/catalogo/ → los tipos que se pueden definir, con nivel, nombre y descripción."""
+    return pedir(request, "GET", "reglas/catalogo/")
+
+
 def listar(request):
-    """GET /reglas/ → las reglas vigentes y las que empiezan después, con su descripción en palabras."""
+    """GET /reglas/ → las reglas abiertas, del conjunto y de cada área, con su descripción en palabras."""
     return pedir(request, "GET", "reglas/")
 
 
 def crear(request, datos):
-    """POST /reglas/ → la regla creada. Exige área, tipo, parámetros y vigencia."""
+    """POST /reglas/ → la regla creada. Exige tipo, parámetros y vigencia; el área, solo si la regla es de un área."""
     return pedir(request, "POST", "reglas/", datos)
 
 
