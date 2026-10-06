@@ -47,7 +47,15 @@ class UsuarioForm(forms.Form):
     numero_documento = forms.CharField(label="Número de documento", max_length=20)
     nombres = forms.CharField(label="Nombres", max_length=80)
     apellidos = forms.CharField(label="Apellidos", max_length=80)
-    telefono = forms.CharField(label="Teléfono", max_length=16, required=False)
+    telefono = forms.RegexField(
+        label="Teléfono",
+        regex=r"^\+?[0-9]{7,15}$",
+        max_length=16,
+        required=False,
+        error_messages={
+            "invalid": "El teléfono debe tener entre 7 y 15 dígitos y puede iniciar con +."
+        },
+    )
     correo = forms.EmailField(label="Correo electrónico")
     contrasena = forms.CharField(label="Contraseña", min_length=8, strip=False, widget=forms.PasswordInput)
     confirmar_contrasena = forms.CharField(

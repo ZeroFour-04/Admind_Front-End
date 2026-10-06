@@ -1,6 +1,7 @@
 """Pantallas de HU-06: el rol del usuario en el conjunto activo (uno solo). La API se simula."""
 from unittest import mock
 
+from apps.usuarios.forms import UsuarioForm
 from cliente_api.http import ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
@@ -21,6 +22,26 @@ ANDRES = {
 }
 DETALLE = f"/usuarios/{ANDRES['id']}/"
 ASIGNACION = ANDRES["asignaciones"][0]["id"]
+
+
+def test_el_alta_rechaza_un_telefono_corto_y_acepta_un_telefono_valido():
+    datos = {
+        "rol": "residente",
+        "tipo_documento": "CC",
+        "numero_documento": "1023456789",
+        "nombres": "Carlos",
+        "apellidos": "Gómez",
+        "correo": "carlos@torres.com",
+        "contrasena": "una-clave-larga-2026",
+        "confirmar_contrasena": "una-clave-larga-2026",
+    }
+
+    invalido = UsuarioForm(data={**datos, "telefono": "323123"})
+    valido = UsuarioForm(data={**datos, "telefono": "3001234567"})
+
+    assert not invalido.is_valid()
+    assert "telefono" in invalido.errors
+    assert valido.is_valid()
 
 
 def test_con_rol_asignar_se_puede_eliminar_y_cambiar_por_otro_rol():
