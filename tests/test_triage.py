@@ -23,31 +23,79 @@ RESERVA = {
 }
 
 
-def test_pestana_solicitudes_muestra_estado_comentario_y_residente():
-    permisos = ["reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
-    with mock.patch("cliente_api.reservas.solicitudes_para_bandeja", return_value=[RESERVA]) as listar:
+def test_pestana_solicitudes_muestra_zonas_comunes_con_solo_la_accion_solicitudes():
+    permisos = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
+    areas = [
+        {
+            "id": RESERVA["area"]["id"],
+            "nombre": "Salón comunal",
+            "hora_apertura": "08:00",
+            "hora_cierre": "22:00",
+            "duracion_franja_minutos": 240,
+            "aforo_maximo": 50,
+            "activo": True,
+            "en_mantenimiento": False,
+        }
+    ]
+    with mock.patch("cliente_api.areas.listar", return_value=areas) as listar:
         html = cliente_con_sesion(permisos=permisos).get("/solicitudes/").content.decode()
 
     listar.assert_called_once()
     assert "Salón comunal" in html
-    assert "Pedro Gómez" in html
-    assert "Reservada" in html
-    assert "Horario confirmado." in html
-    assert "Ana Admin" in html
+    assert "08:00 a 22:00" in html
+    assert "aforo 50" in html
+    assert html.count(f'href="/reservas/areas/{RESERVA["area"]["id"]}/solicitudes/"') == 1
+    assert ">Editar</a>" not in html
+    assert ">Desactivar</button>" not in html
+    assert "Pedro Gómez" not in html
 
 
-def test_pestana_solicitudes_muestra_comentario_de_rechazo():
-    rechazada = {
-        **RESERVA,
-        "estado": "RECHAZADA",
-        "estado_nombre": "Rechazada",
-        "motivo_decision": "Falta la autorización del conjunto.",
-    }
-    with mock.patch("cliente_api.reservas.solicitudes_para_bandeja", return_value=[rechazada]):
-        html = cliente_con_sesion(permisos=["reserva.ver_todas"]).get("/solicitudes/").content.decode()
+def test_administracion_secretaria_y_superusuario_ven_todas_las_zonas_con_su_accion():
+    areas = [
+        {
+            "id": RESERVA["area"]["id"],
+            "nombre": "Salón comunal",
+            "hora_apertura": "08:00",
+            "hora_cierre": "22:00",
+            "duracion_franja_minutos": 240,
+            "aforo_maximo": 50,
+            "activo": True,
+            "en_mantenimiento": False,
+        },
+        {
+            "id": "3c4d5e6f-0000-4000-8000-000000000002",
+            "nombre": "Piscina",
+            "hora_apertura": "06:00",
+            "hora_cierre": "20:00",
+            "duracion_franja_minutos": 120,
+            "aforo_maximo": 30,
+            "activo": True,
+            "en_mantenimiento": True,
+        },
+    ]
+    roles_y_permisos = [
+        ("Administrador", ["reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]),
+        ("Secretaría", ["reserva.ver_todas"]),
+        ("Superusuario", ["reserva.ver_todas"]),
+    ]
 
-    assert "Rechazada" in html
-    assert "Falta la autorización del conjunto." in html
+    for rol, permisos in roles_y_permisos:
+        with mock.patch("cliente_api.areas.listar", return_value=areas):
+            html = cliente_con_sesion(permisos=permisos, tipo_usuario=rol).get("/solicitudes/").content.decode()
+
+        assert "Salón comunal" in html and "Piscina" in html
+        assert html.count('href="/reservas/areas/') == 2
+        assert html.count(">En mantenimiento</span>") == 1
+        assert html.count(">Disponible</span>") == 1
+        assert ">Editar</a>" not in html
+        assert ">Desactivar</button>" not in html
+
+
+def test_pestana_solicitudes_muestra_estado_vacio_si_no_hay_areas():
+    with mock.patch("cliente_api.areas.listar", return_value=[]):
+        html = cliente_con_sesion(permisos=["area.ver", "reserva.ver_todas"]).get("/solicitudes/").content.decode()
+
+    assert "Todavía no hay zonas comunes" in html
 
 
 def test_residente_ve_su_historial_con_estados_y_comentarios():

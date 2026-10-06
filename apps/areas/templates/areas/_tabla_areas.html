@@ -28,7 +28,7 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
           </td>
           {% if acciones or ver_solicitudes %}
             <td>
-              <div class="acciones">
+              <div class="acciones acciones--derecha">
                 {% if ver_solicitudes %}
                   <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitudes-area' area.id %}">Solicitudes</a>
                 {% endif %}

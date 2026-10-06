@@ -8,7 +8,9 @@
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}
 
-{% if solicitudes %}
+{% if puede_ver_reservas and areas %}
+  {% include "areas/_tabla_areas.html" with areas=areas acciones=False ver_solicitudes=True %}
+{% elif es_residente and solicitudes %}
   {% for solicitud in solicitudes %}
     <article class="am-tarjeta tarjeta-contenido">
       <header class="acciones">
@@ -16,10 +18,6 @@
         <span class="am-pastilla {% if solicitud.estado == 'APARTADA' or solicitud.estado == 'EN_SOLICITUD' %}am-pastilla--tramite{% elif solicitud.estado == 'RESERVADA' %}am-pastilla--confirmado{% elif solicitud.estado == 'RECHAZADA' %}am-pastilla--error{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_visible }}</span>
       </header>
       <dl>
-        {% if not es_residente %}
-          <dt>Residente</dt>
-          <dd>{{ solicitud.residente.nombre }}</dd>
-        {% endif %}
         <dt>Fecha y horario</dt>
         <dd>{{ solicitud.fecha }} · {{ solicitud.hora_inicio }} a {{ solicitud.hora_fin }}</dd>
         <dt>Unidad</dt>
@@ -35,25 +33,20 @@
         {% if solicitud.motivo_decision %}
           <dt>Comentario de la decisión</dt>
           <dd>{{ solicitud.motivo_decision }}</dd>
-          {% if solicitud.decidida_por and not es_residente %}
-            <dt>Decidida por</dt>
-            <dd>{{ solicitud.decidida_por.nombre }}{% if solicitud.decidida_en %} · {{ solicitud.decidida_en|date:"d/m/Y H:i" }}{% endif %}</dd>
-          {% endif %}
         {% endif %}
       </dl>
-      {% if not es_residente %}
-        <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitudes-area' solicitud.area.id %}">Ver solicitudes de esta zona</a>
-      {% endif %}
     </article>
   {% endfor %}
 {% elif not error %}
   <div class="am-vacio">
-    {% if es_residente %}
+    {% if puede_ver_reservas %}
+      <p class="am-vacio__titulo">Todavía no hay zonas comunes</p>
+      <p class="am-vacio__texto">Cuando se registren zonas comunes, aparecerán aquí para consultar sus solicitudes.</p>
+    {% elif es_residente %}
       <p class="am-vacio__titulo">Todavía no tienes solicitudes de reserva</p>
       <p class="am-vacio__texto">Tus solicitudes anteriores aparecerán aquí con su estado y los comentarios de la administración.</p>
     {% else %}
-      <p class="am-vacio__titulo">Todavía no hay solicitudes en la bandeja</p>
-      <p class="am-vacio__texto">Las solicitudes de zonas comunes aparecerán aquí cuando un residente las envíe.</p>
+      <p class="am-vacio__titulo">No tienes acceso a solicitudes de reserva</p>
     {% endif %}
   </div>
 {% endif %}

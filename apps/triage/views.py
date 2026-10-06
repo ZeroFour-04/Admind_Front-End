@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from apps.cuentas.sesion import tiene_permiso
+from cliente_api import areas as api_areas
 from cliente_api import reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
@@ -16,16 +17,16 @@ ESTADO_PARA_RESIDENTE = {
 
 
 def bandeja(request):
-    """La administración ve las reservas del conjunto; cada residente ve solo su historial."""
+    """Gestión elige una zona para revisar sus solicitudes; el residente ve su historial."""
     puede_ver_reservas = any(
         tiene_permiso(request, permiso)
         for permiso in ("reserva.ver_todas", "reserva.aprobar", "reserva.rechazar")
     )
     es_residente = not puede_ver_reservas and tiene_permiso(request, "reserva.solicitar")
-    solicitudes, error = [], None
+    solicitudes, areas, error = [], [], None
     if puede_ver_reservas:
         try:
-            solicitudes = api_reservas.solicitudes_para_bandeja(request)
+            areas = api_areas.listar(request)
         except ApiNoDisponible:
             error = MENSAJE_API_NO_DISPONIBLE
         except ErrorDeApi as api_error:
@@ -51,6 +52,7 @@ def bandeja(request):
     ]
     return render(request, "triage/bandeja.html", {
         "solicitudes": solicitudes,
+        "areas": areas,
         "error": error,
         "puede_ver_reservas": puede_ver_reservas,
         "es_residente": es_residente,

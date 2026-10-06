@@ -4,6 +4,10 @@ Alcance: Comprometido (§3.2).
 
 La bandeja de solicitudes. La usa Secretaría y, si no hay secretaría, el administrador.
 
+## Pantalla actual
+
+`/solicitudes/` muestra las zonas comunes con su horario y estado para Administración, Secretaría y Superusuario; cada fila tiene únicamente la acción **Solicitudes**, alineada a la derecha, que abre la bandeja de esa zona. Un residente ve únicamente su historial. La bandeja de triage con pestañas de Citas, Casos y Eventos sigue pendiente (HU-22).
+
 ## Qué va aquí
 
 - Pestañas de Citas, Casos y Eventos, más la vista combinada, con la **antigüedad siempre visible**
