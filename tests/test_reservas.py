@@ -4,7 +4,7 @@ from unittest import mock
 
 from django.urls import URLResolver, get_resolver
 
-from cliente_api.http import ErrorDeApi
+from cliente_api.http import ApiNoDisponible, ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
 SALON = {
@@ -12,7 +12,28 @@ SALON = {
     "nombre": "Salón comunal",
     "hora_apertura": "08:00",
     "hora_cierre": "22:00",
+    "modo_uso": "reserva",
+    "duracion_franja_minutos": 240,
+    "permanencia_maxima_minutos": None,
+    "aforo_maximo": 50,
+    "en_mantenimiento": False,
     "activo": True,
+}
+GIMNASIO = {
+    **SALON,
+    "id": "3c4d5e6f-0000-4000-8000-000000000009",
+    "nombre": "Gimnasio",
+    "modo_uso": "ingreso",
+    "duracion_franja_minutos": None,
+    "permanencia_maxima_minutos": 60,
+    "aforo_maximo": 30,
+}
+ZONA_GIMNASIO = {
+    "area": GIMNASIO,
+    "adentro": 18,
+    "cupos": 12,
+    "abierta_ahora": True,
+    "motivo_cierre": "",
 }
 FRANJAS = {
     "area": {"id": SALON["id"], "nombre": "Salón comunal"},
@@ -334,3 +355,78 @@ def test_un_409_al_enviar_se_muestra_con_su_mensaje():
         html = cliente_con_sesion(permisos=RESIDENTE).post(URL_ENVIO, ENVIO).content.decode()
 
     assert 'role="alert">Se venció el tiempo. La franja quedó libre.</div>' in html
+
+
+# Cómo se usa cada zona y sus cupos (plan de zonas con ingreso, F6)
+
+
+def ver_zonas(areas, zonas=None, permisos=RESIDENTE, url="/reservas/"):
+    """La pantalla con `zonas` como respuesta de la API de ingresos, o una excepción para simular que no responde."""
+    con_zonas = {"side_effect": zonas} if isinstance(zonas, Exception) else {"return_value": zonas or []}
+    with (
+        mock.patch("cliente_api.areas.listar", return_value=areas),
+        mock.patch("cliente_api.ingresos.zonas", **con_zonas),
+    ):
+        return " ".join(cliente_con_sesion(permisos=permisos).get(url).content.decode().split())
+
+
+def fila(html, nombre):
+    return html.split(f"<td>{nombre}</td>")[1].split("</tr>")[0]
+
+
+def test_la_tabla_dice_como_se_usa_cada_zona_y_la_de_ingreso_muestra_sus_cupos_sin_reservar():
+    html = ver_zonas([SALON, GIMNASIO], [ZONA_GIMNASIO])
+
+    assert "<td>Con reserva</td>" in fila(html, "Salón comunal") and ">Reservar</a>" in fila(html, "Salón comunal")
+    gimnasio = fila(html, "Gimnasio")
+    assert "<td>Con ingreso</td>" in gimnasio
+    assert "12 de 30 libres" in gimnasio and "Abierta" in gimnasio and "puedes quedarte hasta 60 min" in gimnasio
+    assert "Reservar" not in gimnasio
+
+
+def test_sin_cupo_cerrada_y_en_mantenimiento_se_dicen_con_texto():
+    sin_cupo = ver_zonas([GIMNASIO], [{**ZONA_GIMNASIO, "adentro": 30, "cupos": 0}])
+    cerrada = ver_zonas([GIMNASIO], [{**ZONA_GIMNASIO, "abierta_ahora": False, "motivo_cierre": "Atiende de 05:00 a 22:00."}])
+    mantenimiento = ver_zonas([{**GIMNASIO, "en_mantenimiento": True}], [{**ZONA_GIMNASIO, "abierta_ahora": False}])
+
+    assert "Sin cupo" in fila(sin_cupo, "Gimnasio") and "0 de 30 libres" in fila(sin_cupo, "Gimnasio")
+    assert "Cerrada" in fila(cerrada, "Gimnasio") and "Atiende de 05:00 a 22:00." in fila(cerrada, "Gimnasio")
+    assert "En mantenimiento" in fila(mantenimiento, "Gimnasio") and "Cerrada" not in fila(mantenimiento, "Gimnasio")
+
+
+def test_el_selector_del_calendario_no_lista_las_zonas_con_ingreso_ni_pinta_sus_franjas():
+    with (
+        mock.patch("cliente_api.areas.listar", return_value=[SALON, GIMNASIO]),
+        mock.patch("cliente_api.ingresos.zonas", return_value=[ZONA_GIMNASIO]),
+        mock.patch("cliente_api.reservas.franjas") as franjas,
+    ):
+        html = cliente_con_sesion(permisos=RESIDENTE).get(f"/reservas/?area={GIMNASIO['id']}&mes=2026-12&dia=2026-12-26").content.decode()
+
+    selector = html.split('<select')[1].split("</select>")[0]
+    assert "Salón comunal" in selector and "Gimnasio" not in selector
+    assert 'selected' not in selector
+    franjas.assert_not_called()
+
+
+def test_con_la_api_de_ingresos_caida_la_pantalla_carga_y_las_zonas_con_reserva_se_pueden_reservar():
+    html = ver_zonas([SALON, GIMNASIO], ApiNoDisponible())
+
+    assert "No pudimos consultar los cupos en este momento." in html
+    assert ">Reservar</a>" in fila(html, "Salón comunal")
+    assert "Sin información" in fila(html, "Gimnasio")
+
+
+def test_sin_zonas_con_ingreso_no_se_consulta_la_api_de_ingresos():
+    with (
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+        mock.patch("cliente_api.ingresos.zonas") as zonas,
+    ):
+        cliente_con_sesion(permisos=RESIDENTE).get("/reservas/")
+
+    zonas.assert_not_called()
+
+
+def test_la_tabla_invita_a_recargar_para_ver_los_cupos_nuevos():
+    html = ver_zonas([GIMNASIO], [ZONA_GIMNASIO])
+
+    assert "Los cupos se actualizan al recargar la página." in html and ">Actualizar</a>" in html

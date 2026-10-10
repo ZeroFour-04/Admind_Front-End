@@ -36,7 +36,11 @@
     <section aria-labelledby="area-{{ forloop.counter }}">
       <h2 id="area-{{ forloop.counter }}">{{ grupo.area.nombre }}</h2>
       <p class="vista__guia">
-        Abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, en franjas de {{ grupo.area.duracion_franja_minutos }} minutos, con aforo de {{ grupo.area.aforo_maximo }} personas.
+        {% if grupo.area.modo_uso == "ingreso" %}
+          Con ingreso: abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, con permanencia máxima de {{ grupo.area.permanencia_maxima_minutos }} minutos y aforo de {{ grupo.area.aforo_maximo }} personas adentro a la vez.
+        {% else %}
+          Abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, en franjas de {{ grupo.area.duracion_franja_minutos }} minutos, con aforo de {{ grupo.area.aforo_maximo }} personas.
+        {% endif %}
         {% if puede_gestionar_areas %}<a href="{% url 'areas:editar' grupo.area.id %}">Cambiar horario o aforo</a>{% endif %}
       </p>
       <div class="am-tabla-caja tabla-desplazable">

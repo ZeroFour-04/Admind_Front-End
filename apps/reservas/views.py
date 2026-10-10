@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 
 from apps.areas.views import cargar_areas
 from apps.cuentas.sesion import tiene_permiso
+from cliente_api import ingresos as api_ingresos
 from cliente_api import reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
@@ -82,6 +83,40 @@ def cargar_franjas(request, area_id, dia):
     return franjas, None
 
 
+def cargar_cupos(request):
+    """Los cupos de las zonas con ingreso por id de área, o el aviso si no se pudieron consultar.
+
+    Es un dato de más: si la API de ingresos no responde, la tabla sale sin cupos y reservar sigue funcionando.
+    """
+    try:
+        return {zona["area"]["id"]: zona for zona in api_ingresos.zonas(request)}, None
+    except ApiNoDisponible:
+        return None, MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as error:
+        return None, error.mensaje
+
+
+def fila_de_zona(area, cupos):
+    """Una zona para la tabla: cómo se usa, cuánto cabe y su estado en una pastilla con texto (plan P18)."""
+    fila = {"area": area, "con_ingreso": area["modo_uso"] == "ingreso", "detalle": ""}
+    zona = (cupos or {}).get(area["id"])
+    if area["en_mantenimiento"]:
+        fila["texto"], fila["clase"] = "En mantenimiento", "am-pastilla--tramite"
+    elif not fila["con_ingreso"]:
+        fila["texto"], fila["clase"] = "Disponible", "am-pastilla--confirmado"
+    elif zona is None:
+        fila["texto"], fila["clase"] = "Sin información", "am-pastilla--neutro"
+    elif not zona["abierta_ahora"]:
+        fila["texto"], fila["clase"], fila["detalle"] = "Cerrada", "am-pastilla--neutro", zona["motivo_cierre"]
+    elif zona["cupos"] == 0:
+        fila["texto"], fila["clase"] = "Sin cupo", "am-pastilla--error"
+    else:
+        fila["texto"], fila["clase"] = "Abierta", "am-pastilla--confirmado"
+    if zona is not None:
+        fila["cupos"] = zona["cupos"]
+    return fila
+
+
 def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
     """El calendario del mes, se arma en el servidor: cambiar de mes, de día o de área es un enlace."""
     hoy = timezone.localdate()
@@ -89,9 +124,12 @@ def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
     dia = _dia_pedido(request.GET.get("dia"), mes)
     if dia and dia < hoy:
         dia = None
-    areas, error_de_areas = cargar_areas(request)
-    areas = [area for area in areas if area["activo"]]
+    todas, error_de_areas = cargar_areas(request)
+    todas = [area for area in todas if area["activo"]]
+    # Solo lo que se reserva va al calendario; lo que tiene ingreso se registra en portería.
+    areas = [area for area in todas if area["modo_uso"] == "reserva"]
     area = next((area for area in areas if area["id"] == request.GET.get("area")), None)
+    cupos, aviso_de_cupos = cargar_cupos(request) if any(a["modo_uso"] == "ingreso" for a in todas) else ({}, None)
     franjas, error_de_franjas = cargar_franjas(request, area["id"], dia) if area and dia else ([], None)
     return render(request, "reservas/calendario.html", {
         "hoy": hoy,
@@ -101,6 +139,8 @@ def pantalla_del_calendario(request, error=None, solicitud_en_curso=None):
         "mes_anterior": _mes_vecino(mes, -1),
         "mes_siguiente": _mes_vecino(mes, 1),
         "areas": areas,
+        "zonas": [fila_de_zona(zona, cupos) for zona in todas],
+        "aviso_de_cupos": aviso_de_cupos,
         "area": area,
         "franjas": franjas,
         "error": error or error_de_areas or error_de_franjas,

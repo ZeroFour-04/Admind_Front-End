@@ -9,11 +9,61 @@
 {% block scripts %}<script src="{% static 'js/calendario-reservas.js' %}" defer></script>{% endblock %}
 
 {% block contenido %}
+{% if zonas %}
+  <section aria-labelledby="titulo-zonas">
+    <h2 id="titulo-zonas">Cómo se usa cada zona</h2>
+    {% if aviso_de_cupos %}
+      <div class="aviso-info" role="note"><p>No pudimos consultar los cupos en este momento. {{ aviso_de_cupos }} Las reservas siguen funcionando.</p></div>
+    {% endif %}
+    <div class="am-tabla-caja tabla-desplazable">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th scope="col">Zona</th>
+            <th scope="col">Cómo se usa</th>
+            <th scope="col">Horario</th>
+            <th scope="col">Cupos ahora</th>
+            <th scope="col">Estado</th>
+            {% if puede_solicitar %}<th scope="col">Acciones</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in zonas %}
+            <tr>
+              <td>{{ fila.area.nombre }}</td>
+              <td>{% if fila.con_ingreso %}Con ingreso{% else %}Con reserva{% endif %}</td>
+              <td class="am-num">
+                {{ fila.area.hora_apertura }} a {{ fila.area.hora_cierre }}
+                <span class="am-tabla__secundario">{% if fila.con_ingreso %}puedes quedarte hasta {{ fila.area.permanencia_maxima_minutos }} min{% else %}franjas de {{ fila.area.duracion_franja_minutos }} min{% endif %}</span>
+              </td>
+              <td class="am-num">
+                {% if not fila.con_ingreso %}Por franjas{% elif fila.cupos is not None %}{{ fila.cupos }} de {{ fila.area.aforo_maximo }} libres{% else %}Sin información{% endif %}
+              </td>
+              <td>
+                <span class="am-pastilla {{ fila.clase }}">{{ fila.texto }}</span>
+                {% if fila.detalle %}<span class="am-tabla__secundario">{{ fila.detalle }}</span>{% endif %}
+              </td>
+              {% if puede_solicitar %}
+                <td>
+                  {% if not fila.con_ingreso and not fila.area.en_mantenimiento %}
+                    <a class="am-btn am-btn--secundario" href="?area={{ fila.area.id }}&amp;mes={{ mes|date:'Y-m' }}">Reservar</a>
+                  {% endif %}
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="vista__guia">Los cupos se actualizan al recargar la página. <a href="{{ request.get_full_path }}">Actualizar</a></p>
+  </section>
+{% endif %}
+
 <div class="calendario-reservas">
 {% if areas %}
   <form method="get" class="am-formulario selector-area">
     <div class="am-campo">
-      <label class="am-campo__etiqueta" for="area">Área común</label>
+      <label class="am-campo__etiqueta" for="area">Área para reservar</label>
       <select class="am-campo__control" id="area" name="area" data-envio-al-cambiar>
         <option value="">Elige el área</option>
         {% for opcion in areas %}

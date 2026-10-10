@@ -1,0 +1,236 @@
+{% extends "base/aplicacion.html" %}
+{% load tz %}
+
+{% block titulo %}{% if registra %}Ingreso a zonas{% else %}Ingresos{% endif %}{% endblock %}
+{% block titulo_vista %}{% if registra %}Ingreso a zonas{% else %}Ingresos{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if exito %}
+  <div class="aviso-exito" role="status">{{ exito }}</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section aria-labelledby="titulo-cupos">
+  <h2 id="titulo-cupos">Cupos por zona</h2>
+  {% if cupos %}
+    <div class="am-tabla-caja tabla-desplazable">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th scope="col">Zona</th>
+            <th scope="col">Cupos ahora</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in cupos %}
+            <tr>
+              <td>{{ fila.area.nombre }}</td>
+              <td class="am-num">{{ fila.cupos }} de {{ fila.area.aforo_maximo }} libres</td>
+              <td>
+                <span class="am-pastilla {{ fila.clase }}">{{ fila.texto }}</span>
+                {% if fila.detalle %}<span class="am-tabla__secundario">{{ fila.detalle }}</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="vista__guia">Los cupos se actualizan al recargar la página. <a href="{{ request.get_full_path }}">Actualizar</a></p>
+  {% elif not error %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">Todavía no hay zonas con ingreso</p>
+      <p class="am-vacio__texto">El gimnasio o la piscina aparecen aquí cuando la administración las cree con ingreso.</p>
+    </div>
+  {% endif %}
+</section>
+
+{% if registra %}
+  <section aria-labelledby="titulo-registrar">
+    <h2 id="titulo-registrar">Registrar una entrada</h2>
+    <div class="aviso-info" role="note"><p>{{ aviso_de_finalidad }}</p></div>
+    {% if motivos %}
+      <div class="am-alerta am-alerta--error" role="alert">
+        <p>No se registró la entrada:</p>
+        <ul class="lista-simple" role="list">{% for motivo in motivos %}<li>{{ motivo }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+    <form method="post" action="{% url 'ingresos:registrar' %}" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" %}
+      {% if residentes %}
+        <input type="hidden" name="paso" value="registrar">
+        <input type="hidden" name="area" value="{{ formulario.area.value }}">
+        <input type="hidden" name="numero_documento" value="{{ formulario.numero_documento.value }}">
+        <input type="hidden" name="acompanantes" value="{{ formulario.acompanantes.value }}">
+        <p class="vista__guia">Zona: <b>{% for valor, nombre in formulario.fields.area.choices %}{% if valor == formulario.area.value %}{{ nombre }}{% endif %}{% endfor %}</b>
+          · Acompañantes: <b>{{ formulario.acompanantes.value }}</b></p>
+        <fieldset class="opciones-alcance">
+          <legend class="am-campo__etiqueta">Confirma quién entra y a nombre de qué vivienda</legend>
+          {% for opcion in formulario.residente %}
+            <label class="opciones-alcance__opcion">
+              {{ opcion.tag }}
+              <span><b>{{ opcion.choice_label }}</b></span>
+            </label>
+          {% endfor %}
+          {% if formulario.residente.errors %}<span class="am-campo__error">{{ formulario.residente.errors|join:" " }}</span>{% endif %}
+        </fieldset>
+        <div class="acciones">
+          <a class="am-btn am-btn--secundario" href="{% url 'ingresos:lista' %}">Cancelar</a>
+          <button class="am-btn am-btn--primario" type="submit">Registrar entrada</button>
+        </div>
+      {% else %}
+        <input type="hidden" name="paso" value="buscar">
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="{{ formulario.area.id_for_label }}">{{ formulario.area.label }}</label>
+          <select class="am-campo__control" id="{{ formulario.area.id_for_label }}" name="{{ formulario.area.html_name }}" required
+                  {% if formulario.area.errors %}aria-invalid="true"{% endif %}>
+            {% for valor, nombre in formulario.fields.area.choices %}
+              <option value="{{ valor }}"{% if formulario.area.value == valor %} selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+          {% if formulario.area.errors %}<span class="am-campo__error">{{ formulario.area.errors|join:" " }}</span>{% endif %}
+        </div>
+        {% include "componentes/campo.html" with campo=formulario.numero_documento modo="numeric" ayuda="Sin puntos ni espacios. Solo se busca entre quienes viven en el conjunto." %}
+        {% include "componentes/campo.html" with campo=formulario.acompanantes tipo="number" modo="numeric" %}
+        <div class="acciones">
+          <button class="am-btn am-btn--primario" type="submit">Buscar residente</button>
+        </div>
+      {% endif %}
+    </form>
+  </section>
+
+  <section aria-labelledby="titulo-adentro">
+    <h2 id="titulo-adentro">Adentro ahora</h2>
+    {% if adentro %}
+      <div class="am-tabla-caja tabla-desplazable">
+        <table class="am-tabla">
+          <thead>
+            <tr>
+              <th scope="col">Persona</th>
+              <th scope="col">Vivienda</th>
+              <th scope="col">Zona</th>
+              <th scope="col">Acompañantes</th>
+              <th scope="col">Entró</th>
+              <th scope="col">Debe salir</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ingreso in adentro %}
+              <tr>
+                <td>{{ ingreso.persona.nombre }}</td>
+                <td>{{ ingreso.unidad.nombre }}</td>
+                <td>{{ ingreso.area.nombre }}</td>
+                <td class="am-num">{{ ingreso.acompanantes }}</td>
+                <td class="am-num">{{ ingreso.entrada_en|localtime|date:"H:i" }}</td>
+                <td class="am-num">{{ ingreso.salida_prevista_en|localtime|date:"H:i" }}</td>
+                <td>
+                  <form method="post" action="{% url 'ingresos:salida' ingreso.id %}">
+                    {% csrf_token %}
+                    <button class="am-btn am-btn--secundario" type="submit">Registrar salida</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">No hay nadie adentro.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="titulo-vencidos">
+    <h2 id="titulo-vencidos">Se les cumplió el tiempo hoy</h2>
+    <p class="vista__guia">El sistema liberó su puesto. Si siguen adentro, pídeles que salgan.</p>
+    {% if vencidos_hoy %}
+      <div class="am-tabla-caja tabla-desplazable">
+        <table class="am-tabla">
+          <thead>
+            <tr>
+              <th scope="col">Persona</th>
+              <th scope="col">Vivienda</th>
+              <th scope="col">Zona</th>
+              <th scope="col">Acompañantes</th>
+              <th scope="col">Se cumplió a las</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ingreso in vencidos_hoy %}
+              <tr>
+                <td>{{ ingreso.persona.nombre }}</td>
+                <td>{{ ingreso.unidad.nombre }}</td>
+                <td>{{ ingreso.area.nombre }}</td>
+                <td class="am-num">{{ ingreso.acompanantes }}</td>
+                <td class="am-num">{{ ingreso.salida_en|localtime|date:"H:i" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">A nadie se le ha cumplido el tiempo hoy.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+{% if historico %}
+  <section aria-labelledby="titulo-historial">
+    <h2 id="titulo-historial">Historial de ingresos</h2>
+    <form method="get" class="am-formulario selector-area" novalidate>
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ filtro.area.id_for_label }}">{{ filtro.area.label }}</label>
+        <select class="am-campo__control" id="{{ filtro.area.id_for_label }}" name="{{ filtro.area.html_name }}">
+          {% for valor, nombre in filtro.fields.area.choices %}
+            <option value="{{ valor }}"{% if filtro.area.value == valor %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% include "componentes/campo.html" with campo=filtro.fecha tipo="date" ayuda="Vacío es hoy." %}
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Filtrar</button>
+      </div>
+    </form>
+    {% if historial %}
+      <div class="am-tabla-caja tabla-desplazable">
+        <table class="am-tabla">
+          <thead>
+            <tr>
+              <th scope="col">Persona</th>
+              <th scope="col">Vivienda</th>
+              <th scope="col">Zona</th>
+              <th scope="col">Acompañantes</th>
+              <th scope="col">Entró</th>
+              <th scope="col">Salió</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Lo registró</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ingreso in historial %}
+              <tr>
+                <td>{{ ingreso.persona.nombre }}</td>
+                <td>{{ ingreso.unidad.nombre }}</td>
+                <td>{{ ingreso.area.nombre }}</td>
+                <td class="am-num">{{ ingreso.acompanantes }}</td>
+                <td class="am-num">{{ ingreso.entrada_en|localtime|date:"d/m/Y H:i" }}</td>
+                <td class="am-num">{% if ingreso.salida_en %}{{ ingreso.salida_en|localtime|date:"H:i" }}{% else %}—{% endif %}</td>
+                <td><span class="am-pastilla {{ ingreso.clase }}">{{ ingreso.estado_nombre }}</span></td>
+                <td>{{ ingreso.registrado_por }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% elif not error %}
+      <div class="am-vacio">
+        <p class="am-vacio__titulo">No hay ingresos en esa fecha</p>
+      </div>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

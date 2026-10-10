@@ -6,7 +6,8 @@ Las pantallas del flujo de reserva. Es la parte de la interfaz que más se suste
 
 ## Qué va aquí
 
-- Calendario con franjas libres y ocupadas
+- **«Zonas comunes» abre con una tabla de todas las zonas**: nombre, cómo se usa, horario y cupos de este momento (`GET /ingresos/zonas/`). La pastilla dice el estado: «Abierta», «Cerrada», «Sin cupo» o «En mantenimiento». Una zona con ingreso no ofrece «Reservar». Si la API de ingresos no responde, la tabla sale sin cupos y con su aviso, y reservar sigue funcionando
+- Calendario con franjas libres y ocupadas. El selector lista solo las áreas con reserva
 - Las franjas apartadas y reservadas se distinguen en rojo en el calendario
 - `Reservar`: toma el bloqueo y muestra la **cuenta regresiva de 3 minutos**. Salir del formulario libera la franja de inmediato
 - Formulario y **confirmación de contenido**, con el día de la semana en letras

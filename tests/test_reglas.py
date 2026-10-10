@@ -8,14 +8,21 @@ from tests.ayudantes import cliente_con_sesion
 
 SALON = {
     "id": "3c4d5e6f-0000-4000-8000-000000000001", "nombre": "Salón comunal", "activo": True,
-    "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": 240, "aforo_maximo": 50,
+    "hora_apertura": "08:00", "hora_cierre": "22:00", "modo_uso": "reserva", "duracion_franja_minutos": 240,
+    "permanencia_maxima_minutos": None, "aforo_maximo": 50,
+}
+GIMNASIO = {
+    **SALON, "id": "3c4d5e6f-0000-4000-8000-000000000009", "nombre": "Gimnasio", "modo_uso": "ingreso",
+    "duracion_franja_minutos": None, "permanencia_maxima_minutos": 60, "aforo_maximo": 3,
 }
 CATALOGO = [
-    {"tipo": "ANTICIPACION_MAXIMA", "nivel": "alfa", "nombre": "Anticipación máxima",
+    {"tipo": "ANTICIPACION_MAXIMA", "nivel": "alfa", "nombre": "Anticipación máxima", "modos": ["reserva"],
      "descripcion": "Hasta cuántos días hacia adelante se puede reservar.", "nota": ""},
-    {"tipo": "DIAS_QUE_NO_ABRE", "nivel": "beta", "nombre": "Días que no abre",
+    {"tipo": "ACOMPANANTES", "nivel": "alfa", "nombre": "Acompañantes", "modos": ["ingreso"],
+     "descripcion": "Cuántos acompañantes puede tener adentro una misma vivienda a la vez.", "nota": ""},
+    {"tipo": "DIAS_QUE_NO_ABRE", "nivel": "beta", "nombre": "Días que no abre", "modos": ["reserva", "ingreso"],
      "descripcion": "Días de la semana, fechas o periodos en que el área no presta servicio.", "nota": ""},
-    {"tipo": "CUPO_POR_UNIDAD", "nivel": "beta", "nombre": "Límite de reservas por apartamento",
+    {"tipo": "CUPO_POR_UNIDAD", "nivel": "beta", "nombre": "Límite de reservas por apartamento", "modos": ["reserva"],
      "descripcion": "Cuántas reservas de esta área puede tener un mismo apartamento en un periodo.", "nota": ""},
 ]
 MAXIMA = {
@@ -34,16 +41,17 @@ CAMPOS_POR_TIPO = {
     "ANTICIPACION_MINIMA": ["horas"],
     "ANTICIPACION_MAXIMA": ["dias"],
     "CUPO_POR_UNIDAD": ["reservas", "dias"],
+    "ACOMPANANTES": ["maximo"],
     "REQUIERE_PAZ_Y_SALVO": [],
 }
 PISO = {"desde": "2026-11-01", "hasta": "2026-11-30", "motivo": "Cambio del piso"}
 
 
-def tablero(reglas, permisos=ADMINISTRACION, url="/reglas/"):
+def tablero(reglas, permisos=ADMINISTRACION, url="/reglas/", areas=(SALON,)):
     with (
         mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
         mock.patch("cliente_api.reglas.listar", return_value=reglas),
-        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+        mock.patch("cliente_api.areas.listar", return_value=list(areas)),
     ):
         return cliente_con_sesion(permisos=permisos).get(url).content.decode()
 
@@ -288,3 +296,55 @@ def test_el_paso_de_reglas_del_asistente_es_el_mismo_tablero():
     assert 'aria-current="step">5. Reglas' in formulario and 'name="volver" value="asistente"' in formulario
     assert guardada["Location"] == "/conjuntos/asistente/reglas/"
     assert retirada["Location"] == "/conjuntos/asistente/reglas/"
+
+
+# Modo de uso y acompañantes (plan de zonas con ingreso, F5)
+
+
+def test_un_area_con_ingreso_no_muestra_el_limite_de_reservas_y_dice_como_se_usa():
+    html = tablero([], areas=(SALON, GIMNASIO))
+    gimnasio = html.split("Gimnasio</h2>")[1]
+    salon = html.split("Salón comunal</h2>")[1].split("Gimnasio</h2>")[0]
+
+    assert "Límite de reservas por apartamento" in salon
+    assert "Límite de reservas por apartamento" not in gimnasio
+    assert "Días que no abre" in gimnasio
+    assert "permanencia máxima de 60 minutos y aforo de 3 personas adentro a la vez" in gimnasio
+
+
+def test_acompanantes_sale_entre_las_reglas_del_conjunto_y_se_define_con_su_formulario():
+    html = tablero([], areas=(SALON,))
+    conjunto = html.split("Reglas del conjunto</h2>")[1].split("Salón comunal</h2>")[0]
+
+    assert "Acompañantes" in conjunto and "/reglas/definir/ACOMPANANTES/" in conjunto
+
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear") as crear,
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/reglas/definir/ACOMPANANTES/", {"maximo": "0", "vigencia_desde": "2026-10-08"}
+        )
+
+    assert crear.call_args.args[1] == {"tipo": "ACOMPANANTES", "parametros": {"maximo": 0}, "vigencia_desde": "2026-10-08"}
+    assert respuesta["Location"] == "/reglas/"
+
+
+def test_acompanantes_acepta_cero_y_rechaza_un_maximo_negativo():
+    from apps.reglas.forms import AcompanantesForm
+
+    assert AcompanantesForm(data={"maximo": "0", "vigencia_desde": "2026-10-08"}).is_valid()
+    assert not AcompanantesForm(data={"maximo": "-1", "vigencia_desde": "2026-10-08"}).is_valid()
+
+
+def test_un_400_de_la_api_sobre_acompanantes_cae_en_su_campo():
+    rechazo = ErrorDeApi(400, {"maximo": ["Debe ser mayor o igual a 0."]})
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear", side_effect=rechazo),
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/reglas/definir/ACOMPANANTES/", {"maximo": "2", "vigencia_desde": "2026-10-08"}
+        )
+
+    assert "id_maximo-error" in respuesta.content.decode()

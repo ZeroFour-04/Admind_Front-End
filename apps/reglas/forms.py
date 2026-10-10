@@ -40,6 +40,14 @@ class CupoPorUnidadForm(ParametrosForm):
     dias = forms.IntegerField(label="Cada cuántos días", min_value=1)
 
 
+class AcompanantesForm(ParametrosForm):
+    maximo = forms.IntegerField(
+        label="Máximo de acompañantes por vivienda a la vez",
+        min_value=0,
+        help_text="Con 0 no se permiten acompañantes. Cada acompañante ocupa un puesto del aforo.",
+    )
+
+
 class RequierePazYSalvoForm(ParametrosForm):
     """Sin parámetros."""
 
@@ -82,6 +90,7 @@ FORMULARIO_POR_TIPO = {
     "ANTICIPACION_MAXIMA": AnticipacionMaximaForm,
     "REQUIERE_PAZ_Y_SALVO": RequierePazYSalvoForm,
     "CUPO_POR_UNIDAD": CupoPorUnidadForm,
+    "ACOMPANANTES": AcompanantesForm,
 }
 
 

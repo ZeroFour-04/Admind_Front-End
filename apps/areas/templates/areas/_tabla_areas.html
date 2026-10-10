@@ -7,6 +7,7 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
     <thead>
       <tr>
         <th>Nombre</th>
+        <th>Cómo se usa</th>
         <th>Horario</th>
         <th>Estado</th>
         {% if acciones or ver_solicitudes %}<th>Acciones</th>{% endif %}
@@ -16,7 +17,8 @@ Parámetros: areas y acciones (si se muestran los botones de gestión).
       {% for area in areas %}
         <tr>
           <td>{{ area.nombre }}</td>
-          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">franjas de {{ area.duracion_franja_minutos }} min · aforo {{ area.aforo_maximo }}</span></td>
+          <td>{% if area.modo_uso == "ingreso" %}Con ingreso{% else %}Con reserva{% endif %}</td>
+          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">{% if area.modo_uso == "ingreso" %}permanencia de {{ area.permanencia_maxima_minutos }} min{% else %}franjas de {{ area.duracion_franja_minutos }} min{% endif %} · aforo {{ area.aforo_maximo }}</span></td>
           <td>
             {% if not area.activo %}
               <span class="am-pastilla am-pastilla--neutro">Inactiva</span>

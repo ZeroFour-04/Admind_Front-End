@@ -52,14 +52,19 @@ def cargar_tablero(request):
     areas, error = cargar_areas(request)
     definida = {(regla["tipo"], regla["area"]["id"] if regla["area"] else None): regla for regla in reglas}
 
-    def filas(nivel, area_id=None):
+    def filas(nivel, area_id=None, modo=None):
+        """Las reglas del nivel. En un área, solo las que aplican a su modo de uso (`modos` del catálogo)."""
         return [
-            {**tipo, "regla": definida.get((tipo["tipo"], area_id))} for tipo in catalogo if tipo["nivel"] == nivel
+            {**tipo, "regla": definida.get((tipo["tipo"], area_id))}
+            for tipo in catalogo
+            if tipo["nivel"] == nivel and (modo is None or modo in tipo["modos"])
         ]
 
     tablero = {
         "alfas": filas("alfa"),
-        "por_area": [{"area": area, "filas": filas("beta", area["id"])} for area in areas if area["activo"]],
+        "por_area": [
+            {"area": area, "filas": filas("beta", area["id"], area["modo_uso"])} for area in areas if area["activo"]
+        ],
     }
     return tablero, error
 

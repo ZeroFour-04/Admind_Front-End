@@ -3,6 +3,33 @@ Campos del formulario de un área (HU-09). Lo usan el alta, la edición y el pas
 Parámetros: formulario.
 {% endcomment %}
 {% include "componentes/errores_formulario.html" %}
+{% if formulario.modo_uso %}
+  <fieldset class="opciones-alcance">
+    <legend class="am-campo__etiqueta">{{ formulario.modo_uso.label }}</legend>
+    {% for valor, nombre in formulario.fields.modo_uso.choices %}
+      <label class="opciones-alcance__opcion">
+        <input type="radio" name="{{ formulario.modo_uso.html_name }}" value="{{ valor }}"
+               {% if formulario.modo_uso.value == valor or not formulario.modo_uso.value and valor == "reserva" %}checked{% endif %}>
+        <span>
+          <b>{{ nombre }}</b>
+          {% if valor == "reserva" %}
+            <span class="am-campo__ayuda">Se aparta una franja con anticipación: salón, BBQ, jacuzzi.</span>
+          {% else %}
+            <span class="am-campo__ayuda">No se aparta: portería registra a quien entra y no se pasa del aforo. Gimnasio, piscina.</span>
+          {% endif %}
+        </span>
+      </label>
+    {% endfor %}
+    <span class="am-campo__ayuda">El modo no se puede cambiar después de crear el área.</span>
+    {% if formulario.modo_uso.errors %}<span class="am-campo__error">{{ formulario.modo_uso.errors|join:" " }}</span>{% endif %}
+  </fieldset>
+{% elif formulario.modo_uso_actual %}
+  <div class="am-campo">
+    <span class="am-campo__etiqueta">Cómo se usa</span>
+    <b>{% if formulario.modo_uso_actual == "ingreso" %}Con ingreso{% else %}Con reserva{% endif %}</b>
+    <span class="am-campo__ayuda">El modo no cambia después de crear el área. Para cambiarlo, se desactiva y se crea otra.</span>
+  </div>
+{% endif %}
 {% include "componentes/campo.html" with campo=formulario.nombre ayuda="Como la conoce el conjunto, por ejemplo «Salón comunal»." %}
 <div class="am-campo">
   <label class="am-campo__etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
@@ -13,8 +40,13 @@ Parámetros: formulario.
 
 {% include "componentes/campo.html" with campo=formulario.hora_apertura tipo="time" %}
 {% include "componentes/campo.html" with campo=formulario.hora_cierre tipo="time" %}
-{% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Mínimo 120 minutos (2 horas). Las franjas se arman en bloques desde la hora de apertura." %}
-{% include "componentes/campo.html" with campo=formulario.aforo_maximo tipo="number" modo="numeric" ayuda="Cuántas personas caben. Es el máximo de asistentes de cada reserva." %}
+{% if formulario.modo_uso_actual != "ingreso" %}
+  {% include "componentes/campo.html" with campo=formulario.duracion_franja_minutos tipo="number" modo="numeric" ayuda="Solo para áreas con reserva. Mínimo 120 minutos (2 horas). Las franjas se arman en bloques desde la hora de apertura." %}
+{% endif %}
+{% if formulario.modo_uso_actual != "reserva" %}
+  {% include "componentes/campo.html" with campo=formulario.permanencia_maxima_minutos tipo="number" modo="numeric" ayuda="Solo para áreas con ingreso. Cuánto puede quedarse una persona desde que entra, de 15 a 1440 minutos. La salida prevista no pasa de la hora de cierre." %}
+{% endif %}
+{% include "componentes/campo.html" with campo=formulario.aforo_maximo tipo="number" modo="numeric" ayuda="Cuántas personas caben. Con reserva, es el máximo de asistentes de cada reserva; con ingreso, el máximo de personas adentro al mismo tiempo." %}
 
 {% if formulario.en_mantenimiento %}
   <label class="opciones-alcance__opcion">
