@@ -1,7 +1,7 @@
 """Endpoints de `Admind_Backend/apps/reservas/`: franjas y solicitudes de reserva (HU-11)."""
 from urllib.parse import urlencode
 
-from cliente_api.http import pedir
+from cliente_api.http import pedir, pedir_archivo
 
 
 def franjas(request, area_id, fecha):
@@ -47,3 +47,33 @@ def solicitudes_para_bandeja(request):
 def decidir(request, solicitud_id, datos):
     """POST /reservas/solicitudes/<id>/decision/ → acepta o rechaza una solicitud con motivo."""
     return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/decision/", datos)
+
+
+def declarar_pago(request, solicitud_id, archivo=None):
+    """POST /reservas/solicitudes/<id>/pago/ → la solicitud con `pago.declarado` y `pago.declarado_por`.
+
+    El `archivo` es el comprobante, opcional. 400 bajo `archivo` si no es PDF, JPG ni PNG o pesa más de 5 MB;
+    409 si la solicitud no está apartada ni reservada, si el pago ya estaba declarado o si ya hay 3 comprobantes.
+    """
+    archivos = {"archivo": (archivo.name, archivo.read(), archivo.content_type)} if archivo else None
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/pago/", archivos=archivos)
+
+
+def retirar_pago(request, solicitud_id, motivo):
+    """POST /reservas/solicitudes/<id>/pago/retirar/ → la solicitud con el pago sin declarar. 409 si no estaba declarado."""
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/pago/retirar/", {"motivo": motivo})
+
+
+def subir_comprobante(request, solicitud_id, archivo):
+    """POST /reservas/solicitudes/<id>/comprobantes/ → la solicitud propia con el comprobante en `pago`.
+
+    Subirlo no declara el pago. 400 bajo `archivo` (tipo o peso); 409 si el pago ya está declarado, si la solicitud
+    ya no admite comprobantes o si ya tiene 3; 404 si la solicitud no es de quien pide.
+    """
+    contenido = (archivo.name, archivo.read(), archivo.content_type)
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/comprobantes/", archivos={"archivo": contenido})
+
+
+def comprobante(request, comprobante_id):
+    """GET /reservas/comprobantes/<id>/ → (contenido, tipo). 404 si no existe o la persona no puede verlo."""
+    return pedir_archivo(request, f"reservas/comprobantes/{comprobante_id}/")

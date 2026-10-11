@@ -52,6 +52,25 @@ class RequierePazYSalvoForm(ParametrosForm):
     """Sin parámetros."""
 
 
+class DiaLimiteDePagoForm(ParametrosForm):
+    """El día del mes hasta el que se paga la administración sin entrar en mora (HU-35)."""
+
+    dia = forms.IntegerField(
+        label="Día límite de pago",
+        min_value=1,
+        max_value=28,
+        help_text="Hasta el 28, para que exista en todos los meses.",
+    )
+
+
+class UnaReservaPorDiaForm(ParametrosForm):
+    """Sin parámetros: definirla la activa."""
+
+
+class SinFranjasSeguidasForm(ParametrosForm):
+    """Sin parámetros: definirla la activa."""
+
+
 class DiaQueNoAbreForm(forms.Form):
     """Un renglón de «Días que no abre»: un día de la semana, o una fecha o periodo, con su motivo."""
 
@@ -89,8 +108,11 @@ FORMULARIO_POR_TIPO = {
     "ANTICIPACION_MINIMA": AnticipacionMinimaForm,
     "ANTICIPACION_MAXIMA": AnticipacionMaximaForm,
     "REQUIERE_PAZ_Y_SALVO": RequierePazYSalvoForm,
+    "DIA_LIMITE_DE_PAGO": DiaLimiteDePagoForm,
     "CUPO_POR_UNIDAD": CupoPorUnidadForm,
     "ACOMPANANTES": AcompanantesForm,
+    "UNA_RESERVA_POR_DIA": UnaReservaPorDiaForm,
+    "SIN_FRANJAS_SEGUIDAS": SinFranjasSeguidasForm,
 }
 
 

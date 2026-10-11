@@ -16,7 +16,9 @@ Las pantallas del flujo de reserva. Es la parte de la interfaz que más se suste
 - Bandeja de solicitudes por zona común para administración, secretaría y superusuario; permite aceptar o rechazar con motivo
 - Suscripción a la campana de una franja ocupada
 - Detalle para el administrador: aprobar escribiendo las condiciones, que llegan precargadas desde el área, o rechazar con categoría
-- La frase de que el dinero lo valida una persona, visible en la interfaz (§5.1)
+- La frase de que el dinero lo valida una persona, visible en la interfaz (§5.1). Está escrita una sola vez, en `views.py` (`AVISO_DEL_DINERO`), y las dos pantallas la reciben por contexto
+- **El pago declarado** (HU-16), con el fragmento `_pago.html`, sin JavaScript: en la tarjeta de cada solicitud del área, Administración (`reserva.declarar_pago`) declara con comprobante opcional, con la frase de qué declara (de quién, qué área, qué día en letras y qué horario) junto al botón, o retira la declaración con motivo; Secretaría solo ve. En el detalle de la solicitud, el residente ve si el pago está declarado, sin el nombre de quien lo declaró, y sube su comprobante. `/reservas/comprobantes/<id>/` entrega el archivo que pide a la API: el front no lo guarda
+- No decide nada del pago: qué se puede hacer lo responde la API (400 bajo `archivo`, 409, 403 o 404) y la pantalla lo muestra arriba de la tarjeta o dentro del bloque
 
 ## Estados como pastillas
 

@@ -95,6 +95,9 @@
       <p>Esta solicitud está {{ solicitud.estado_nombre|lower }}.</p>
     {% endif %}
   </div>
+  {% if muestra_el_pago %}
+    {% include "reservas/_pago.html" with pago=pago id_de_solicitud=solicitud.id aviso=aviso_del_dinero para_gestion=False puede_subir=puede_subir_comprobante error=error_de_pago %}
+  {% endif %}
   <div class="acciones">
     <a class="am-btn am-btn--secundario" href="{{ volver }}">Volver al calendario</a>
   </div>

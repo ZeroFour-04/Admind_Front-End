@@ -32,6 +32,9 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   {% elif "ingreso.ver_historico" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}>Ingresos</a>
   {% endif %}
+  {% if "pago.ver" in request.session.permisos or "pago.reportar" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'pagos' %} am-es-activo{% endif %}" href="{% url 'pagos:administracion' %}"{% if actual == 'pagos' %} aria-current="page"{% endif %}>Pagos</a>
+  {% endif %}
   {% if "visitante.ver_historico" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'visitantes' %} am-es-activo{% endif %}" href="{% url 'visitantes:lista' %}"{% if actual == 'visitantes' %} aria-current="page"{% endif %}>Visitantes</a>
   {% elif "visitante.registrar" in request.session.permisos %}

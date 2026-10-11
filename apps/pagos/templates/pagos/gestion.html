@@ -1,0 +1,106 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Pagos{% endblock %}
+{% block titulo_vista %}Pagos de administración{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+<div class="aviso-info" role="note"><p>{{ aviso_del_dinero }}</p></div>
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<nav class="acciones" aria-label="Mes de la tabla">
+  <a class="am-btn am-btn--secundario" href="?periodo={{ mes_anterior }}{% if buscar %}&amp;buscar={{ buscar|urlencode }}{% endif %}">Mes anterior</a>
+  <h2>{{ mes|capfirst }}</h2>
+  <a class="am-btn am-btn--secundario" href="?periodo={{ mes_siguiente }}{% if buscar %}&amp;buscar={{ buscar|urlencode }}{% endif %}">Mes siguiente</a>
+</nav>
+
+<form method="get" class="am-formulario am-tarjeta" role="search">
+  <input type="hidden" name="periodo" value="{{ periodo }}">
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="buscar">Buscar por nombre, cédula o apartamento</label>
+    <input class="am-campo__control" type="search" id="buscar" name="buscar" value="{{ buscar }}" autocomplete="off">
+  </div>
+  <div class="acciones">
+    <button class="am-btn am-btn--primario" type="submit">Buscar</button>
+    {% if buscar %}<a class="am-btn am-btn--texto" href="?periodo={{ periodo }}">Quitar búsqueda</a>{% endif %}
+  </div>
+</form>
+
+{% if filas %}
+  <div class="am-tabla-caja tabla-desplazable">
+    <table class="am-tabla" aria-label="Pagos de administración de {{ mes }}">
+      <thead>
+        <tr>
+          <th scope="col">Vivienda</th>
+          <th scope="col">Personas</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Reportó</th>
+          <th scope="col">Comprobante</th>
+          <th scope="col">Pagado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td><b>{{ fila.unidad.nombre }}</b></td>
+            <td>
+              {% for persona in fila.personas %}
+                {{ persona.nombre }} <span class="am-tabla__secundario">{% if persona.tipo == "propietario" %}propietario{% else %}arrendatario{% endif %}</span>{% if not forloop.last %}<br>{% endif %}
+              {% empty %}—{% endfor %}
+            </td>
+            <td><span class="am-pastilla {{ fila.clase }}">{{ fila.etiqueta }}</span></td>
+            <td>
+              {% if fila.reportado_por %}
+                {{ fila.reportado_por }}
+                <span class="am-tabla__secundario">{{ fila.reportado_en|date:"j \d\e F, H:i"|lower }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if fila.comprobante %}
+                <a href="{% url 'pagos:comprobante' fila.comprobante.id %}" target="_blank" rel="noopener">{{ fila.comprobante.nombre }}</a>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if puede_confirmar %}
+                <form method="post" action="{% url 'pagos:confirmar' fila.unidad.id periodo %}" x-data>
+                  {% csrf_token %}
+                  <input type="hidden" name="buscar" value="{{ buscar }}">
+                  <input type="hidden" name="confirmado" value="{% if fila.estado == 'confirmado' %}0{% else %}1{% endif %}">
+                  <label class="am-opcion">
+                    <input type="checkbox"{% if fila.estado == 'confirmado' %} checked{% endif %} @change="$el.form.submit()">
+                    Pagado: {{ fila.unidad.nombre }}
+                  </label>
+                  <noscript><button class="am-btn am-btn--texto" type="submit">Guardar</button></noscript>
+                </form>
+                {% if fila.confirmado_por %}
+                  <span class="am-tabla__secundario">{{ fila.confirmado_por }}, {{ fila.confirmado_en|date:"j \d\e F, H:i"|lower }}</span>
+                {% endif %}
+              {% elif fila.estado == "confirmado" %}
+                <span class="am-pastilla am-pastilla--confirmado">Confirmado</span>
+                {% if fila.confirmado_por %}<span class="am-tabla__secundario">{{ fila.confirmado_por }}, {{ fila.confirmado_en|date:"j \d\e F, H:i"|lower }}</span>{% endif %}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    {% if buscar %}
+      <p class="am-vacio__titulo">Ninguna vivienda coincide con lo que buscaste</p>
+      <p class="am-vacio__texto">Prueba con el apellido, el número del apartamento o los primeros dígitos de la cédula.</p>
+    {% else %}
+      <p class="am-vacio__titulo">Todavía no hay viviendas registradas</p>
+      <p class="am-vacio__texto">Cuando el conjunto tenga viviendas, su pago de cada mes aparece aquí.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if puede_confirmar %}<script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>{% endif %}
+{% endblock %}

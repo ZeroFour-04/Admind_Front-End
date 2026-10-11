@@ -18,12 +18,18 @@ GIMNASIO = {
 CATALOGO = [
     {"tipo": "ANTICIPACION_MAXIMA", "nivel": "alfa", "nombre": "Anticipación máxima", "modos": ["reserva"],
      "descripcion": "Hasta cuántos días hacia adelante se puede reservar.", "nota": ""},
+    {"tipo": "DIA_LIMITE_DE_PAGO", "nivel": "alfa", "nombre": "Día límite de pago", "modos": [],
+     "descripcion": "El día del mes hasta el que se paga la administración sin entrar en mora.", "nota": ""},
     {"tipo": "ACOMPANANTES", "nivel": "alfa", "nombre": "Acompañantes", "modos": ["ingreso"],
      "descripcion": "Cuántos acompañantes puede tener adentro una misma vivienda a la vez.", "nota": ""},
     {"tipo": "DIAS_QUE_NO_ABRE", "nivel": "beta", "nombre": "Días que no abre", "modos": ["reserva", "ingreso"],
      "descripcion": "Días de la semana, fechas o periodos en que el área no presta servicio.", "nota": ""},
     {"tipo": "CUPO_POR_UNIDAD", "nivel": "beta", "nombre": "Límite de reservas por apartamento", "modos": ["reserva"],
      "descripcion": "Cuántas reservas de esta área puede tener un mismo apartamento en un periodo.", "nota": ""},
+    {"tipo": "UNA_RESERVA_POR_DIA", "nivel": "beta", "nombre": "Una reserva al día", "modos": ["reserva"],
+     "descripcion": "Si la activas, el área admite una sola reserva por día.", "nota": ""},
+    {"tipo": "SIN_FRANJAS_SEGUIDAS", "nivel": "beta", "nombre": "Sin franjas seguidas", "modos": ["reserva"],
+     "descripcion": "Si la activas, un mismo apartamento no reserva dos franjas seguidas del mismo día.", "nota": ""},
 ]
 MAXIMA = {
     "id": "4d5e6f7a-0000-4000-8000-000000000001", "area": None, "nivel": "alfa",
@@ -42,7 +48,10 @@ CAMPOS_POR_TIPO = {
     "ANTICIPACION_MAXIMA": ["dias"],
     "CUPO_POR_UNIDAD": ["reservas", "dias"],
     "ACOMPANANTES": ["maximo"],
+    "DIA_LIMITE_DE_PAGO": ["dia"],
     "REQUIERE_PAZ_Y_SALVO": [],
+    "UNA_RESERVA_POR_DIA": [],
+    "SIN_FRANJAS_SEGUIDAS": [],
 }
 PISO = {"desde": "2026-11-01", "hasta": "2026-11-30", "motivo": "Cambio del piso"}
 
@@ -312,6 +321,29 @@ def test_un_area_con_ingreso_no_muestra_el_limite_de_reservas_y_dice_como_se_usa
     assert "permanencia máxima de 60 minutos y aforo de 3 personas adentro a la vez" in gimnasio
 
 
+@pytest.mark.parametrize(
+    ("tipo", "nombre"), [("UNA_RESERVA_POR_DIA", "Una reserva al día"), ("SIN_FRANJAS_SEGUIDAS", "Sin franjas seguidas")]
+)
+def test_las_reglas_sin_valores_salen_solo_en_las_areas_con_reserva_y_se_activan_al_definirlas(tipo, nombre):
+    html = tablero([], areas=(SALON, GIMNASIO))
+    gimnasio = html.split("Gimnasio</h2>")[1]
+    salon = html.split("Salón comunal</h2>")[1].split("Gimnasio</h2>")[0]
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear", return_value=MAXIMA) as crear,
+    ):
+        cliente = cliente_con_sesion(permisos=ADMINISTRACION)
+        formulario = cliente.get(f"/reglas/definir/{tipo}/?area={SALON['id']}").content.decode()
+        cliente.post(f"/reglas/definir/{tipo}/", {"area": SALON["id"], "vigencia_desde": "2026-10-10"})
+
+    assert nombre in salon and f"/reglas/definir/{tipo}/?area={SALON['id']}" in salon
+    assert nombre not in gimnasio
+    assert "Si la activas" in formulario and 'name="vigencia_desde"' in formulario
+    assert crear.call_args.args[1] == {
+        "area": SALON["id"], "tipo": tipo, "parametros": {}, "vigencia_desde": "2026-10-10"
+    }
+
+
 def test_acompanantes_sale_entre_las_reglas_del_conjunto_y_se_define_con_su_formulario():
     html = tablero([], areas=(SALON,))
     conjunto = html.split("Reglas del conjunto</h2>")[1].split("Salón comunal</h2>")[0]
@@ -348,3 +380,36 @@ def test_un_400_de_la_api_sobre_acompanantes_cae_en_su_campo():
         )
 
     assert "id_maximo-error" in respuesta.content.decode()
+
+
+def test_el_dia_limite_de_pago_se_define_desde_el_tablero_con_su_dia():
+    html = tablero([MAXIMA])
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear", return_value=MAXIMA) as crear,
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/reglas/definir/DIA_LIMITE_DE_PAGO/", {"dia": "10", "vigencia_desde": "2026-10-06"}
+        )
+
+    assert "Día límite de pago" in html and "/reglas/definir/DIA_LIMITE_DE_PAGO/" in html
+    assert crear.call_args.args[1] == {
+        "tipo": "DIA_LIMITE_DE_PAGO",
+        "parametros": {"dia": 10},
+        "vigencia_desde": "2026-10-06",
+    }
+    assert respuesta["Location"] == "/reglas/"
+
+
+def test_un_dia_limite_pasado_del_28_se_rechaza_sin_llamar_a_la_api():
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear") as crear,
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/reglas/definir/DIA_LIMITE_DE_PAGO/", {"dia": "29", "vigencia_desde": "2026-10-06"}
+        ).content.decode()
+
+    crear.assert_not_called()
+    assert "Asegúrese de que este valor sea menor o igual a 28." in html or "menor o igual a 28" in html
+    assert "Hasta el 28, para que exista en todos los meses." in html

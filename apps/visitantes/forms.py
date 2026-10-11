@@ -16,12 +16,28 @@ class RegistrarVisitanteForm(forms.Form):
         choices=(("Auto", "Auto"), ("Moto", "Moto")),
         required=False,
     )
+    # Las opciones son los parqueaderos de visitantes libres al cargar la pantalla. Validar contra ellas es la
+    # primera barrera; la segunda es la API, que responde 409 si otra visita lo ocupó entre tanto.
+    parqueadero = forms.ChoiceField(
+        label="Parqueadero de visitantes",
+        required=False,
+        error_messages={
+            "invalid_choice": "Ese parqueadero ya no está libre. Elige otro o registra la visita sin parqueadero."
+        },
+    )
     apartamento_visitado = forms.ChoiceField(label="Apartamento a visitar")
 
-    def __init__(self, *args, unidades=(), **kwargs):
+    def __init__(self, *args, unidades=(), parqueaderos=(), **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["apartamento_visitado"].choices = [("", "Selecciona un apartamento")] + [
             (str(unidad["id"]), unidad["nombre"]) for unidad in unidades
+        ]
+        self.ofrecer_parqueaderos(parqueaderos)
+
+    def ofrecer_parqueaderos(self, parqueaderos):
+        """Cambia las opciones de parqueadero: la primera siempre es «Sin parqueadero»."""
+        self.fields["parqueadero"].choices = [("", "Sin parqueadero")] + [
+            (str(p["id"]), p["codigo"] + (" · accesible" if p.get("accesible") else "")) for p in parqueaderos
         ]
 
     def clean(self):
@@ -35,5 +51,7 @@ class RegistrarVisitanteForm(forms.Form):
         else:
             datos["placa_vehiculo"] = ""
             datos["tipo_vehiculo"] = ""
+            # Sin vehículo no hay puesto: un campo desactivado tampoco viaja, y esto dice lo mismo que el JavaScript.
+            datos["parqueadero"] = ""
         datos["ingresa_con_vehiculo"] = ingresa_con_vehiculo
         return datos

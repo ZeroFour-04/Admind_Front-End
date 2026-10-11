@@ -126,6 +126,9 @@ a.am-btn--secundario:hover{color:var(--texto-fuerte)}
 .requisitos__item{display:flex;justify-content:space-between;align-items:center;gap:var(--e-3);padding:var(--e-3) 0;border-bottom:1px solid var(--borde)}
 .requisitos__item:last-child{border-bottom:0}
 details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-medio)}
+/* Confirmación sin JavaScript: «Retirar» o «Registrar salida» abre, dentro de la fila, la frase de qué se hace y el botón. */
+.confirmar-accion summary{cursor:pointer;font-weight:var(--peso-texto-medio);min-height:var(--toque-minimo);display:flex;align-items:center}
+.confirmar-accion form{display:flex;flex-direction:column;gap:var(--e-2);padding-bottom:var(--e-2)}
 
 /* ---------- Foto del conjunto (HU-21) ---------------------------------- */
 /* Siempre cuadrada. Sin foto, un marcador con las iniciales en neutros: la foto no es acento,

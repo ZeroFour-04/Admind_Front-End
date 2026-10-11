@@ -2,6 +2,8 @@
 from datetime import date
 from unittest import mock
 
+import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import URLResolver, get_resolver
 
 from cliente_api.http import ApiNoDisponible, ErrorDeApi
@@ -430,3 +432,339 @@ def test_la_tabla_invita_a_recargar_para_ver_los_cupos_nuevos():
     html = ver_zonas([GIMNASIO], [ZONA_GIMNASIO])
 
     assert "Los cupos se actualizan al recargar la página." in html and ">Actualizar</a>" in html
+
+
+# El pago declarado de una reserva y su comprobante (HU-16). El front solo muestra: decide la API.
+
+AVISO_DEL_DINERO = "AdMind no verifica el dinero: el pago lo declara una persona de la administración."
+RESIDENTE_ID = "8a9b0c1d-0000-4000-8000-000000000001"
+COMPROBANTE_ID = "9c0d1e2f-0000-4000-8000-000000000001"
+SIN_PAGO = {"declarado": False, "declarado_en": None, "comprobantes": []}
+PAGO_DECLARADO = {
+    "declarado": True,
+    "declarado_en": "2026-10-12T09:30:00-05:00",
+    "declarado_por": "Andrés Gómez",
+    "comprobantes": [
+        {
+            "id": COMPROBANTE_ID,
+            "nombre": "transferencia.png",
+            "subido_en": "2026-10-11T18:00:00-05:00",
+            "del_residente": True,
+            "subido_por": "Pedro Gómez",
+        },
+        {
+            "id": "9c0d1e2f-0000-4000-8000-000000000002",
+            "nombre": "recibo.pdf",
+            "subido_en": "2026-10-12T09:30:00-05:00",
+            "del_residente": False,
+            "subido_por": "Andrés Gómez",
+        },
+    ],
+}
+APARTADA_PARA_GESTION = {
+    **EN_TRAMITE,
+    "estado": "APARTADA",
+    "estado_nombre": "Apartada",
+    "residente": {"id": RESIDENTE_ID, "nombre": "Pedro Gómez"},
+    "unidad": {"id": "7a1b2c3d-0000-4000-8000-000000000101", "nombre": "Torre 1 – 101"},
+    "motivo": "Cumpleaños",
+    "asistentes": 20,
+    "motivo_decision": "",
+    "decidida_por": None,
+    "decidida_en": None,
+    "pago": SIN_PAGO,
+}
+ADMINISTRACION = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar", "reserva.declarar_pago"]
+SECRETARIA = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
+FRASE_DEL_PAGO = (
+    "Vas a declarar que recibiste el pago de la reserva de Pedro Gómez (Torre 1 – 101) en Salón comunal, "
+    "el sábado 26 de diciembre de 2026, de 2:00 p. m. a 6:00 p. m."
+)
+URL_DE_LA_ZONA = f"/reservas/areas/{SALON['id']}/solicitudes/"
+
+
+def ver_zona(solicitudes, permisos=ADMINISTRACION, **sesion):
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=solicitudes),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        return cliente_con_sesion(permisos=permisos, **sesion).get(URL_DE_LA_ZONA).content.decode()
+
+
+def test_la_tarjeta_dice_que_el_dinero_lo_valida_una_persona_y_que_el_pago_no_esta_declarado():
+    html = ver_zona([APARTADA_PARA_GESTION])
+
+    assert AVISO_DEL_DINERO in html
+    assert 'role="note"' in html
+    assert ">Sin pago declarado</span>" in html
+    assert "Todavía no hay comprobantes." in html
+
+
+def test_la_tarjeta_muestra_quien_declaro_cuando_y_cada_comprobante_con_quien_lo_subio():
+    html = ver_zona([{**APARTADA_PARA_GESTION, "estado": "RESERVADA", "estado_nombre": "Reservada", "pago": PAGO_DECLARADO}])
+
+    assert ">Pago declarado</span>" in html
+    assert "Declarado por Andrés Gómez" in html
+    assert "lunes 12 de octubre de 2026" in html and "09:30" in html
+    assert f'href="/reservas/comprobantes/{COMPROBANTE_ID}/" target="_blank" rel="noopener">transferencia.png</a>' in html
+    assert "subido por Pedro Gómez" in html and "subido por Andrés Gómez" in html
+    # Con el pago ya declarado no se ofrece declararlo otra vez.
+    assert ">Declarar pago recibido</button>" not in html
+
+
+def test_administracion_ve_el_formulario_con_la_frase_completa_y_secretaria_no():
+    de_administracion = ver_zona([APARTADA_PARA_GESTION])
+    de_secretaria = ver_zona([APARTADA_PARA_GESTION], permisos=SECRETARIA, tipo_usuario="Secretaría")
+
+    assert FRASE_DEL_PAGO in de_administracion
+    assert ">Declarar pago recibido</button>" in de_administracion
+    assert 'enctype="multipart/form-data"' in de_administracion and 'name="archivo"' in de_administracion
+    assert f'action="/reservas/solicitudes/{EN_TRAMITE["id"]}/pago/"' in de_administracion
+    assert AVISO_DEL_DINERO in de_secretaria and ">Sin pago declarado</span>" in de_secretaria
+    assert "Declarar pago recibido" not in de_secretaria and "Vas a declarar" not in de_secretaria
+    # La decisión de aprobar o rechazar sigue siendo de las dos.
+    assert 'name="decision" value="RESERVADA">Aceptar</button>' in de_secretaria
+
+
+def test_una_rechazada_con_pago_declarado_lo_conserva_y_no_ofrece_declarar():
+    html = ver_zona([{**APARTADA_PARA_GESTION, "estado": "RECHAZADA", "estado_nombre": "Rechazada", "pago": PAGO_DECLARADO}])
+
+    assert ">Pago declarado</span>" in html
+    assert ">Retirar la declaración</button>" in html
+    assert ">Declarar pago recibido</button>" not in html
+
+
+def test_las_pantallas_de_gestion_del_pago_no_cargan_javascript():
+    html = ver_zona([APARTADA_PARA_GESTION])
+
+    assert "alpine" not in html and "reservas.js" not in html
+
+
+def test_declarar_con_archivo_lo_manda_a_la_api_y_vuelve_a_la_zona():
+    comprobante = SimpleUploadedFile("pago.pdf", b"%PDF-1.7 contenido", content_type="application/pdf")
+    recibido = {}
+
+    def como_la_api(request, solicitud_id, archivo):
+        # El archivo se cierra al terminar la petición: se lee aquí, mientras la API «lo recibe».
+        recibido.update(solicitud=str(solicitud_id), nombre=archivo.name, contenido=archivo.read())
+
+    with mock.patch("cliente_api.reservas.declarar_pago", side_effect=como_la_api):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/", {"area": SALON["id"], "archivo": comprobante}
+        )
+
+    assert recibido == {"solicitud": EN_TRAMITE["id"], "nombre": "pago.pdf", "contenido": b"%PDF-1.7 contenido"}
+    assert respuesta["Location"] == f"{URL_DE_LA_ZONA}?pago=declarado"
+
+
+def test_declarar_sin_archivo_tambien_se_puede():
+    with mock.patch("cliente_api.reservas.declarar_pago") as declarar:
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/", {"area": SALON["id"]}
+        )
+
+    assert declarar.call_args.args[2] is None
+    assert respuesta.status_code == 302
+
+
+def test_al_volver_dice_que_el_pago_quedo_declarado():
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[APARTADA_PARA_GESTION]),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).get(f"{URL_DE_LA_ZONA}?pago=declarado").content.decode()
+
+    assert "El pago quedó declarado." in html
+
+
+@pytest.mark.parametrize(
+    "error, texto",
+    [
+        (
+            ErrorDeApi(400, {"archivo": ["El comprobante debe ser un PDF o una imagen JPG o PNG."]}),
+            "El comprobante debe ser un PDF o una imagen JPG o PNG.",
+        ),
+        (
+            ErrorDeApi(409, {"detail": "El pago de esta solicitud ya está declarado."}),
+            "El pago de esta solicitud ya está declarado.",
+        ),
+        (ErrorDeApi(403, {"detail": "No tienes permiso para hacer esto."}), "No tienes permiso para hacer esto"),
+    ],
+)
+def test_un_error_de_la_api_al_declarar_se_muestra_arriba_de_las_tarjetas(error, texto):
+    with (
+        mock.patch("cliente_api.reservas.declarar_pago", side_effect=error),
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[APARTADA_PARA_GESTION]),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/", {"area": SALON["id"]}
+        ).content.decode()
+
+    assert texto in html
+    assert html.index(texto) < html.index('class="am-tarjeta')
+
+
+def test_retirar_la_declaracion_exige_motivo():
+    with (
+        mock.patch("cliente_api.reservas.retirar_pago") as retirar,
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[APARTADA_PARA_GESTION]),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/retirar/", {"area": SALON["id"], "motivo": "   "}
+        ).content.decode()
+
+    retirar.assert_not_called()
+    assert "Escribe el motivo para retirar la declaración del pago." in html
+
+
+def test_retirar_con_motivo_lo_manda_a_la_api_y_vuelve_a_la_zona():
+    with mock.patch("cliente_api.reservas.retirar_pago") as retirar:
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/retirar/",
+            {"area": SALON["id"], "motivo": "Era otra solicitud."},
+        )
+
+    assert str(retirar.call_args.args[1]) == EN_TRAMITE["id"]
+    assert retirar.call_args.args[2] == "Era otra solicitud."
+    assert respuesta["Location"] == f"{URL_DE_LA_ZONA}?pago=retirado"
+
+
+def test_un_area_que_no_es_un_identificador_no_tiene_a_donde_volver():
+    respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+        f"/reservas/solicitudes/{EN_TRAMITE['id']}/pago/", {"area": "no-es-un-uuid"}
+    )
+
+    assert respuesta.status_code == 404
+
+
+def test_la_vista_del_comprobante_devuelve_el_archivo_con_su_tipo():
+    with mock.patch("cliente_api.reservas.comprobante", return_value=(b"\x89PNG\r\n\x1a\n", "image/png")) as pedir:
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).get(f"/reservas/comprobantes/{COMPROBANTE_ID}/")
+
+    assert str(pedir.call_args.args[1]) == COMPROBANTE_ID
+    assert respuesta.status_code == 200
+    assert respuesta["Content-Type"] == "image/png"
+    assert respuesta["Content-Disposition"] == 'inline; filename="comprobante.png"'
+    assert respuesta["X-Content-Type-Options"] == "nosniff"
+    assert respuesta.content == b"\x89PNG\r\n\x1a\n"
+
+
+@pytest.mark.parametrize(
+    "falla, devuelve",
+    [
+        (ErrorDeApi(404, {"detail": "No encontrado."}), None),
+        (ApiNoDisponible(), None),
+        (None, (b"<html>no soy un comprobante</html>", "text/html")),
+    ],
+)
+def test_si_la_api_no_lo_entrega_o_no_es_un_comprobante_responde_404(falla, devuelve):
+    with mock.patch("cliente_api.reservas.comprobante", side_effect=falla, return_value=devuelve):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).get(f"/reservas/comprobantes/{COMPROBANTE_ID}/")
+
+    assert respuesta.status_code == 404
+
+
+# El residente: ve el pago de su solicitud y sube su comprobante, sin poder declararlo (HU-16)
+
+
+def test_el_detalle_de_una_apartada_dice_que_no_hay_pago_declarado_y_ofrece_subir_el_comprobante():
+    html = ver_solicitud(estado="APARTADA", estado_nombre="Apartada", pago=SIN_PAGO)
+
+    assert AVISO_DEL_DINERO in html
+    assert ">Sin pago declarado</span>" in html
+    assert 'enctype="multipart/form-data"' in html and 'name="archivo"' in html
+    assert f'action="/reservas/solicitudes/{EN_TRAMITE["id"]}/comprobantes/"' in html
+    assert "Subir el comprobante no confirma el pago: lo declara la administración cuando lo verifique." in html
+    assert ">Subir comprobante</button>" in html
+
+
+def test_la_pantalla_del_residente_no_tiene_ningun_control_para_declarar_el_pago():
+    for estado, nombre in (("APARTADA", "Apartada"), ("RESERVADA", "Reservada")):
+        html = ver_solicitud(estado=estado, estado_nombre=nombre, pago=SIN_PAGO)
+
+        assert "Declarar pago recibido" not in html and "Retirar la declaración" not in html
+        assert "/pago/" not in html
+        assert 'name="decision"' not in html
+    assert "alpine" not in html
+
+
+def test_con_el_pago_declarado_el_residente_lo_ve_sin_el_nombre_y_ya_no_sube_mas():
+    # La API no manda `declarado_por` al residente; aun si llegara, la plantilla no lo escribe.
+    html = ver_solicitud(estado="RESERVADA", estado_nombre="Reservada", pago=PAGO_DECLARADO)
+
+    assert ">Pago declarado</span>" in html
+    assert "Pago declarado por la administración" in html and "12 de octubre de 2026" in html
+    assert "Andrés" not in html and "Pedro Gómez" not in html
+    assert "subido por ti" in html and "subido por la administración" in html
+    assert 'name="archivo"' not in html and ">Subir comprobante</button>" not in html
+
+
+def test_con_el_maximo_de_comprobantes_no_se_ofrece_subir_otro():
+    tres = [{**PAGO_DECLARADO["comprobantes"][0], "id": f"9c0d1e2f-0000-4000-8000-00000000010{n}"} for n in range(3)]
+
+    html = ver_solicitud(estado="APARTADA", estado_nombre="Apartada", pago={**SIN_PAGO, "comprobantes": tres})
+
+    assert html.count("transferencia.png</a>") == 3
+    assert ">Subir comprobante</button>" not in html
+
+
+def test_una_rechazada_sin_pago_no_muestra_el_bloque_y_con_pago_declarado_si():
+    sin_pago = ver_solicitud(estado="RECHAZADA", estado_nombre="Rechazada", pago=SIN_PAGO)
+    con_pago = ver_solicitud(estado="RECHAZADA", estado_nombre="Rechazada", pago=PAGO_DECLARADO)
+
+    assert "Sin pago declarado" not in sin_pago and AVISO_DEL_DINERO not in sin_pago
+    assert ">Pago declarado</span>" in con_pago
+    assert ">Subir comprobante</button>" not in con_pago
+
+
+def test_subir_el_comprobante_lo_manda_a_la_api_y_vuelve_a_la_solicitud():
+    foto = SimpleUploadedFile("transferencia.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+    with mock.patch("cliente_api.reservas.subir_comprobante") as subir:
+        respuesta = cliente_con_sesion(permisos=RESIDENTE).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/comprobantes/", {"archivo": foto}
+        )
+
+    assert str(subir.call_args.args[1]) == EN_TRAMITE["id"]
+    assert subir.call_args.args[2].name == "transferencia.png"
+    assert respuesta["Location"] == f"/reservas/solicitudes/{EN_TRAMITE['id']}/"
+
+
+@pytest.mark.parametrize(
+    "error, texto",
+    [
+        (ErrorDeApi(400, {"archivo": ["El comprobante no puede pesar más de 5 MB."]}), "El comprobante no puede pesar más de 5 MB."),
+        (
+            ErrorDeApi(409, {"detail": "El pago ya está declarado por la administración: no se pueden subir más comprobantes."}),
+            "El pago ya está declarado por la administración: no se pueden subir más comprobantes.",
+        ),
+    ],
+)
+def test_un_error_de_la_api_al_subir_se_muestra_dentro_del_bloque_del_pago(error, texto):
+    foto = SimpleUploadedFile("grande.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+    apartada = {**EN_TRAMITE, "estado": "APARTADA", "estado_nombre": "Apartada", "pago": SIN_PAGO}
+    with (
+        mock.patch("cliente_api.reservas.subir_comprobante", side_effect=error),
+        mock.patch("cliente_api.reservas.obtener", return_value=apartada),
+    ):
+        html = cliente_con_sesion(permisos=RESIDENTE).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/comprobantes/", {"archivo": foto}
+        ).content.decode()
+
+    assert texto in html
+    assert html.index(AVISO_DEL_DINERO) < html.index(texto) < html.index(">Subir comprobante</button>")
+
+
+def test_subir_sin_elegir_archivo_lo_dice_y_no_llama_a_la_api():
+    apartada = {**EN_TRAMITE, "estado": "APARTADA", "estado_nombre": "Apartada", "pago": SIN_PAGO}
+    with (
+        mock.patch("cliente_api.reservas.subir_comprobante") as subir,
+        mock.patch("cliente_api.reservas.obtener", return_value=apartada),
+    ):
+        html = cliente_con_sesion(permisos=RESIDENTE).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/comprobantes/"
+        ).content.decode()
+
+    subir.assert_not_called()
+    assert "Elige el archivo del comprobante." in html

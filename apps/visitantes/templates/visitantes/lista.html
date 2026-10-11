@@ -9,6 +9,9 @@
   {% if registrado %}
     <div class="am-alerta" role="status">Ingreso de visitante registrado.</div>
   {% endif %}
+  {% if salio %}
+    <div class="am-alerta" role="status">Salida registrada.</div>
+  {% endif %}
   {% if error %}
     <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
   {% endif %}
@@ -46,6 +49,25 @@
           <span class="am-campo__error" role="alert">{{ formulario.tipo_vehiculo.errors|join:" " }}</span>
         {% endif %}
       </div>
+      {% if hay_parqueaderos_libres or formulario.parqueadero.errors %}
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="{{ formulario.parqueadero.id_for_label }}">
+            {{ formulario.parqueadero.label }}
+          </label>
+          <select class="am-campo__control" id="{{ formulario.parqueadero.id_for_label }}"
+                  name="{{ formulario.parqueadero.html_name }}"
+                  {% if formulario.parqueadero.errors %}aria-invalid="true"{% endif %}>
+            {% for valor, etiqueta in formulario.parqueadero.field.choices %}
+              <option value="{{ valor }}"{% if formulario.parqueadero.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+            {% endfor %}
+          </select>
+          {% if formulario.parqueadero.errors %}
+            <span class="am-campo__error" role="alert">{{ formulario.parqueadero.errors|join:" " }}</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="aviso-info" role="note">No hay parqueaderos de visitantes libres. La visita se registra sin parqueadero.</p>
+      {% endif %}
     </div>
     <div class="am-campo">
       <label class="am-campo__etiqueta" for="{{ formulario.apartamento_visitado.id_for_label }}">
@@ -81,6 +103,8 @@
             <th>Tipo vehículo</th>
             <th>Hora ingreso</th>
             <th>Apartamento a visitar</th>
+            <th>Parqueadero</th>
+            <th>Salida</th>
           </tr>
         </thead>
         <tbody>
@@ -92,6 +116,26 @@
               <td>{{ visitante.tipo_vehiculo|default:"—" }}</td>
               <td>{{ visitante.hora_entrada|localtime|date:"d/m/Y H:i" }}</td>
               <td>{{ visitante.apartamento_visitado }}</td>
+              <td>{{ visitante.parqueadero|default:"—" }}</td>
+              <td>
+                {% if visitante.hora_salida %}
+                  {{ visitante.hora_salida|localtime|date:"d/m/Y H:i" }}
+                {% elif es_vigilante %}
+                  <details class="confirmar-accion">
+                    <summary>Registrar salida</summary>
+                    <form method="post" action="{% url 'visitantes:salida' visitante.id %}">
+                      {% csrf_token %}
+                      <p>
+                        Vas a registrar la salida de <b>{{ visitante.nombre }}</b>{% if visitante.placa_vehiculo %}, con el vehículo de placa <b>{{ visitante.placa_vehiculo }}</b>{% endif %}.
+                        {% if visitante.parqueadero %}Se libera el parqueadero <b>{{ visitante.parqueadero }}</b>.{% else %}No ocupa parqueadero.{% endif %}
+                      </p>
+                      <button class="am-btn am-btn--secundario" type="submit">Confirmar salida de {{ visitante.nombre }}</button>
+                    </form>
+                  </details>
+                {% else %}
+                  Sin salida
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </tbody>

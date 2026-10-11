@@ -11,6 +11,9 @@
 {% if actualizada %}
   <div class="aviso-exito" role="status">La decisión quedó guardada.</div>
 {% endif %}
+{% if aviso_de_pago %}
+  <div class="aviso-exito" role="status">{{ aviso_de_pago }}</div>
+{% endif %}
 
 {% if area %}
   <p class="vista__guia">Solicitudes para {{ area.nombre }}.</p>
@@ -42,6 +45,7 @@
           {% endif %}
         {% endif %}
       </dl>
+      {% include "reservas/_pago.html" with pago=solicitud.pago id_de_solicitud=solicitud.id aviso=aviso_del_dinero para_gestion=True puede_declarar=solicitud.puede_declarar puede_retirar=solicitud.puede_retirar frase=solicitud.frase_del_pago area_id=area.id %}
       {% if solicitud.estado == "APARTADA" %}
         <form method="post" action="{% url 'reservas:decidir' solicitud.id %}" class="am-formulario">
           {% csrf_token %}

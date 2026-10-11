@@ -1,2 +1,5 @@
 <a class="am-lateral__item{% if actual == 'usuarios' %} am-es-activo{% endif %}" href="{% url 'usuarios:lista' %}"{% if actual == 'usuarios' %} aria-current="page"{% endif %}>Usuarios</a>
 <a class="am-lateral__item{% if actual == 'unidades' %} am-es-activo{% endif %}" href="{% url 'unidades:lista' %}"{% if actual == 'unidades' %} aria-current="page"{% endif %}>Unidades</a>
+{% if "parqueadero.ver" in request.session.permisos or "parqueadero.gestionar" in request.session.permisos %}
+<a class="am-lateral__item{% if actual == 'parqueaderos' %} am-es-activo{% endif %}" href="{% url 'parqueaderos:lista' %}"{% if actual == 'parqueaderos' %} aria-current="page"{% endif %}>Parqueaderos</a>
+{% endif %}

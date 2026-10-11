@@ -16,6 +16,9 @@
       <header class="acciones">
         <h2>{{ solicitud.area.nombre }}</h2>
         <span class="am-pastilla {% if solicitud.estado == 'APARTADA' or solicitud.estado == 'EN_SOLICITUD' %}am-pastilla--tramite{% elif solicitud.estado == 'RESERVADA' %}am-pastilla--confirmado{% elif solicitud.estado == 'RECHAZADA' %}am-pastilla--error{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_visible }}</span>
+        {% if solicitud.estado == 'APARTADA' or solicitud.estado == 'RESERVADA' %}
+          <span class="am-pastilla {% if solicitud.pago.declarado %}am-pastilla--confirmado{% else %}am-pastilla--neutro{% endif %}">{% if solicitud.pago.declarado %}Pago declarado{% else %}Sin pago declarado{% endif %}</span>
+        {% endif %}
       </header>
       <dl>
         <dt>Fecha y horario</dt>
@@ -35,6 +38,9 @@
           <dd>{{ solicitud.motivo_decision }}</dd>
         {% endif %}
       </dl>
+      <div class="acciones">
+        <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitud' solicitud.id %}">Ver solicitud</a>
+      </div>
     </article>
   {% endfor %}
 {% elif not error %}

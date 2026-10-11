@@ -133,6 +133,37 @@ def test_residente_ve_su_historial_con_estados_y_comentarios():
     assert "Ver solicitudes de esta zona" not in html
 
 
+def test_el_historial_enlaza_al_detalle_y_dice_si_el_pago_esta_declarado():
+    declarado = {"declarado": True, "declarado_en": "2026-10-12T09:30:00-05:00", "comprobantes": []}
+    propias = [
+        {**RESERVA, "estado": "APARTADA", "estado_nombre": "Apartada", "motivo_decision": ""},
+        {
+            **RESERVA,
+            "id": "6f7a8b9c-0000-4000-8000-000000000002",
+            "estado": "RESERVADA",
+            "estado_nombre": "Reservada",
+            "pago": declarado,
+        },
+        {
+            **RESERVA,
+            "id": "6f7a8b9c-0000-4000-8000-000000000003",
+            "estado": "RECHAZADA",
+            "estado_nombre": "Rechazada",
+            "pago": declarado,
+        },
+    ]
+    with mock.patch("cliente_api.reservas.mis_solicitudes", return_value=propias):
+        html = cliente_con_sesion(permisos=["area.ver", "reserva.solicitar"]).get("/solicitudes/").content.decode()
+
+    for solicitud in propias:
+        assert f'href="/reservas/solicitudes/{solicitud["id"]}/"' in html
+    assert html.count(">Ver solicitud</a>") == 3
+    # La pastilla del pago solo va en las que siguen en pie.
+    assert html.count(">Sin pago declarado</span>") == 1
+    assert html.count(">Pago declarado</span>") == 1
+    assert "Declarar pago recibido" not in html and "/pago/" not in html
+
+
 def test_solicitud_del_residente_muestra_resultado_y_comentario():
     from tests.test_reservas import ver_solicitud
 

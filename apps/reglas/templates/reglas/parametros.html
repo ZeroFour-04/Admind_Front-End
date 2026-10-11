@@ -35,7 +35,7 @@
       {% include "componentes/campo.html" with campo=campo tipo=campo.field.widget.input_type ayuda=campo.help_text %}
     {% endif %}
   {% empty %}
-    <p class="vista__guia">Esta regla no lleva valores: solo deja solicitar a los apartamentos que estén a paz y salvo.</p>
+    <p class="vista__guia">Esta regla no lleva valores: al guardarla queda activa, y se quita desde el tablero.</p>
   {% endfor %}
   <div class="acciones">
     <a class="am-btn am-btn--secundario" href="{% if volver == 'asistente' %}{% url 'conjuntos:asistente-reglas' %}{% else %}{% url 'reglas:lista' %}{% endif %}">{% if regla %}Cancelar{% else %}Volver{% endif %}</a>
