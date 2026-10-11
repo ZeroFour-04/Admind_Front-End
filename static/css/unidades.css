@@ -1,4 +1,5 @@
-/* UNIDADES — recuadros por agrupación y buscador. Solo variables de design-system/: ningún hex aquí.
+/* UNIDADES — recuadros por agrupación, buscador y vínculos de una vivienda. Solo variables de design-system/:
+   ningún hex aquí.
    El recuadro no usa el acento: el acento tiene cuatro sitios y este no es uno (maestro §6.1). */
 
 [x-cloak]{display:none}
@@ -13,6 +14,30 @@
 /* Cuántas viviendas tiene la agrupación: un dato, no el protagonista del recuadro. */
 .recuadro-conteo{min-width:var(--e-7);padding:var(--e-1) var(--e-2);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-fuerte);text-align:center;font-variant-numeric:var(--cifras-tabulares)}
 
+/* Vínculos de una vivienda: el buscador para elegir a la persona. La lista y la persona elegida no usan el
+   acento: es un control de formulario, no uno de sus cuatro sitios. */
+.selector-persona{max-width:560px}
+.selector-persona__busqueda{display:flex;flex-direction:column;gap:var(--e-2)}
+.selector-persona__busqueda[hidden]{display:none}
+.selector-persona__lista{list-style:none;margin:0;padding:0;max-height:260px;overflow-y:auto;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-tarjeta)}
+.selector-persona__lista li + li{border-top:1px solid var(--borde)}
+.selector-persona__nuevo{margin-top:var(--e-1)}
+.opcion-persona{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:var(--toque-minimo);padding:var(--e-2) var(--e-3);border:0;background:none;font:inherit;color:var(--texto-fuerte);text-align:left;cursor:pointer;transition:background var(--transicion)}
+.opcion-persona:hover{background:var(--superficie-hundida)}
+.opcion-persona__nombre{font-weight:var(--peso-texto-medio)}
+.opcion-persona__correo{font-size:var(--tipo-meta);color:var(--texto-suave)}
+.persona-elegida{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--e-3);padding:var(--e-3) var(--e-4);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida)}
+.persona-elegida__datos{display:flex;flex-direction:column;gap:2px;min-width:0}
+
+/* El modal para crear a un residente: un <dialog> con scroll propio si el alto no alcanza. */
+.modal-formulario{width:min(100% - var(--e-6),560px);max-height:calc(100vh - var(--e-6));padding:0;border:1px solid var(--borde);border-radius:var(--radio-caja);background:var(--superficie-tarjeta);color:var(--texto-fuerte);box-shadow:var(--sombra-flotante);overflow-y:auto}
+.modal-formulario::backdrop{background:var(--tinta-a28)}
+.modal-formulario .am-formulario{max-width:none;padding:0;gap:0}
+.modal-formulario .am-campo{max-width:none}
+.alta-residente__fila{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-3)}
+
 @media (max-width:480px){
   .agrupaciones{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-3)}
+  .alta-residente__fila{grid-template-columns:minmax(0,1fr)}
+  .modal-formulario .am-modal__cuerpo{padding:var(--e-4)}
 }

@@ -12,7 +12,7 @@ from cliente_api import cuentas as api_cuentas
 from cliente_api import unidades as api_unidades
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
-from .forms import CerrarVinculoForm, UnidadForm, VinculoForm
+from .forms import CerrarVinculoForm, NuevoResidenteForm, UnidadForm, VinculoForm
 
 
 def con_fechas(vinculo):
@@ -131,20 +131,50 @@ def viviendas_de_agrupacion(request, agrupacion_id=None):
     return render(request, "unidades/agrupacion.html", contexto)
 
 
-def personas_del_conjunto(request):
-    """[(persona_id, nombre)] de las cuentas con rol en el conjunto activo."""
+# El residente recién creado pasa a la pantalla por la sesión, no por la URL: se usa una sola vez.
+CLAVE_RESIDENTE_CREADO = "residente_creado"
+# Los campos del alta no comparten id con el formulario del vínculo, que está en la misma página.
+AUTO_ID_RESIDENTE = "residente_%s"
+# Desde la vivienda solo se crean residentes: el rol lo pone la vista, el formulario ni lo tiene.
+ROL_DEL_ALTA = "residente"
+
+
+def usuarios_del_conjunto(request):
+    """Las cuentas con rol en el conjunto activo; sin ellas (la API no responde) el selector queda vacío."""
     try:
-        usuarios = api_cuentas.listar_usuarios(request)
+        return api_cuentas.listar_usuarios(request)
     except (ApiNoDisponible, ErrorDeApi):
         return []
+
+
+def personas_de(usuarios):
+    """[(persona_id, nombre)]: las opciones que acepta el formulario del vínculo."""
     return [(usuario["persona"], usuario["nombre"]) for usuario in usuarios]
+
+
+def para_el_selector(usuarios):
+    """Lo que el buscador de personas necesita de cada cuenta. El documento va para poder buscar por él; la
+    pantalla no lo imprime."""
+    return [
+        {
+            "id": usuario["persona"],
+            "nombre": usuario["nombre"],
+            "correo": usuario.get("correo", ""),
+            "documento": usuario.get("documento", ""),
+        }
+        for usuario in usuarios
+    ]
 
 
 @require_http_methods(["GET", "POST"])
 def detalle(request, unidad_id):
     if not tiene_permiso(request, "vinculo.gestionar"):
         return redirect("unidades:lista")
-    formulario = VinculoForm(request.POST or None, personas=personas_del_conjunto(request))
+    usuarios = usuarios_del_conjunto(request)
+    # Quien acaba de crear a un residente lo encuentra ya elegido en el formulario del vínculo.
+    creado = request.session.pop(CLAVE_RESIDENTE_CREADO, None) if request.method == "GET" else None
+    inicial = {"persona": creado["persona"]} if creado and creado["persona"] else {}
+    formulario = VinculoForm(request.POST or None, initial=inicial, personas=personas_de(usuarios))
     if request.method == "POST" and formulario.is_valid():
         try:
             api_unidades.registrar_vinculo(request, unidad_id, formulario.cleaned_data)
@@ -154,10 +184,10 @@ def detalle(request, unidad_id):
             errores_de_la_api_al_formulario(formulario, error)
         else:
             return redirect("unidades:detalle", unidad_id=unidad_id)
-    return pantalla_de_detalle(request, unidad_id, formulario)
+    return pantalla_de_detalle(request, unidad_id, formulario, usuarios, creado=creado)
 
 
-def pantalla_de_detalle(request, unidad_id, formulario, error_de_accion=None):
+def pantalla_de_detalle(request, unidad_id, formulario, usuarios, error_de_accion=None, residente=None, creado=None):
     try:
         unidad, error = api_unidades.obtener(request, unidad_id), None
     except ApiNoDisponible:
@@ -175,21 +205,60 @@ def pantalla_de_detalle(request, unidad_id, formulario, error_de_accion=None):
         "error": error_de_accion or error,
         "formulario": formulario,
         "cierre": CerrarVinculoForm(),
+        "personas": para_el_selector(usuarios),
+        # Crear a alguien es de quien gestiona usuarios; el vínculo, de quien gestiona vínculos.
+        "puede_crear_residente": tiene_permiso(request, "usuario.gestionar"),
+        "residente": residente or NuevoResidenteForm(auto_id=AUTO_ID_RESIDENTE),
+        # Con errores en el alta, la pantalla vuelve con el modal abierto.
+        "abrir_alta": residente is not None,
+        "residente_creado": creado["nombre"] if creado else None,
     }
     return render(request, "unidades/detalle.html", contexto)
 
 
 @require_POST
+def crear_residente(request, unidad_id):
+    """Crea la cuenta de un residente desde la vivienda y lo deja elegido en el formulario del vínculo."""
+    if not (tiene_permiso(request, "vinculo.gestionar") and tiene_permiso(request, "usuario.gestionar")):
+        return redirect("unidades:lista")
+    residente = NuevoResidenteForm(request.POST, auto_id=AUTO_ID_RESIDENTE)
+    usuarios = usuarios_del_conjunto(request)
+    if residente.is_valid():
+        datos = residente.cleaned_data
+        try:
+            nuevo = api_cuentas.crear_usuario(request, {**datos, "rol": ROL_DEL_ALTA})
+        except ApiNoDisponible:
+            residente.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(residente, error)
+        else:
+            try:
+                persona = api_cuentas.obtener_usuario(request, nuevo["id"])["persona"]
+            except (ApiNoDisponible, ErrorDeApi):
+                persona = None  # quedó creado: aparece en la lista, solo que no llega elegido
+            request.session[CLAVE_RESIDENTE_CREADO] = {
+                "persona": persona,
+                "nombre": f"{datos['nombres']} {datos['apellidos']}",
+            }
+            return redirect("unidades:detalle", unidad_id=unidad_id)
+    formulario = VinculoForm(personas=personas_de(usuarios))
+    return pantalla_de_detalle(request, unidad_id, formulario, usuarios, residente=residente)
+
+
+@require_POST
 def cerrar_vinculo(request, unidad_id, vinculo_id):
     cierre = CerrarVinculoForm(request.POST)
-    formulario = VinculoForm(personas=personas_del_conjunto(request))
+    usuarios = usuarios_del_conjunto(request)
+    formulario = VinculoForm(personas=personas_de(usuarios))
     if not cierre.is_valid():
-        return pantalla_de_detalle(request, unidad_id, formulario, "Escribe una fecha válida para cerrar el vínculo.")
+        return pantalla_de_detalle(
+            request, unidad_id, formulario, usuarios, "Escribe una fecha válida para cerrar el vínculo."
+        )
     try:
         api_unidades.cerrar_vinculo(request, unidad_id, vinculo_id, cierre.datos_para_api())
     except ApiNoDisponible:
-        return pantalla_de_detalle(request, unidad_id, formulario, MENSAJE_API_NO_DISPONIBLE)
+        return pantalla_de_detalle(request, unidad_id, formulario, usuarios, MENSAJE_API_NO_DISPONIBLE)
     except ErrorDeApi as error:
         mensaje = " ".join(sum(error.campos.values(), [])) or error.mensaje
-        return pantalla_de_detalle(request, unidad_id, formulario, mensaje)
+        return pantalla_de_detalle(request, unidad_id, formulario, usuarios, mensaje)
     return redirect("unidades:detalle", unidad_id=unidad_id)

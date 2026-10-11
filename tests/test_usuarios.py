@@ -1,4 +1,6 @@
 """Pantallas de HU-06: el rol del usuario en el conjunto activo (uno solo). La API se simula."""
+import json
+import re
 from unittest import mock
 
 from apps.usuarios.forms import UsuarioForm
@@ -152,12 +154,72 @@ def buscar(cliente, numero="1.023.456.789"):
     return cliente.post("/usuarios/registrar/", {"accion": "buscar", "tipo_documento": "CC", "numero_documento": numero})
 
 
-def test_la_lista_muestra_el_rol_de_cada_usuario():
+def datos_del_directorio(html, id_del_json):
+    """Lo que la página le entrega al directorio del navegador (`json_script`)."""
+    contenido = re.search(rf'<script id="{id_del_json}" type="application/json">(.*?)</script>', html, re.S)
+    return json.loads(contenido.group(1))
+
+
+ANA = {
+    **ANDRES,
+    "id": "0a1b2c3d-0000-4000-8000-000000000002",
+    "nombre": "Ana Ruiz",
+    "correo": "ana@torres.com",
+    "documento": "55555",
+    "roles": ["Residente"],
+    "asignaciones": [
+        {"id": "2c3d4e5f-0000-4000-8000-000000000002", "rol": "residente", "nombre": "Residente",
+         "desde": "2026-10-01"},
+    ],
+    "unidades": [{"nombre": "Torre 3 – 402", "agrupacion": "Torre 3", "orden": 2}],
+}
+
+
+def test_la_lista_entrega_cada_usuario_con_su_rol_su_vivienda_y_su_enlace():
+    with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[ANDRES, ANA]):
+        html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
+
+    filas = {fila["correo"]: fila for fila in datos_del_directorio(html, "usuarios-datos")}
+    assert filas["admin@torres.com"]["rol"] == "administracion"
+    assert filas["ana@torres.com"]["rol"] == "residente"
+    assert filas["ana@torres.com"]["unidades"] == ANA["unidades"]
+    assert filas["ana@torres.com"]["url"] == f"/usuarios/{ANA['id']}/"
+    assert filas["admin@torres.com"]["unidades"] == []
+
+
+def test_la_lista_ordena_los_grupos_con_la_administracion_primero_y_los_residentes_al_final():
     with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[ANDRES]):
         html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
 
-    assert "<th>Rol</th>" in html
-    assert "<td>Administración</td>" in html
+    grupos = datos_del_directorio(html, "usuarios-grupos")
+    assert [grupo["rol"] for grupo in grupos] == ["administracion", "secretaria", "vigilancia", "residente", "otro"]
+    assert 'x-data="directorioDeUsuarios()"' in html
+    assert 'type="search"' in html and "Buscar un usuario" in html
+    assert "js/directorio-usuarios.js" in html
+
+
+def test_un_rol_fuera_del_catalogo_cae_en_otros_y_no_desaparece_de_la_lista():
+    raro = {**ANA, "asignaciones": [{**ANA["asignaciones"][0], "rol": "consejo"}]}
+    with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[raro]):
+        html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
+
+    assert [fila["rol"] for fila in datos_del_directorio(html, "usuarios-datos")] == ["otro"]
+
+
+def test_la_lista_sin_usuarios_invita_a_registrar_y_no_trae_el_directorio():
+    with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[]):
+        html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
+
+    assert "Todavía no hay usuarios para mostrar" in html
+    assert 'id="usuarios-datos"' not in html and "directorioDeUsuarios" not in html
+
+
+def test_el_documento_de_la_lista_no_se_imprime_en_ninguna_url():
+    with mock.patch("cliente_api.cuentas.listar_usuarios", return_value=[ANA]):
+        html = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/").content.decode()
+
+    enlaces = [parte.split('"')[0] for parte in html.split('href="')[1:] + html.split('action="')[1:]]
+    assert not any("55555" in enlace for enlace in enlaces)
 
 
 def test_la_lista_lleva_a_registrar_persona():
@@ -176,6 +238,25 @@ def test_encontrada_se_ofrece_vincularla():
     assert "Carlos Gómez" in html and "Sin cuenta" in html
     assert "Vincular al conjunto" in html
     assert f'value="{CARLOS["id"]}"' in html
+
+
+def test_al_registrar_a_alguien_el_rol_marcado_es_residente_y_no_administracion():
+    with mock.patch("cliente_api.personas.buscar", return_value={"encontrada": True, "persona": CARLOS}):
+        vincular = buscar(cliente_con_sesion(permisos=BUSCADOR)).content.decode()
+    alta = cliente_con_sesion(permisos=BUSCADOR).get("/usuarios/nuevo/").content.decode()
+
+    for html in (vincular, alta):
+        assert re.search(r'<option value="residente"[^>]*selected', html)
+        assert not re.search(r'<option value="administracion"[^>]*selected', html)
+
+
+def test_en_el_detalle_el_rol_que_se_ofrece_primero_nunca_es_administracion():
+    sin_rol = {**ANDRES, "roles": [], "asignaciones": []}
+    with mock.patch("cliente_api.cuentas.obtener_usuario", return_value=sin_rol):
+        html = cliente_con_sesion(permisos=["rol.asignar"]).get(DETALLE).content.decode()
+
+    opciones = re.findall(r'<option value="([a-z]+)">', html)
+    assert opciones[0] == "residente" and opciones[-1] == "administracion"
 
 
 def test_vincular_manda_la_persona_y_el_rol():

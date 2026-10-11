@@ -88,6 +88,57 @@ def test_el_selector_muestra_la_foto_o_el_marcador_de_cada_conjunto():
     assert "Mirador" in html and "Torres del Río" in html
 
 
+# «Crear conjunto» en el selector: quien administra alguno lo ve apenas inicia sesión
+
+
+def selector_html(cliente):
+    with mock.patch("cliente_api.cuentas.listar_conjuntos", return_value=[{**TORRES, "direccion": ""}]):
+        return cliente.get("/conjuntos/").content.decode()
+
+
+def test_el_selector_ofrece_crear_conjunto_sin_conjunto_activo_si_la_api_lo_permite():
+    cliente = cliente_con_sesion(conjunto_activo=None, permisos=[], puede_crear_conjunto=True)
+
+    html = selector_html(cliente)
+
+    assert ">Crear conjunto</a>" in html
+    assert 'href="/conjuntos/nuevo/"' in html
+
+
+def test_el_selector_no_ofrece_crear_conjunto_a_quien_la_api_no_se_lo_permite():
+    cliente = cliente_con_sesion(conjunto_activo=None, permisos=[], puede_crear_conjunto=False)
+
+    assert ">Crear conjunto</a>" not in selector_html(cliente)
+
+
+def test_el_selector_sigue_usando_el_permiso_del_conjunto_activo_en_una_sesion_sin_el_indicador():
+    cliente = cliente_con_sesion(permisos=["conjunto.crear"])
+
+    assert ">Crear conjunto</a>" in selector_html(cliente)
+
+
+def test_al_iniciar_sesion_con_varios_conjuntos_el_selector_ya_trae_crear_conjunto():
+    estado = {
+        "token": "token-de-prueba",
+        "vence_en": "2099-01-01T00:00:00+00:00",
+        "conjunto_activo": None,
+        "permisos": [],
+        "puede_crear_conjunto": True,
+        "roles": [],
+        "tipo_usuario": "Usuario",
+        "dos_factores": {"requerido": False, "verificado": False, "configurado": False},
+    }
+    cliente = Client()
+    with (
+        mock.patch("cliente_api.cuentas.iniciar_sesion", return_value=estado),
+        mock.patch("cliente_api.cuentas.listar_conjuntos", return_value=[{**TORRES, "direccion": ""}]),
+    ):
+        respuesta = cliente.post("/", {"correo": "admin@torres.com", "contrasena": "Clave-Segura-123"}, follow=True)
+
+    assert respuesta.redirect_chain[-1][0] == "/conjuntos/"
+    assert ">Crear conjunto</a>" in respuesta.content.decode()
+
+
 # La imagen pasa por este servidor
 
 

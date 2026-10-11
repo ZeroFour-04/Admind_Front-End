@@ -8,7 +8,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.areas import views as vistas_de_areas
 from apps.areas.forms import PLANTILLAS_DE_AREA, AreaForm
-from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, tiene_permiso
+from apps.cuentas.sesion import destino_despues_de_entrar, guardar_estado, puede_crear_conjunto, tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
 from cliente_api import conjuntos as api_conjuntos
 from cliente_api import cuentas as api_cuentas
@@ -76,7 +76,7 @@ def selector(request):
     contexto = {
         "conjuntos": conjuntos or [],
         "error": error,
-        "puede_crear": tiene_permiso(request, "conjunto.crear"),
+        "puede_crear": puede_crear_conjunto(request),
     }
     return render(request, "conjuntos/selector.html", contexto)
 

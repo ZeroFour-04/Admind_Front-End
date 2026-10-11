@@ -6,6 +6,9 @@ Estilos propios de las pantallas, para lo que `design-system/` no cubre.
 
 - Hojas por módulo, escritas **solo con variables** del sistema de diseño
 
+- `usuarios.css`: la lista de Usuarios (desplegable por rol, buscador y «Ordenar por»)
+- `unidades.css`: los recuadros por agrupación y, en el detalle de una vivienda, el buscador de personas y el modal de residente
+
 ## Lo que no va
 
 - Hex, colores sueltos o tokens nuevos. Los tokens viven en `design-system/tokens/`

@@ -2,12 +2,15 @@ from django import forms
 
 
 # Los roles de conjunto del catálogo (maestro §5.3). No se crean ni se editan desde la interfaz.
+# De menos a más poder: en un select queda marcada la primera opción, y nadie debe quedar con la
+# Administración sin que alguien la haya elegido.
 ROLES_DE_CONJUNTO = [
-    ("administracion", "Administración"),
-    ("secretaria", "Secretaría"),
-    ("vigilancia", "Vigilancia"),
     ("residente", "Residente"),
+    ("vigilancia", "Vigilancia"),
+    ("secretaria", "Secretaría"),
+    ("administracion", "Administración"),
 ]
+ROL_POR_DEFECTO = "residente"
 
 
 class AsignarRolForm(forms.Form):
@@ -38,11 +41,11 @@ class BuscarPersonaForm(forms.Form):
 
 class VincularPersonaForm(forms.Form):
     persona = forms.UUIDField(widget=forms.HiddenInput)
-    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO)
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
 
 
 class UsuarioForm(forms.Form):
-    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO)
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
     tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
     numero_documento = forms.CharField(label="Número de documento", max_length=20)
     nombres = forms.CharField(label="Nombres", max_length=80)

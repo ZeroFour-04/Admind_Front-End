@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.cuentas.sesion import tiene_permiso
@@ -12,6 +13,40 @@ from .forms import AsignarRolForm, BuscarPersonaForm, UsuarioForm, VincularPerso
 # El documento buscado pasa al alta por la sesión: nunca por la URL (maestro §5.2, plan P4).
 CLAVE_DOCUMENTO_BUSCADO = "documento_buscado"
 
+# Los grupos de la lista de usuarios, en el orden en que salen: primero quienes administran el conjunto.
+# Quien tenga un rol que no esté aquí cae en «Otros»: nadie desaparece de la lista.
+GRUPOS_DE_USUARIOS = [
+    {"rol": "administracion", "titulo": "Administración"},
+    {"rol": "secretaria", "titulo": "Secretaría"},
+    {"rol": "vigilancia", "titulo": "Vigilancia"},
+    {"rol": "residente", "titulo": "Residentes"},
+    {"rol": "otro", "titulo": "Otros"},
+]
+
+
+def para_el_directorio(usuarios):
+    """Lo que el directorio de la página necesita de cada cuenta. Viaja como JSON: agrupar, buscar y
+    ordenar lo hace el navegador con lo que la API ya entregó. El documento va para poder buscar por él;
+    la pantalla no lo imprime."""
+    roles = {grupo["rol"] for grupo in GRUPOS_DE_USUARIOS}
+    filas = []
+    for usuario in usuarios:
+        asignacion = (usuario.get("asignaciones") or [{}])[0]
+        rol = asignacion.get("rol")
+        filas.append(
+            {
+                "id": usuario["id"],
+                "nombre": usuario["nombre"],
+                "correo": usuario["correo"],
+                "documento": usuario.get("documento", ""),
+                "rol": rol if rol in roles else "otro",
+                "desde": asignacion.get("desde", ""),
+                "unidades": usuario.get("unidades", []),
+                "url": reverse("usuarios:detalle", args=[usuario["id"]]),
+            }
+        )
+    return filas
+
 
 def lista(request):
     try:
@@ -24,7 +59,12 @@ def lista(request):
         error = api_error.mensaje
     else:
         error = None
-    return render(request, "usuarios/lista.html", {"usuarios": usuarios or [], "error": error})
+    contexto = {
+        "usuarios": para_el_directorio(usuarios or []),
+        "grupos": GRUPOS_DE_USUARIOS,
+        "error": error,
+    }
+    return render(request, "usuarios/lista.html", contexto)
 
 
 def detalle(request, usuario_id, error_de_accion=None):

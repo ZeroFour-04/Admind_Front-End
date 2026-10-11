@@ -7,6 +7,7 @@ from cliente_api.http import CLAVE_TOKEN, token_de
 
 CLAVE_CONJUNTO_ACTIVO = "conjunto_activo"
 CLAVE_PERMISOS = "permisos"
+CLAVE_PUEDE_CREAR_CONJUNTO = "puede_crear_conjunto"
 CLAVE_ROLES = "roles"
 CLAVE_DOS_FACTORES = "dos_factores"
 CLAVE_TIPO_USUARIO = "tipo_usuario"
@@ -43,7 +44,15 @@ def guardar_estado(request, estado):
     La API sigue siendo quien decide en cada petición; esto solo le sirve a las pantallas para
     saber qué mostrar.
     """
-    for clave in (CLAVE_CONJUNTO_ACTIVO, CLAVE_PERMISOS, CLAVE_ROLES, CLAVE_TIPO_USUARIO, CLAVE_DOS_FACTORES):
+    claves = (
+        CLAVE_CONJUNTO_ACTIVO,
+        CLAVE_PERMISOS,
+        CLAVE_PUEDE_CREAR_CONJUNTO,
+        CLAVE_ROLES,
+        CLAVE_TIPO_USUARIO,
+        CLAVE_DOS_FACTORES,
+    )
+    for clave in claves:
         if clave in estado:
             request.session[clave] = estado[clave]
     request.session.modified = True
@@ -51,6 +60,15 @@ def guardar_estado(request, estado):
 
 def tiene_permiso(request, permiso):
     return permiso in request.session.get(CLAVE_PERMISOS, [])
+
+
+def puede_crear_conjunto(request):
+    """Si se ofrece «Crear conjunto». La API lo calcula sobre todos sus conjuntos.
+
+    `permisos` son los del conjunto activo y vienen vacíos antes de elegir uno. Una sesión abierta
+    antes de que existiera el indicador no lo trae: ahí vale el permiso del conjunto activo.
+    """
+    return bool(request.session.get(CLAVE_PUEDE_CREAR_CONJUNTO)) or tiene_permiso(request, "conjunto.crear")
 
 
 def segundo_factor_pendiente(request):

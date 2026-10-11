@@ -1,7 +1,9 @@
 """Pantallas de HU-08: unidades por agrupación, sus vínculos vigentes y el histórico. La API se simula."""
+import json
+import re
 from unittest import mock
 
-from cliente_api.http import ErrorDeApi
+from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
 TORRE_1 = {"id": "a1b2c3d4-0000-4000-8000-0000000000a1", "nombre": "Torre 1"}
@@ -224,3 +226,175 @@ def test_sin_vinculo_gestionar_no_hay_formularios_ni_detalle_ni_personas():
     assert "Registrar apartamento" not in html and "Ver vínculos" not in html
     assert "Propietario" not in html and "o una persona" not in html
     assert cliente.get(f"/unidades/{APTO['id']}/")["Location"] == "/unidades/"
+
+
+# Buscador de personas y alta de residentes desde la vivienda
+
+NUEVO_USUARIO = {"id": "u9", "correo": "ana@torres.com"}
+PERSONA_NUEVA = "1b2c3d4e-0000-4000-8000-000000000099"
+ALTA = {
+    "tipo_documento": "CC",
+    "numero_documento": "1098765432",
+    "nombres": "Ana",
+    "apellidos": "Ruiz",
+    "telefono": "3001234567",
+    "correo": "ana@torres.com",
+    "contrasena": "una-clave-larga-2026",
+    "confirmar_contrasena": "una-clave-larga-2026",
+}
+USUARIOS_CON_DATOS = [
+    {"id": "u1", "persona": MARTA["id"], "nombre": MARTA["nombre"], "correo": "marta@torres.com", "documento": "1023456790"},
+    {"id": "u2", "persona": PEDRO["id"], "nombre": PEDRO["nombre"], "correo": "pedro@torres.com", "documento": "1023456791"},
+]
+ADMINISTRACION_COMPLETA = ["vinculo.gestionar", "usuario.gestionar"]
+
+
+def abrir_detalle(permisos=ADMINISTRACION_COMPLETA, cliente=None):
+    cliente = cliente or cliente_con_sesion(permisos=permisos)
+    with (
+        mock.patch("cliente_api.unidades.obtener", return_value=DETALLE),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        return cliente.get(f"/unidades/{APTO['id']}/")
+
+
+def datos_del_selector(html):
+    contenido = re.search(r'<script id="personas-datos" type="application/json">(.*?)</script>', html, re.S)
+    return json.loads(contenido.group(1))
+
+
+def test_el_vinculo_se_busca_en_un_selector_que_trae_nombre_correo_y_documento():
+    html = abrir_detalle().content.decode()
+
+    assert 'x-data="selectorDePersona"' in html and 'type="search"' in html
+    assert datos_del_selector(html) == [
+        {"id": MARTA["id"], "nombre": "Marta Gómez", "correo": "marta@torres.com", "documento": "1023456790"},
+        {"id": PEDRO["id"], "nombre": "Pedro Gómez", "correo": "pedro@torres.com", "documento": "1023456791"},
+    ]
+    assert "js/busqueda.js" in html and "js/vinculos.js" in html
+    # El documento viaja para buscar por él, pero no se imprime en la página.
+    assert "1023456790" not in html.split('id="personas-datos"')[0]
+
+
+def test_sin_javascript_el_valor_de_la_persona_sale_solo_del_select():
+    html = abrir_detalle().content.decode()
+
+    # El campo oculto solo se crea con alguien elegido (dentro de un <template>); si no, sin JavaScript
+    # viajaría vacío junto al <select> y le pisaría el valor.
+    ocultos = re.findall(r'(<template x-if="elegida">\s*)?<input type="hidden" name="persona"', html)
+    assert ocultos and all(ocultos)
+    assert f'<option value="{MARTA["id"]}">Marta Gómez</option>' in html
+
+
+def test_con_usuario_gestionar_hay_boton_y_modal_para_crear_un_residente():
+    html = abrir_detalle().content.decode()
+
+    assert 'data-abrir-modal="modal-residente"' in html and "Crear nuevo residente" in html
+    assert f'action="/unidades/{APTO["id"]}/residentes/"' in html
+    etiqueta_del_modal = html.split('id="modal-residente"')[1].split(">")[0]
+    assert "data-abrir" not in etiqueta_del_modal
+
+
+def test_el_modal_no_ofrece_elegir_el_rol():
+    html = abrir_detalle().content.decode()
+    modal = html.split('id="modal-residente"')[1].split("</dialog>")[0]
+
+    assert 'name="rol"' not in modal and "Rol en el conjunto" not in modal
+    assert 'name="numero_documento"' in modal and 'name="contrasena"' in modal
+
+
+def test_sin_usuario_gestionar_no_hay_boton_ni_modal_para_crear():
+    html = abrir_detalle(permisos=["vinculo.gestionar"]).content.decode()
+
+    assert "Crear nuevo residente" not in html and "modal-residente" not in html
+    assert 'x-data="selectorDePersona"' in html
+
+
+def test_crear_un_residente_manda_siempre_el_rol_residente_aunque_pidan_otro():
+    with (
+        mock.patch("cliente_api.cuentas.crear_usuario", return_value=NUEVO_USUARIO) as crear,
+        mock.patch("cliente_api.cuentas.obtener_usuario", return_value={"id": "u9", "persona": PERSONA_NUEVA}),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION_COMPLETA).post(
+            f"/unidades/{APTO['id']}/residentes/", {**ALTA, "rol": "administracion"}
+        )
+
+    enviado = crear.call_args.args[1]
+    assert enviado["rol"] == "residente"
+    assert enviado["numero_documento"] == "1098765432" and enviado["correo"] == "ana@torres.com"
+    assert "confirmar_contrasena" not in enviado
+    assert respuesta["Location"] == f"/unidades/{APTO['id']}/"
+
+
+def test_el_residente_recien_creado_llega_elegido_y_con_un_aviso_una_sola_vez():
+    cliente = cliente_con_sesion(permisos=ADMINISTRACION_COMPLETA)
+    with (
+        mock.patch("cliente_api.cuentas.crear_usuario", return_value=NUEVO_USUARIO),
+        mock.patch("cliente_api.cuentas.obtener_usuario", return_value={"id": "u9", "persona": PERSONA_NUEVA}),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        cliente.post(f"/unidades/{APTO['id']}/residentes/", ALTA)
+    primera = abrir_detalle(cliente=cliente).content.decode()
+    segunda = abrir_detalle(cliente=cliente).content.decode()
+
+    assert f'data-elegida="{PERSONA_NUEVA}"' in primera
+    assert "Se creó la cuenta de Ana Ruiz con el rol Residente" in primera
+    assert 'data-elegida=""' in segunda and "Se creó la cuenta" not in segunda
+
+
+def test_un_documento_repetido_vuelve_al_modal_abierto_con_el_motivo_y_sin_perder_lo_escrito():
+    repetido = ErrorDeApi(400, {"numero_documento": ["Ya existe una persona con este documento."]})
+    with (
+        mock.patch("cliente_api.cuentas.crear_usuario", side_effect=repetido),
+        mock.patch("cliente_api.unidades.obtener", return_value=DETALLE),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION_COMPLETA).post(
+            f"/unidades/{APTO['id']}/residentes/", ALTA
+        )
+    html = respuesta.content.decode()
+
+    assert respuesta.status_code == 200
+    assert 'id="modal-residente" aria-labelledby="titulo-modal-residente" data-abrir' in html
+    assert "Ya existe una persona con este documento." in html
+    assert 'value="1098765432"' in html and 'value="Ana"' in html
+    # La contraseña nunca vuelve al formulario.
+    assert "una-clave-larga-2026" not in html
+
+
+def test_un_alta_invalida_no_llama_a_la_api_y_vuelve_al_modal():
+    with (
+        mock.patch("cliente_api.cuentas.crear_usuario") as crear,
+        mock.patch("cliente_api.unidades.obtener", return_value=DETALLE),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION_COMPLETA).post(
+            f"/unidades/{APTO['id']}/residentes/", {**ALTA, "confirmar_contrasena": "otra-distinta-2026"}
+        ).content.decode()
+
+    crear.assert_not_called()
+    assert "Las contraseñas no coinciden." in html and "data-abrir>" in html
+
+
+def test_sin_usuario_gestionar_el_alta_no_llama_a_la_api():
+    with mock.patch("cliente_api.cuentas.crear_usuario") as crear:
+        respuesta = cliente_con_sesion(permisos=["vinculo.gestionar"]).post(
+            f"/unidades/{APTO['id']}/residentes/", ALTA
+        )
+
+    crear.assert_not_called()
+    assert respuesta["Location"] == "/unidades/"
+
+
+def test_si_la_api_no_responde_al_crear_el_modal_vuelve_con_el_aviso():
+    with (
+        mock.patch("cliente_api.cuentas.crear_usuario", side_effect=ApiNoDisponible),
+        mock.patch("cliente_api.unidades.obtener", return_value=DETALLE),
+        mock.patch("cliente_api.cuentas.listar_usuarios", return_value=USUARIOS_CON_DATOS),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION_COMPLETA).post(
+            f"/unidades/{APTO['id']}/residentes/", ALTA
+        ).content.decode()
+
+    assert MENSAJE_API_NO_DISPONIBLE in html and "data-abrir>" in html
