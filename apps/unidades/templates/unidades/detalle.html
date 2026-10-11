@@ -114,6 +114,10 @@
 {% endif %}
 
 <div class="acciones">
-  <a class="am-btn am-btn--secundario" href="{% url 'unidades:lista' %}">Volver a los apartamentos</a>
+  {% if unidad.agrupacion %}
+    <a class="am-btn am-btn--secundario" href="{% url 'unidades:agrupacion' unidad.agrupacion.id %}">Volver a {{ unidad.agrupacion.nombre }}</a>
+  {% else %}
+    <a class="am-btn am-btn--secundario" href="{% url 'unidades:lista' %}">Volver a Unidades</a>
+  {% endif %}
 </div>
 {% endblock %}

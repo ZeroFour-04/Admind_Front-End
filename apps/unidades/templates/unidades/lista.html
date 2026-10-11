@@ -1,8 +1,10 @@
 {% extends "base/aplicacion.html" %}
+{% load static %}
 
-{% block titulo %}Apartamentos{% endblock %}
-{% block titulo_vista %}Apartamentos{% endblock %}
+{% block titulo %}Unidades{% endblock %}
+{% block titulo_vista %}Unidades{% endblock %}
 {% block estado_vista %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/unidades.css' %}">{% endblock %}
 
 {% block contenido %}
 {% if error %}
@@ -10,32 +12,35 @@
 {% endif %}
 
 {% if unidades %}
-  <div class="am-tabla-caja">
-    <table class="am-tabla">
-      <thead>
-        <tr>
-          <th>Apartamento</th>
-          <th class="am-col-num">Vínculos vigentes</th>
-          {% if puede_gestionar %}<th>Acciones</th>{% endif %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for unidad in unidades %}
-          <tr>
-            <td>{{ unidad.nombre }}</td>
-            <td class="am-col-num am-num">{{ unidad.vinculos_vigentes }}</td>
-            {% if puede_gestionar %}
-              <td><a class="am-btn am-btn--secundario" href="{% url 'unidades:detalle' unidad.id %}">Ver vínculos</a></td>
-            {% endif %}
-          </tr>
+  <div class="directorio" x-data="directorioDeUnidades({ limite: 100, hayAgrupaciones: {{ hay_agrupaciones|yesno:'true,false' }} })">
+    {% include "unidades/_buscador.html" %}
+
+    {% if hay_agrupaciones %}
+      <ul class="agrupaciones" role="list" aria-label="Agrupaciones del conjunto" x-show="mostrarRecuadros">
+        {% for recuadro in recuadros %}
+          <li>
+            <a class="am-tesela tesela-enlace" href="{{ recuadro.url }}">
+              <span class="tesela-enlace__cabeza">
+                <span class="am-tesela__titulo">{{ recuadro.nombre }}</span>
+                <span class="recuadro-conteo">{{ recuadro.total }}</span>
+              </span>
+              <span class="am-tesela__pie">
+                {{ recuadro.viviendas|capfirst }}{% if recuadro.sin_vinculos %} · {{ recuadro.sin_vinculos }} sin vínculos{% endif %}
+              </span>
+            </a>
+          </li>
         {% endfor %}
-      </tbody>
-    </table>
+      </ul>
+    {% endif %}
+
+    <section aria-label="Resultados de la búsqueda" x-show="verResultados" x-cloak>
+      {% include "unidades/_resultados.html" with con_agrupacion=True %}
+    </section>
   </div>
 {% elif not error %}
   <div class="am-vacio">
-    <p class="am-vacio__titulo">Todavía no hay apartamentos registrados</p>
-    <p class="am-vacio__texto">Cada apartamento guarda quién es su propietario, quién lo arrienda y quién vive ahí.</p>
+    <p class="am-vacio__titulo">Todavía no hay viviendas registradas</p>
+    <p class="am-vacio__texto">Cada vivienda guarda quién es su propietario, quién la arrienda y quién vive ahí.</p>
   </div>
 {% endif %}
 
@@ -52,4 +57,10 @@
     </form>
   </details>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if unidades %}{{ unidades|json_script:"unidades-datos" }}{% endif %}
+  <script src="{% static 'js/unidades.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
 {% endblock %}

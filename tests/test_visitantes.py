@@ -39,7 +39,7 @@ def test_vigilancia_solo_ve_las_secciones_permitidas_en_el_lateral():
         for texto in (
             "Inicio", "Zonas comunes", "Áreas comunes", "Reglas", "Anuncios",
             "Notificaciones", "Solicitudes", "Visitante", "Visitantes", "Conjunto",
-            "Usuarios", "Apartamentos y parqueaderos",
+            "Usuarios", "Unidades",
         )
         if f">{texto}</a>" in lateral
     ]

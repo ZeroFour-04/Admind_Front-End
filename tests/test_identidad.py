@@ -51,19 +51,19 @@ def test_el_lateral_trae_en_el_pie_lo_que_la_barra_oculta_en_pantallas_angostas(
 
 
 @pytest.mark.parametrize("rol", ["Superusuario", "Administrador", "Secretaría"])
-def test_el_lateral_muestra_usuarios_y_apartamentos_solo_a_roles_autorizados(rol):
+def test_el_lateral_muestra_usuarios_y_unidades_solo_a_roles_autorizados(rol):
     html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
 
     assert ">Usuarios</a>" in html
-    assert ">Apartamentos y parqueaderos</a>" in html
+    assert ">Unidades</a>" in html
 
 
 @pytest.mark.parametrize("rol", ["Residente", "Vigilancia"])
-def test_el_lateral_oculta_usuarios_y_apartamentos_a_los_demas_roles(rol):
+def test_el_lateral_oculta_usuarios_y_unidades_a_los_demas_roles(rol):
     html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
 
     assert ">Usuarios</a>" not in html
-    assert ">Apartamentos y parqueaderos</a>" not in html
+    assert ">Unidades</a>" not in html
 
 
 def test_con_foto_la_barra_muestra_la_foto_y_tambien_el_nombre():

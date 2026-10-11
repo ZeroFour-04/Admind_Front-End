@@ -6,7 +6,7 @@ Las viviendas del conjunto y sus vínculos.
 
 ## Qué va aquí
 
-- Listado de unidades
+- Listado de unidades: un recuadro por agrupación, la tabla de cada una y el buscador (nomenclatura, nombre o cédula)
 - Vínculos de cada unidad: propietario o arrendatario, si reside, desde cuándo
 - Cierre de un vínculo, que no lo borra
 

@@ -13,7 +13,7 @@ def crear(request, datos):
 
 
 def obtener(request, unidad_id):
-    """GET /unidades/<id>/ → {id, nombre, vigentes, historicos}, o 404."""
+    """GET /unidades/<id>/ → {id, nombre, agrupacion: {id, nombre} | None, vigentes, historicos}, o 404."""
     return pedir(request, "GET", f"unidades/{unidad_id}/")
 
 

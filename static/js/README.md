@@ -8,6 +8,7 @@ Comportamiento en el navegador con Alpine.js. Solo lo que no se resuelve con HTM
 - La liberación del bloqueo al salir del formulario
 - Abrir y cerrar el modal de confirmación
 - `lateral.js`: abrir y cerrar el menú de secciones en pantallas angostas (bajo 900px). No usa Alpine y lo carga `templates/base/aplicacion.html` en todas las pantallas con lateral
+- `unidades.js`: el buscador de la pantalla Unidades; filtra en el navegador lo que la API ya entregó
 - `vendor/`: Alpine.js autoalojado
 
 ## Lo que no va

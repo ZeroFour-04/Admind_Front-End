@@ -1,7 +1,9 @@
-"""Apartamentos del conjunto activo y sus vínculos (HU-08): propietarios, arrendatarios y su histórico."""
+"""Unidades del conjunto activo y sus vínculos (HU-08): propietarios, arrendatarios y su histórico."""
 from datetime import date
 
+from django.http import Http404
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.cuentas.sesion import tiene_permiso
@@ -21,6 +23,65 @@ def con_fechas(vinculo):
     return {**vinculo, **fechas}
 
 
+PLURAL_DE_TIPO = {"apartamento": "apartamentos", "casa": "casas"}
+
+
+def cargar_unidades(request):
+    """(unidades, error): las viviendas del conjunto activo, o ([], el motivo) si la API no las entrega."""
+    try:
+        return api_unidades.listar(request), None
+    except ApiNoDisponible:
+        return [], MENSAJE_API_NO_DISPONIBLE
+    except ErrorDeApi as api_error:
+        return [], api_error.mensaje
+
+
+def para_el_buscador(unidades, puede_gestionar):
+    """Lo que el buscador de la página necesita de cada vivienda. Viaja como JSON, no se pinta fila por fila."""
+    filas = []
+    for unidad in unidades:
+        agrupacion = unidad.get("agrupacion") or {}
+        filas.append(
+            {
+                "id": unidad["id"],
+                "nombre": unidad["nombre"],
+                "agrupacion": agrupacion.get("nombre", ""),
+                "tipo": unidad.get("tipo", "apartamento"),
+                "numero": unidad.get("numero", ""),
+                "vinculos": unidad.get("vinculos_vigentes", 0),
+                "personas": unidad.get("personas", []),
+                "url": reverse("unidades:detalle", args=[unidad["id"]]) if puede_gestionar else "",
+            }
+        )
+    return filas
+
+
+def recuadros_de_agrupaciones(unidades):
+    """Un recuadro por agrupación, en el orden de la API, y «Sin agrupar» al final si hay viviendas sueltas."""
+    recuadros = {}
+    for unidad in unidades:
+        agrupacion = unidad.get("agrupacion")
+        clave = agrupacion["id"] if agrupacion else ""
+        recuadro = recuadros.setdefault(
+            clave,
+            {
+                "nombre": agrupacion["nombre"] if agrupacion else "Sin agrupar",
+                "sin_agrupar": agrupacion is None,
+                "url": reverse("unidades:agrupacion", args=[clave]) if agrupacion else reverse("unidades:sin-agrupar"),
+                "total": 0,
+                "sin_vinculos": 0,
+                "tipos": set(),
+            },
+        )
+        recuadro["total"] += 1
+        recuadro["sin_vinculos"] += 0 if unidad.get("vinculos_vigentes") else 1
+        recuadro["tipos"].add(unidad.get("tipo", "apartamento"))
+    for recuadro in recuadros.values():
+        tipos = recuadro.pop("tipos")
+        recuadro["viviendas"] = PLURAL_DE_TIPO[tipos.pop()] if len(tipos) == 1 else "viviendas"
+    return sorted(recuadros.values(), key=lambda recuadro: recuadro["sin_agrupar"])
+
+
 @require_http_methods(["GET", "POST"])
 def lista(request):
     puede_gestionar = tiene_permiso(request, "vinculo.gestionar")
@@ -35,14 +96,39 @@ def lista(request):
         else:
             return redirect("unidades:detalle", unidad_id=unidad["id"])
 
-    try:
-        unidades, error = api_unidades.listar(request), None
-    except ApiNoDisponible:
-        unidades, error = [], MENSAJE_API_NO_DISPONIBLE
-    except ErrorDeApi as api_error:
-        unidades, error = [], api_error.mensaje
-    contexto = {"unidades": unidades, "error": error, "formulario": formulario, "puede_gestionar": puede_gestionar}
+    unidades, error = cargar_unidades(request)
+    recuadros = recuadros_de_agrupaciones(unidades)
+    contexto = {
+        "unidades": para_el_buscador(unidades, puede_gestionar),
+        "recuadros": recuadros,
+        # Si ninguna vivienda tiene agrupación, un solo recuadro «Sin agrupar» no ayuda: va la tabla directa.
+        "hay_agrupaciones": any(unidad.get("agrupacion") for unidad in unidades),
+        "error": error,
+        "formulario": formulario,
+        "puede_gestionar": puede_gestionar,
+    }
     return render(request, "unidades/lista.html", contexto)
+
+
+def viviendas_de_agrupacion(request, agrupacion_id=None):
+    """Las viviendas de una agrupación (o las que no tienen), con su buscador."""
+    puede_gestionar = tiene_permiso(request, "vinculo.gestionar")
+    unidades, error = cargar_unidades(request)
+    buscada = str(agrupacion_id) if agrupacion_id else ""
+    propias = [u for u in unidades if str((u.get("agrupacion") or {}).get("id", "")) == buscada]
+    if not propias and not error:
+        raise Http404
+    if propias and buscada:
+        nombre = propias[0]["agrupacion"]["nombre"]
+    else:
+        nombre = "Sin agrupar" if not agrupacion_id else "Unidades"
+    contexto = {
+        "nombre": nombre,
+        "unidades": para_el_buscador(propias, puede_gestionar),
+        "error": error,
+        "puede_gestionar": puede_gestionar,
+    }
+    return render(request, "unidades/agrupacion.html", contexto)
 
 
 def personas_del_conjunto(request):
