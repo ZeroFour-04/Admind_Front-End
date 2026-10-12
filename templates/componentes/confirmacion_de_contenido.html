@@ -7,13 +7,19 @@ de la semana en letras. Vive dentro de un `x-data` que tenga `revisando` y `venc
 no le pide nada al servidor ni toca el reloj.
 
 Parámetros, ya formateados en el servidor: area, fecha, horario, avisos (textos que resaltan sin impedir
-el envío) y asistentes (si es True, muestra el número enlazado con `x-text`).
+el envío), condiciones (opcional) y asistentes (si es True, muestra el número enlazado con `x-text`).
 {% endcomment %}
 <section class="am-tarjeta tarjeta-contenido" x-show="revisando" x-cloak aria-labelledby="titulo-confirmacion">
   <h2 id="titulo-confirmacion">Revisa antes de enviar</h2>
   <p class="tarjeta-contenido__cuerpo">
     Vas a solicitar el <b>{{ area }}</b> para el <b>{{ fecha }}</b>, de <b>{{ horario }}</b>{% if asistentes %}, para <b x-text="asistentes"></b> asistentes{% endif %}.
   </p>
+  {% if condiciones %}
+    <div class="aviso-info" role="note">
+      <b>Reglas de renta de la zona</b>
+      <p>{{ condiciones|linebreaksbr }}</p>
+    </div>
+  {% endif %}
   {% if avisos %}
     <ul class="lista-simple" role="list">
       {% for aviso in avisos %}<li><span class="am-pastilla am-pastilla--tramite">{{ aviso }}</span></li>{% endfor %}

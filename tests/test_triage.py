@@ -115,6 +115,13 @@ def test_residente_ve_su_historial_con_estados_y_comentarios():
             "estado_nombre": "Apartada",
             "motivo_decision": "",
         },
+        {
+            **RESERVA,
+            "id": "6f7a8b9c-0000-4000-8000-000000000004",
+            "estado": "EN_SOLICITUD",
+            "estado_nombre": "En trámite",
+            "motivo_decision": "",
+        },
     ]
     with (
         mock.patch("cliente_api.reservas.mis_solicitudes", return_value=propias) as propias_api,
@@ -124,10 +131,12 @@ def test_residente_ve_su_historial_con_estados_y_comentarios():
 
     propias_api.assert_called_once()
     todas_api.assert_not_called()
-    assert html.count("Salón comunal") == 3
-    assert ">Aprobada</span>" in html
-    assert ">Rechazada</span>" in html
-    assert ">En revisión</span>" in html
+    assert html.count("Salón comunal") == 4
+    assert 'class="am-pastilla am-pastilla--confirmado">Aceptado</span>' in html
+    assert 'class="am-pastilla am-pastilla--error">Rechazado</span>' in html
+    assert html.count('class="am-pastilla am-pastilla--tramite">En progreso</span>') == 2
+    assert 'href="/casos/">Casos</a>' in html
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Reservas</span>' in html
     assert "Horario confirmado." in html
     assert "Falta autorización." in html
     assert "Ver solicitudes de esta zona" not in html

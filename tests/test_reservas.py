@@ -49,7 +49,7 @@ FRANJAS = {
 }
 EN_TRAMITE = {
     "id": "6f7a8b9c-0000-4000-8000-000000000001",
-    "area": {"id": SALON["id"], "nombre": "Salón comunal"},
+    "area": {"id": SALON["id"], "nombre": "Salón comunal", "condiciones_alquiler": ""},
     "fecha": "2026-12-26",
     "hora_inicio": "14:00",
     "hora_fin": "18:00",
@@ -257,6 +257,28 @@ def test_el_panel_dice_el_area_el_dia_de_la_semana_en_letras_la_fecha_y_el_horar
     assert "Vas a solicitar el <b>Salón comunal</b> para el <b>sábado 26 de diciembre de 2026</b>" in html
     assert "de <b>2:00 p. m. a 6:00 p. m.</b>, para <b x-text=\"asistentes\"></b> asistentes." in html
     assert ">Corregir</button>" in html and ">Enviar solicitud</button>" in html
+
+
+def test_el_residente_ve_las_condiciones_al_agendar_y_antes_de_enviar():
+    condiciones = "No se permiten fiestas después de las 10 p. m.\nDejar limpia la zona."
+    html = ver_solicitud(area={**EN_TRAMITE["area"], "condiciones_alquiler": condiciones})
+
+    assert html.count("Reglas de renta de la zona") == 2
+    assert html.count("No se permiten fiestas después de las 10 p. m.") == 2
+    assert html.count("Dejar limpia la zona.") == 2
+
+
+@pytest.mark.parametrize("estado,nombre", [("RESERVADA", "Reservada"), ("RECHAZADA", "Rechazada")])
+def test_el_residente_ve_las_condiciones_al_consultar_una_decision(estado, nombre):
+    condiciones = "No se permiten fiestas después de las 10 p. m."
+    html = ver_solicitud(
+        estado=estado,
+        estado_nombre=nombre,
+        area={**EN_TRAMITE["area"], "condiciones_alquiler": condiciones},
+    )
+
+    assert "Reglas de renta de la zona" in html
+    assert condiciones in html
 
 
 def test_los_avisos_se_muestran_con_texto_y_no_deshabilitan_el_envio():
@@ -489,6 +511,19 @@ def ver_zona(solicitudes, permisos=ADMINISTRACION, **sesion):
         mock.patch("cliente_api.areas.listar", return_value=[SALON]),
     ):
         return cliente_con_sesion(permisos=permisos, **sesion).get(URL_DE_LA_ZONA).content.decode()
+
+
+def test_la_regla_de_renta_de_la_zona_se_precarga_al_revisar_una_solicitud():
+    condiciones = "No se permiten fiestas después de las 10 p. m."
+    area = {**SALON, "condiciones_alquiler": condiciones}
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[APARTADA_PARA_GESTION]),
+        mock.patch("cliente_api.areas.listar", return_value=[area]),
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).get(URL_DE_LA_ZONA).content.decode()
+
+    assert f">{condiciones}</textarea>" in html
+    assert "Motivo de la decisión o condiciones del alquiler" in html
 
 
 def test_la_tarjeta_dice_que_el_dinero_lo_valida_una_persona_y_que_el_pago_no_esta_declarado():

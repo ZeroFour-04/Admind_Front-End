@@ -1,0 +1,28 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Crear caso{% endblock %}
+{% block titulo_vista %}Crear caso{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "casos/_pestanas.html" with es_residente=True pestana_activa="casos" %}
+<form method="post" enctype="multipart/form-data" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.titulo %}
+  {% include "componentes/campo.html" with campo=formulario.caso %}
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.foto.id_for_label }}">{{ formulario.foto.label }}</label>
+    <input class="am-campo__control campo-archivo" type="file" id="{{ formulario.foto.id_for_label }}" name="{{ formulario.foto.html_name }}"
+           accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+           aria-describedby="{{ formulario.foto.id_for_label }}-ayuda{% if formulario.foto.errors %} {{ formulario.foto.id_for_label }}-error{% endif %}"
+           {% if formulario.foto.errors %}aria-invalid="true"{% endif %}>
+    <span class="am-campo__ayuda" id="{{ formulario.foto.id_for_label }}-ayuda">Opcional. Una imagen PNG, JPG o WebP de hasta 5 MB.</span>
+    {% if formulario.foto.errors %}<span class="am-campo__error" id="{{ formulario.foto.id_for_label }}-error">{{ formulario.foto.errors|join:" " }}</span>{% endif %}
+  </div>
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'casos:lista' %}">Cancelar</a>
+    <button class="am-btn am-btn--primario" type="submit">Crear caso</button>
+  </div>
+</form>
+{% endblock %}

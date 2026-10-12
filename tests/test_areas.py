@@ -9,6 +9,7 @@ SALON = {
     "id": "3c4d5e6f-0000-4000-8000-000000000001",
     "nombre": "Salón comunal",
     "descripcion": "",
+    "condiciones_alquiler": "",
     "hora_apertura": "08:00",
     "hora_cierre": "22:00",
     "modo_uso": "reserva",
@@ -30,7 +31,7 @@ GIMNASIO = {
 PORTERIA = {**SALON, "id": "3c4d5e6f-0000-4000-8000-000000000002", "nombre": "Portería", "en_mantenimiento": True}
 DATOS = {
     "nombre": "Salón comunal", "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": "240",
-    "aforo_maximo": "50",
+    "aforo_maximo": "50", "condiciones_alquiler": "",
 }
 ADMINISTRACION = ["area.ver", "area.gestionar"]
 
@@ -80,6 +81,7 @@ def test_crear_manda_las_horas_como_texto_y_vuelve_a_la_lista():
 
     assert crear.call_args.args[1] == {
         "modo_uso": "reserva", "nombre": "Salón comunal", "descripcion": "",
+        "condiciones_alquiler": "",
         "hora_apertura": "08:00", "hora_cierre": "22:00", "duracion_franja_minutos": 240, "aforo_maximo": 50,
     }
     assert respuesta["Location"] == "/areas/?creada=1"
@@ -122,6 +124,27 @@ def test_editar_manda_el_mantenimiento():
 
     assert editar.call_args.args[2]["en_mantenimiento"] is True
     assert respuesta["Location"] == "/areas/"
+
+
+def test_crear_y_editar_guardan_las_reglas_de_renta():
+    condiciones = "No se permiten fiestas después de las 10 p. m."
+    with mock.patch("cliente_api.areas.crear", return_value=SALON) as crear:
+        cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/areas/nueva/", {**DATOS, "condiciones_alquiler": condiciones}
+        )
+    assert crear.call_args.args[1]["condiciones_alquiler"] == condiciones
+
+    with (
+        mock.patch("cliente_api.areas.obtener", return_value={**SALON, "condiciones_alquiler": condiciones}),
+        mock.patch("cliente_api.areas.editar", return_value=SALON) as editar,
+    ):
+        html = cliente_con_sesion(permisos=ADMINISTRACION).get(f"/areas/{SALON['id']}/editar/").content.decode()
+        cliente_con_sesion(permisos=ADMINISTRACION).post(
+            f"/areas/{SALON['id']}/editar/", {**DATOS, "condiciones_alquiler": condiciones}
+        )
+
+    assert f">{condiciones}</textarea>" in html
+    assert editar.call_args.args[2]["condiciones_alquiler"] == condiciones
 
 
 def test_desactivar_llama_a_la_api_y_un_409_se_muestra():
@@ -191,6 +214,7 @@ def test_crear_un_area_con_ingreso_manda_el_modo_y_la_permanencia_sin_duracion()
 
     assert crear.call_args.args[1] == {
         "modo_uso": "ingreso", "nombre": "Gimnasio", "descripcion": "",
+        "condiciones_alquiler": "",
         "hora_apertura": "05:00", "hora_cierre": "22:00", "permanencia_maxima_minutos": 60, "aforo_maximo": 3,
     }
     assert respuesta["Location"] == "/areas/?creada=1"

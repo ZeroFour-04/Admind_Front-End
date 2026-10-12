@@ -1,0 +1,14 @@
+{% if es_residente %}
+<nav class="am-pestanas" aria-label="Mis solicitudes">
+  {% if pestana_activa == "reservas" %}
+    <span class="am-pestana am-es-activa" aria-current="page">Reservas</span>
+  {% else %}
+    <a class="am-pestana" href="{% url 'triage:bandeja' %}">Reservas</a>
+  {% endif %}
+  {% if pestana_activa == "casos" %}
+    <span class="am-pestana am-es-activa" aria-current="page">Casos</span>
+  {% else %}
+    <a class="am-pestana" href="{% url 'casos:lista' %}">Casos</a>
+  {% endif %}
+</nav>
+{% endif %}

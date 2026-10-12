@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.pagos",
     "apps.parqueaderos",
     "apps.triage",
+    "apps.casos",
     "apps.unidades",
     "apps.usuarios",
     "apps.visitantes",

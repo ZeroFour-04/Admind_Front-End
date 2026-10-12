@@ -6,10 +6,10 @@ from cliente_api import reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
 ESTADO_PARA_RESIDENTE = {
-    "APARTADA": "En revisión",
-    "RESERVADA": "Aprobada",
-    "RECHAZADA": "Rechazada",
-    "EN_SOLICITUD": "En trámite",
+    "APARTADA": "En progreso",
+    "RESERVADA": "Aceptado",
+    "RECHAZADA": "Rechazado",
+    "EN_SOLICITUD": "En progreso",
     "CANCELADA": "Cancelada",
     "EXPIRADA": "Expirada",
     "LIBERADA": "Liberada",

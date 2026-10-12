@@ -1,0 +1,12 @@
+.caso__foto{display:block;max-width:min(100%,640px);max-height:480px;margin-top:var(--e-3);border-radius:var(--radio-control);object-fit:contain}
+.caso__tarjeta{padding:0}
+.caso__resumen{display:flex;align-items:center;justify-content:space-between;gap:var(--e-3);padding:var(--e-4);cursor:pointer;list-style:none}
+.caso__resumen::-webkit-details-marker{display:none}
+.caso__resumen>span:first-child{display:grid;gap:var(--e-1)}
+.caso__detalle{padding:0 var(--e-4) var(--e-4)}
+.caso__acciones{display:flex;align-items:flex-start;gap:var(--e-2);margin-top:var(--e-3)}
+.caso__rechazo>form{display:grid;gap:var(--e-2);min-width:min(100%,420px);padding:var(--e-3) 0}
+.caso__rechazo textarea{width:100%;resize:vertical}
+.caso__motivo-rechazo{margin-top:var(--e-3)}
+.caso__motivo-rechazo p{margin-bottom:0}
+@media(max-width:600px){.caso__resumen{align-items:flex-start}.caso__acciones{flex-direction:column}}

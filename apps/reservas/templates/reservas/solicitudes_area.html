@@ -51,8 +51,9 @@
           {% csrf_token %}
           <input type="hidden" name="area" value="{{ area.id }}">
           <div class="am-campo">
-            <label class="am-campo__etiqueta" for="motivo-{{ solicitud.id }}">Motivo de la decisión</label>
-            <textarea class="am-campo__control" id="motivo-{{ solicitud.id }}" name="motivo" rows="3" maxlength="1000" required></textarea>
+            <label class="am-campo__etiqueta" for="motivo-{{ solicitud.id }}">Motivo de la decisión o condiciones del alquiler</label>
+            <textarea class="am-campo__control" id="motivo-{{ solicitud.id }}" name="motivo" rows="3" maxlength="1000" required>{{ area.condiciones_alquiler }}</textarea>
+            <span class="am-campo__ayuda">Al aceptar, puedes revisar y ajustar las reglas de renta configuradas para esta zona.</span>
           </div>
           <div class="acciones">
             <button class="am-btn am-btn--primario" type="submit" name="decision" value="RESERVADA">Aceptar</button>

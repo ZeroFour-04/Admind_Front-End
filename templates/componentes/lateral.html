@@ -27,6 +27,9 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>
   <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
   {% endif %}
+  {% if "caso.crear" in request.session.permisos or "caso.ver_todos" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'casos' %} am-es-activo{% endif %}" href="{% url 'casos:lista' %}"{% if actual == 'casos' %} aria-current="page"{% endif %}>Casos</a>
+  {% endif %}
   {% if "ingreso.registrar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}>Ingreso a zonas</a>
   {% elif "ingreso.ver_historico" in request.session.permisos %}

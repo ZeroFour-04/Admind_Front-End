@@ -11,6 +11,7 @@ Las pantallas del flujo de reserva. Es la parte de la interfaz que más se suste
 - Las franjas apartadas y reservadas se distinguen en rojo en el calendario
 - `Reservar`: toma el bloqueo y muestra la **cuenta regresiva de 3 minutos**. Salir del formulario libera la franja de inmediato
 - Formulario y **confirmación de contenido**, con el día de la semana en letras
+- Las reglas de renta configuradas para la zona se muestran al residente al solicitar la reserva y al consultar una solicitud aceptada o rechazada
 - Aviso de última oportunidad cuando el residente ya dejó vencer esa franja una vez (R9)
 - Mis reservas: ver y cancelar
 - Bandeja de solicitudes por zona común para administración, secretaría y superusuario; permite aceptar o rechazar con motivo

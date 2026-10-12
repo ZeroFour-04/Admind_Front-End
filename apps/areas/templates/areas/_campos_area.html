@@ -37,6 +37,13 @@ Parámetros: formulario.
             aria-describedby="{{ formulario.descripcion.id_for_label }}-ayuda">{{ formulario.descripcion.value|default_if_none:'' }}</textarea>
   <span class="am-campo__ayuda" id="{{ formulario.descripcion.id_for_label }}-ayuda">Opcional.</span>
 </div>
+<div class="am-campo">
+  <label class="am-campo__etiqueta" for="{{ formulario.condiciones_alquiler.id_for_label }}">{{ formulario.condiciones_alquiler.label }}</label>
+  <textarea class="am-campo__control" id="{{ formulario.condiciones_alquiler.id_for_label }}" name="{{ formulario.condiciones_alquiler.html_name }}" rows="4"
+            maxlength="1000" aria-describedby="{{ formulario.condiciones_alquiler.id_for_label }}-ayuda">{{ formulario.condiciones_alquiler.value|default_if_none:'' }}</textarea>
+  <span class="am-campo__ayuda" id="{{ formulario.condiciones_alquiler.id_for_label }}-ayuda">{{ formulario.condiciones_alquiler.help_text }}</span>
+  {% if formulario.condiciones_alquiler.errors %}<span class="am-campo__error">{{ formulario.condiciones_alquiler.errors|join:" " }}</span>{% endif %}
+</div>
 
 {% include "componentes/campo.html" with campo=formulario.hora_apertura tipo="time" %}
 {% include "componentes/campo.html" with campo=formulario.hora_cierre tipo="time" %}

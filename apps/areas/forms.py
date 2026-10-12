@@ -20,6 +20,13 @@ class AreaForm(forms.Form):
     modo_uso = forms.ChoiceField(label="Cómo se usa", choices=MODOS_DE_USO, initial="reserva", required=False)
     nombre = forms.CharField(label="Nombre", max_length=80)
     descripcion = forms.CharField(label="Descripción", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+    condiciones_alquiler = forms.CharField(
+        label="Reglas de renta de la zona",
+        required=False,
+        max_length=1000,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text="Se precargarán al revisar y aceptar solicitudes de reserva.",
+    )
     hora_apertura = forms.TimeField(label="Abre a las")
     hora_cierre = forms.TimeField(label="Cierra a las")
     duracion_franja_minutos = forms.IntegerField(

@@ -4,6 +4,7 @@
 {% block titulo_vista %}Solicitudes{% endblock %}
 
 {% block contenido %}
+{% include "casos/_pestanas.html" with pestana_activa="reservas" %}
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}

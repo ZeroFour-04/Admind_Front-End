@@ -71,7 +71,7 @@ def editar(request, area_id):
         return render(request, "areas/editar.html", {"error": error.mensaje})
 
     campos = (
-        "nombre", "descripcion", "hora_apertura", "hora_cierre", "duracion_franja_minutos",
+        "nombre", "descripcion", "condiciones_alquiler", "hora_apertura", "hora_cierre", "duracion_franja_minutos",
         "permanencia_maxima_minutos", "aforo_maximo", "en_mantenimiento",
     )
     formulario = EditarAreaForm(

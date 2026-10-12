@@ -18,6 +18,12 @@
     <p class="vista__guia">
       {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
     </p>
+    {% if solicitud.area.condiciones_alquiler %}
+      <div class="aviso-info" role="note">
+        <b>Reglas de renta de la zona</b>
+        <p>{{ solicitud.area.condiciones_alquiler|linebreaksbr }}</p>
+      </div>
+    {% endif %}
     <p class="reloj-solicitud" role="timer" aria-live="off">
       Tienes
       <span class="am-pastilla am-pastilla--tramite"><span class="am-pastilla__reloj am-num" x-text="reloj">{{ reloj }}</span></span>
@@ -57,7 +63,7 @@
             <button class="am-btn am-btn--primario" type="button" @click="revisar($el.form)" :disabled="vencido">Revisar solicitud</button>
           </div>
         </div>
-        {% include "componentes/confirmacion_de_contenido.html" with area=solicitud.area.nombre fecha=fecha_en_letras horario=horario avisos=avisos asistentes=True %}
+        {% include "componentes/confirmacion_de_contenido.html" with area=solicitud.area.nombre fecha=fecha_en_letras horario=horario avisos=avisos condiciones=solicitud.area.condiciones_alquiler asistentes=True %}
       </form>
     {% else %}
       <div class="aviso-info" role="note"><p>Para reservar necesitas vivir en un apartamento del conjunto. Cancela la solicitud para soltar la franja.</p></div>
@@ -95,6 +101,14 @@
       <p>Esta solicitud está {{ solicitud.estado_nombre|lower }}.</p>
     {% endif %}
   </div>
+  {% if solicitud.estado == "RESERVADA" or solicitud.estado == "RECHAZADA" %}
+    {% if solicitud.area.condiciones_alquiler %}
+      <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-condiciones-renta">
+        <h2 id="titulo-condiciones-renta">Reglas de renta de la zona</h2>
+        <p>{{ solicitud.area.condiciones_alquiler|linebreaksbr }}</p>
+      </section>
+    {% endif %}
+  {% endif %}
   {% if muestra_el_pago %}
     {% include "reservas/_pago.html" with pago=pago id_de_solicitud=solicitud.id aviso=aviso_del_dinero para_gestion=False puede_subir=puede_subir_comprobante error=error_de_pago %}
   {% endif %}
