@@ -21,7 +21,9 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}>Áreas comunes</a>
   {% endif %}
   {% endif %}
+  {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
+  {% endif %}
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>

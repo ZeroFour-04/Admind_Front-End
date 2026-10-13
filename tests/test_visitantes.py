@@ -55,7 +55,7 @@ def test_vigilancia_solo_ve_las_secciones_permitidas_en_el_lateral():
         if f">{texto}</a>" in lateral
     ]
 
-    assert opciones == ["Inicio", "Zonas comunes", "Reglas", "Anuncios", "Visitante"]
+    assert opciones == ["Inicio", "Zonas comunes", "Anuncios", "Visitante"]
 
 
 def test_administracion_y_superusuario_ven_el_historial_sin_formulario():
