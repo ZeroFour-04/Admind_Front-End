@@ -8,6 +8,7 @@ modo (inputmode) y ayuda. Una contraseña nunca se devuelve al formulario, ni si
          {% if tipo != "password" %}value="{{ campo.value|default_if_none:'' }}"{% endif %}
          {% if autocompletar %}autocomplete="{{ autocompletar }}"{% endif %}
          {% if modo %}inputmode="{{ modo }}"{% endif %}
+         {% if campo.field.max_length %}maxlength="{{ campo.field.max_length }}"{% endif %}
          {% if campo.field.required %}required{% endif %}
          {% if campo.errors or ayuda %}aria-describedby="{% if ayuda %}{{ campo.id_for_label }}-ayuda {% endif %}{% if campo.errors %}{{ campo.id_for_label }}-error{% endif %}"{% endif %}
          {% if campo.errors %}aria-invalid="true"{% endif %}>

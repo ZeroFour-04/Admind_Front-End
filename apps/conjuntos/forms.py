@@ -51,7 +51,7 @@ class ColorDelConjuntoForm(forms.Form):
 class ConjuntoForm(ColorDelConjuntoForm):
     """Paso 1 del asistente: datos básicos."""
 
-    nombre = forms.CharField(label="Nombre del conjunto", max_length=80)
+    nombre = forms.CharField(label="Nombre del conjunto", max_length=30)
     direccion = forms.CharField(label="Dirección", max_length=200, required=False)
 
     field_order = ["nombre", "direccion", "acento", "color"]

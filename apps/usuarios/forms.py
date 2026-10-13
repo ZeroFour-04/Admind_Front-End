@@ -48,15 +48,15 @@ class UsuarioForm(forms.Form):
     rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
     tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
     numero_documento = forms.CharField(label="Número de documento", max_length=20)
-    nombres = forms.CharField(label="Nombres", max_length=80)
-    apellidos = forms.CharField(label="Apellidos", max_length=80)
+    nombres = forms.CharField(label="Nombres", max_length=30)
+    apellidos = forms.CharField(label="Apellidos", max_length=30)
     telefono = forms.RegexField(
         label="Teléfono",
-        regex=r"^\+?[0-9]{7,15}$",
-        max_length=16,
+        regex=r"^\+?[0-9]{7,10}$",
+        max_length=10,
         required=False,
         error_messages={
-            "invalid": "El teléfono debe tener entre 7 y 15 dígitos y puede iniciar con +."
+            "invalid": "El teléfono debe tener entre 7 y 10 dígitos y puede iniciar con +."
         },
     )
     correo = forms.EmailField(label="Correo electrónico")
