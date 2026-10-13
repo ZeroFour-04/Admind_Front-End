@@ -89,3 +89,46 @@ def test_el_resumen_ya_no_espera_ningun_modulo_y_administracion_deja_operativo()
     assert "módulo que todavía no existe" not in html and "Módulo en construcción" not in html
     assert 'href="/conjuntos/asistente/reglamento/">Volver' in html
     assert "Dejar operativo" in html
+    assert "Eliminar conjunto" not in html
+
+
+def test_el_boton_eliminar_conjunto_solo_aparece_al_superusuario_en_el_bloque_datos():
+    cliente = cliente_con_sesion(roles=["Superusuario"], tipo_usuario="Superusuario")
+    with mock.patch("cliente_api.conjuntos.resumen", return_value=RESUMEN):
+        html = cliente.get("/conjuntos/asistente/resumen/").content.decode()
+
+    bloque = html.split('<section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-datos">', 1)[1]
+    bloque = bloque.split("</section>", 1)[0]
+    assert "Eliminar conjunto" in bloque
+    assert "¿Está seguro de eliminar el conjunto Torres del Río?" in bloque
+    assert ">Sí, eliminar</button>" in bloque
+    assert 'class="am-btn am-btn--secundario" type="button" data-cerrar-eliminar-conjunto>No</button>' in bloque
+    assert "js/conjuntos.js" in html
+    assert html.count("Eliminar conjunto") == 1
+
+
+def test_superusuario_elimina_desde_el_resumen_y_vuelve_al_selector():
+    cliente = cliente_con_sesion(roles=["Superusuario"], tipo_usuario="Superusuario")
+    with (
+        mock.patch("cliente_api.conjuntos.eliminar") as eliminar,
+        mock.patch("cliente_api.conjuntos.resumen", return_value=RESUMEN),
+    ):
+        respuesta = cliente.post("/conjuntos/asistente/resumen/", {"accion": "eliminar"})
+
+    eliminar.assert_called_once_with(mock.ANY)
+    assert respuesta.status_code == 302
+    assert respuesta["Location"] == "/conjuntos/"
+    assert cliente.session["conjunto_activo"] is None
+    assert cliente.session["permisos"] == []
+
+
+def test_no_superusuario_no_puede_invocar_la_eliminacion_desde_el_resumen():
+    cliente = cliente_con_sesion(roles=["Administrador"], tipo_usuario="Administrador")
+    with (
+        mock.patch("cliente_api.conjuntos.eliminar") as eliminar,
+        mock.patch("cliente_api.conjuntos.resumen", return_value=RESUMEN),
+    ):
+        respuesta = cliente.post("/conjuntos/asistente/resumen/", {"accion": "eliminar"})
+
+    eliminar.assert_not_called()
+    assert "No tienes permiso para eliminar este conjunto." in respuesta.content.decode()

@@ -50,6 +50,26 @@
         <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:identidad' %}">Cambiar color y foto</a>
       </div>
     {% endif %}
+    {% if es_superusuario %}
+      <div class="acciones">
+        <button class="am-btn am-btn--peligro" type="button" data-abrir-eliminar-conjunto>
+          Eliminar conjunto
+        </button>
+      </div>
+      <dialog class="confirmacion-eliminar" id="confirmar-eliminar-conjunto" aria-labelledby="titulo-confirmar-eliminar-conjunto">
+        <div class="am-modal__cuerpo">
+          <h2 class="am-modal__titulo" id="titulo-confirmar-eliminar-conjunto">
+            ¿Está seguro de eliminar el conjunto {{ resumen.conjunto.nombre }}?
+          </h2>
+        </div>
+        <form method="post" class="am-modal__pie">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="eliminar">
+          <button class="am-btn am-btn--peligro" type="submit">Sí, eliminar</button>
+          <button class="am-btn am-btn--secundario" type="button" data-cerrar-eliminar-conjunto>No</button>
+        </form>
+      </dialog>
+    {% endif %}
   </section>
 
   <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-requisitos">
@@ -79,5 +99,12 @@
       </form>
     {% endif %}
   </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% load static %}
+{% if es_superusuario %}
+  <script src="{% static 'js/conjuntos.js' %}" defer></script>
 {% endif %}
 {% endblock %}

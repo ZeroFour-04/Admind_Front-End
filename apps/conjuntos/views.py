@@ -288,15 +288,30 @@ def resumen(request):
     activado = False
     error = None
     if request.method == "POST":
-        try:
-            api_conjuntos.activar(request)
-        except ApiNoDisponible:
-            error = MENSAJE_API_NO_DISPONIBLE
-        except ErrorDeApi as api_error:
-            error = api_error.mensaje
-            faltantes = api_error.cuerpo.get("faltantes")
+        if request.POST.get("accion") == "eliminar":
+            if "Superusuario" in request.session.get("roles", []):
+                try:
+                    api_conjuntos.eliminar(request)
+                except ApiNoDisponible:
+                    error = MENSAJE_API_NO_DISPONIBLE
+                except ErrorDeApi as api_error:
+                    error = api_error.mensaje
+                else:
+                    request.session["conjunto_activo"] = None
+                    request.session["permisos"] = []
+                    return redirect("conjuntos:selector")
+            else:
+                error = "No tienes permiso para eliminar este conjunto."
         else:
-            activado = True
+            try:
+                api_conjuntos.activar(request)
+            except ApiNoDisponible:
+                error = MENSAJE_API_NO_DISPONIBLE
+            except ErrorDeApi as api_error:
+                error = api_error.mensaje
+                faltantes = api_error.cuerpo.get("faltantes")
+            else:
+                activado = True
     datos_del_resumen, error_al_cargar = cargar_resumen(request)
     contexto = {
         "resumen": datos_del_resumen,
@@ -305,6 +320,7 @@ def resumen(request):
         "activado": activado,
         "nombre_del_acento": nombre_del_color((datos_del_resumen or {}).get("conjunto", {})),
         "puede_cambiar_identidad": puede_cambiar_identidad(request),
+        "es_superusuario": "Superusuario" in request.session.get("roles", []),
         "paso": 7,
     }
     return render(request, "conjuntos/asistente_resumen.html", contexto)

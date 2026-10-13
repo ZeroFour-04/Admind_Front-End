@@ -22,6 +22,11 @@ def activar(request):
     return pedir(request, "POST", "conjuntos/actual/activar/")
 
 
+def eliminar(request):
+    """DELETE /conjuntos/actual/ → baja lógica del conjunto activo."""
+    return pedir(request, "DELETE", "conjuntos/actual/")
+
+
 # Identidad visual (HU-21)
 
 
