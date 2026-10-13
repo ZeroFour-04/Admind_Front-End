@@ -18,7 +18,7 @@ def obtener(request, area_id):
 
 
 def editar(request, area_id, datos):
-    """PATCH /areas/<id>/ → el área con nombre, descripción, horario o mantenimiento nuevos."""
+    """PATCH /areas/<id>/ → el área con sus datos nuevos. Si cambió el modo de uso, `cambio_de_modo` dice qué quedó del anterior."""
     return pedir(request, "PATCH", f"areas/{area_id}/", datos)
 
 

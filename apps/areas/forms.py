@@ -15,7 +15,7 @@ MODOS_DE_USO = [("reserva", "Con reserva"), ("ingreso", "Con ingreso")]
 
 
 class AreaForm(forms.Form):
-    """Los nombres coinciden con los de la API. El modo se elige al crear y no cambia (plan P3)."""
+    """Los nombres coinciden con los de la API. Cada modo de uso pide su campo y no manda el del otro."""
 
     modo_uso = forms.ChoiceField(label="Cómo se usa", choices=MODOS_DE_USO, initial="reserva", required=False)
     nombre = forms.CharField(label="Nombre", max_length=80)
@@ -69,19 +69,13 @@ class AreaForm(forms.Form):
 
 
 class EditarAreaForm(AreaForm):
-    """Con la casilla de mantenimiento. El modo se lee y no se cambia: la API lo rechaza (plan P3)."""
+    """Con la casilla de mantenimiento. El modo se puede cambiar: viaja siempre y la API dice qué quedó del anterior."""
 
     en_mantenimiento = forms.BooleanField(label="En mantenimiento: no admite solicitudes", required=False)
 
     def __init__(self, *args, modo_uso="reserva", **kwargs):
         super().__init__(*args, **kwargs)
         self.modo_uso_actual = modo_uso
-        del self.fields["modo_uso"]
 
     def modo_elegido(self):
-        return self.modo_uso_actual
-
-    def datos_para_api(self):
-        datos = super().datos_para_api()
-        del datos["modo_uso"]
-        return datos
+        return self.cleaned_data.get("modo_uso") or self.modo_uso_actual

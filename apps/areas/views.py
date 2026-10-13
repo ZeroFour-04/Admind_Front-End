@@ -10,6 +10,8 @@ from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDe
 
 from .forms import AreaForm, EditarAreaForm
 
+CLAVE_CAMBIO_DE_MODO = "area_cambio_de_modo"
+
 
 def cargar_areas(request):
     """Las áreas del conjunto activo, o el mensaje de error para mostrar en su lugar."""
@@ -45,6 +47,7 @@ def lista(request, error_de_accion=None):
             for permiso in ("reserva.ver_todas", "reserva.aprobar", "reserva.rechazar")
         ),
         "creada": request.GET.get("creada") == "1",
+        "cambio_de_modo": request.session.pop(CLAVE_CAMBIO_DE_MODO, None) if request.method == "GET" else None,
     }
     return render(request, "areas/lista.html", contexto)
 
@@ -71,20 +74,28 @@ def editar(request, area_id):
         return render(request, "areas/editar.html", {"error": error.mensaje})
 
     campos = (
-        "nombre", "descripcion", "condiciones_alquiler", "hora_apertura", "hora_cierre", "duracion_franja_minutos",
-        "permanencia_maxima_minutos", "aforo_maximo", "en_mantenimiento",
+        "modo_uso", "nombre", "descripcion", "condiciones_alquiler", "hora_apertura", "hora_cierre",
+        "duracion_franja_minutos", "permanencia_maxima_minutos", "aforo_maximo", "en_mantenimiento",
     )
     formulario = EditarAreaForm(
         request.POST or None, initial={campo: area[campo] for campo in campos}, modo_uso=area["modo_uso"]
     )
     if request.method == "POST" and formulario.is_valid():
         try:
-            api_areas.editar(request, area_id, formulario.datos_para_api())
+            editada = api_areas.editar(request, area_id, formulario.datos_para_api())
         except ApiNoDisponible:
             formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
         except ErrorDeApi as error:
             errores_de_la_api_al_formulario(formulario, error)
         else:
+            if editada.get("cambio_de_modo"):
+                # Se muestra una vez, en la lista: qué quedó del modo anterior.
+                request.session[CLAVE_CAMBIO_DE_MODO] = {
+                    "area_id": editada["id"],
+                    "nombre": editada["nombre"],
+                    "modo_uso": editada["modo_uso"],
+                    **editada["cambio_de_modo"],
+                }
             return redirect("areas:lista")
     return render(request, "areas/editar.html", {"area": area, "formulario": formulario})
 
