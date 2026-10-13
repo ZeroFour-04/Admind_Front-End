@@ -1,6 +1,8 @@
 """La bandeja general de Solicitudes muestra el estado y comentario de las reservas."""
+from datetime import date
 from unittest import mock
 
+from cliente_api.http import ApiNoDisponible
 from tests.ayudantes import cliente_con_sesion
 
 
@@ -23,79 +25,168 @@ RESERVA = {
 }
 
 
-def test_pestana_solicitudes_muestra_zonas_comunes_con_solo_la_accion_solicitudes():
-    permisos = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
-    areas = [
-        {
-            "id": RESERVA["area"]["id"],
-            "nombre": "Salón comunal",
-            "hora_apertura": "08:00",
-            "hora_cierre": "22:00",
-            "duracion_franja_minutos": 240,
-            "aforo_maximo": 50,
-            "activo": True,
-            "en_mantenimiento": False,
-        }
-    ]
-    with mock.patch("cliente_api.areas.listar", return_value=areas) as listar:
-        html = cliente_con_sesion(permisos=permisos).get("/solicitudes/").content.decode()
-
-    listar.assert_called_once()
-    assert "Salón comunal" in html
-    assert "08:00 a 22:00" in html
-    assert "aforo 50" in html
-    assert html.count(f'href="/reservas/areas/{RESERVA["area"]["id"]}/solicitudes/"') == 1
-    assert ">Editar</a>" not in html
-    assert ">Desactivar</button>" not in html
-    assert "Pedro Gómez" not in html
-
-
-def test_administracion_secretaria_y_superusuario_ven_todas_las_zonas_con_su_accion():
-    areas = [
-        {
-            "id": RESERVA["area"]["id"],
-            "nombre": "Salón comunal",
-            "hora_apertura": "08:00",
-            "hora_cierre": "22:00",
-            "duracion_franja_minutos": 240,
-            "aforo_maximo": 50,
-            "activo": True,
-            "en_mantenimiento": False,
-        },
-        {
-            "id": "3c4d5e6f-0000-4000-8000-000000000002",
-            "nombre": "Piscina",
-            "hora_apertura": "06:00",
-            "hora_cierre": "20:00",
-            "duracion_franja_minutos": 120,
-            "aforo_maximo": 30,
-            "activo": True,
-            "en_mantenimiento": True,
-        },
-    ]
-    roles_y_permisos = [
-        ("Administrador", ["reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]),
-        ("Secretaría", ["reserva.ver_todas"]),
-        ("Superusuario", ["reserva.ver_todas"]),
-    ]
-
-    for rol, permisos in roles_y_permisos:
-        with mock.patch("cliente_api.areas.listar", return_value=areas):
-            html = cliente_con_sesion(permisos=permisos, tipo_usuario=rol).get("/solicitudes/").content.decode()
-
-        assert "Salón comunal" in html and "Piscina" in html
-        assert html.count('href="/reservas/areas/') == 2
-        assert html.count(">En mantenimiento</span>") == 1
-        assert html.count(">Disponible</span>") == 1
-        assert ">Editar</a>" not in html
-        assert ">Desactivar</button>" not in html
+GESTION = ["solicitud.bandeja_ver", "reserva.ver_todas", "caso.ver_todos"]
+HOY = date(2026, 10, 6)
+PENDIENTE = {
+    **RESERVA,
+    "estado": "APARTADA",
+    "estado_nombre": "Apartada",
+    "motivo_decision": "",
+    "decidida_por": None,
+    "decidida_en": None,
+    "creada_en": "2026-10-01T08:57:00-05:00",
+    "enviada_en": "2026-10-01T09:00:00-05:00",
+    "completada": False,
+    "pago": {"declarado": False, "declarado_en": None, "declarado_por": None, "comprobantes": []},
+}
+APROBADA = {
+    **PENDIENTE,
+    "id": "9a1b2c3d-0000-4000-8000-000000000002",
+    "estado": "RESERVADA",
+    "estado_nombre": "Reservada",
+    "enviada_en": "2026-10-05T16:00:00-05:00",
+    "pago": {**PENDIENTE["pago"], "declarado": True},
+}
+CASO = {
+    "id": "c0ffee00-0000-4000-8000-000000000001",
+    "titulo": "Fuga de agua",
+    "cuerpo": "Hay una fuga en el pasillo.",
+    "estado": "ABIERTO",
+    "prioridad": "URGENTE",
+    "autor": "Lucía Pérez",
+    "apartamento": "Torre 2 – 304",
+    "creado_en": "2026-10-05T11:00:00-05:00",
+    "cerrado_en": None,
+}
+RESUELTO = {
+    **CASO,
+    "id": "deadbe00-0000-4000-8000-000000000002",
+    "titulo": "Ruido en la noche",
+    "estado": "RESUELTO",
+    "prioridad": "NORMAL",
+    "cerrado_en": "2026-10-05T18:00:00-05:00",
+}
 
 
-def test_pestana_solicitudes_muestra_estado_vacio_si_no_hay_areas():
-    with mock.patch("cliente_api.areas.listar", return_value=[]):
-        html = cliente_con_sesion(permisos=["area.ver", "reserva.ver_todas"]).get("/solicitudes/").content.decode()
+def abrir_dashboard(consulta="", permisos=GESTION, reservas=(PENDIENTE, APROBADA), casos=(CASO, RESUELTO)):
+    """El dashboard con la API simulada y el día fijo, para que la antigüedad no dependa de cuándo se corre."""
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_para_bandeja", return_value=list(reservas)) as de_reservas,
+        mock.patch("cliente_api.casos.listar", return_value=list(casos)) as de_casos,
+        mock.patch("apps.triage.views.timezone.localdate", return_value=HOY),
+    ):
+        html = cliente_con_sesion(permisos=permisos).get(f"/solicitudes/{consulta}").content.decode()
+    return html, de_reservas, de_casos
 
-    assert "Todavía no hay zonas comunes" in html
+
+def test_gestion_ve_el_dashboard_con_tres_pestanas_y_cuantas_hay_pendientes():
+    html, _, _ = abrir_dashboard()
+
+    assert "<h1>Dashboard de Gestión de Reservas</h1>" in html
+    assert "Maqueta con datos de ejemplo" not in html
+    assert 'aria-label="Tipos de solicitud"' in html
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Reservas <span class="tablero__cuenta">1<' in html
+    assert '<a class="am-pestana" href="/solicitudes/?pestana=casos">Casos <span class="tablero__cuenta">1<' in html
+    assert '<a class="am-pestana" href="/solicitudes/?pestana=citas">Citas</a>' in html
+    # La pantalla no carga JavaScript: pestañas y filtros son enlaces.
+    assert "alpine" not in html.lower()
+
+
+def test_la_pestana_reservas_es_una_tabla_con_la_fila_enlazada_a_la_tarjeta():
+    html, _, _ = abrir_dashboard()
+
+    for columna in ("ID", "Zona", "Día y franja", "Estado", "Residente", "Vivienda", "Solicitada", "Pago"):
+        assert f'<th scope="col">{columna}</th>' in html
+    assert "Prioridad" not in html  # entre reservas manda el orden de llegada
+    enlace = f'/reservas/areas/{RESERVA["area"]["id"]}/solicitudes/#solicitud-{PENDIENTE["id"]}'
+    assert f'<a class="tabla-solicitudes__enlace" href="{enlace}">RES-6F7A8B</a>' in html
+    assert "Salón comunal" in html and "Pedro Gómez" in html and "Torre 1 – 101" in html
+    assert "Sábado 26 de diciembre" in html and "14:00 a 18:00" in html
+    assert 'am-pastilla--tramite">En revisión</span>' in html
+    assert "01/10/2026" in html and "hace 5 días" in html
+    assert 'am-pastilla--neutro">Sin declarar</span>' in html
+    # Por defecto, solo las que esperan decisión.
+    assert "RES-9A1B2C" not in html
+    assert 'class="tablero__opcion tablero__opcion--activa" href="/solicitudes/?pestana=reservas&amp;ver=pendientes"' in html
+
+
+def test_ver_todas_trae_las_decididas_y_una_franja_que_ya_paso_sale_completada():
+    completada = {**APROBADA, "id": "5e5e5e00-0000-4000-8000-000000000003", "completada": True}
+    rechazada = {**PENDIENTE, "id": "7d7d7d00-0000-4000-8000-000000000004", "estado": "RECHAZADA"}
+
+    html, _, _ = abrir_dashboard("?ver=todas", reservas=(PENDIENTE, APROBADA, completada, rechazada))
+
+    assert "RES-6F7A8B" in html and "RES-9A1B2C" in html
+    assert 'am-pastilla--confirmado">Aprobada</span>' in html
+    assert 'am-pastilla--neutro">Completada</span>' in html
+    assert 'am-pastilla--error">Rechazada</span>' in html
+    assert 'am-pastilla--confirmado">Declarado</span>' in html
+    assert "hace 1 día" in html
+    assert "No aplica" in html  # una rechazada no tiene pago que declarar
+
+
+def test_la_pestana_casos_trae_estado_prioridad_y_antiguedad_y_enlaza_al_detalle():
+    html, _, de_casos = abrir_dashboard("?pestana=casos")
+
+    assert de_casos.call_args.kwargs == {"orden": "prioridad"}
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Casos' in html
+    for columna in ("ID", "Asunto", "Estado", "Prioridad", "Residente", "Vivienda", "Creado"):
+        assert f'<th scope="col">{columna}</th>' in html
+    assert f'<a class="tabla-solicitudes__enlace" href="/casos/{CASO["id"]}/">CAS-C0FFEE</a>' in html
+    assert "Fuga de agua" in html and "Lucía Pérez" in html and "Torre 2 – 304" in html
+    assert 'am-pastilla--neutro">Por revisar</span>' in html
+    assert 'am-pastilla--error">Urgente</span>' in html
+    assert "05/10/2026" in html and "hace 1 día" in html
+    # Por defecto, solo los abiertos.
+    assert "Ruido en la noche" not in html
+
+
+def test_los_casos_se_pueden_ver_todos_y_por_antiguedad_sin_perder_la_columna():
+    html, _, de_casos = abrir_dashboard("?pestana=casos&ver=todos&orden=antiguedad")
+
+    assert de_casos.call_args.kwargs == {"orden": "antiguedad"}
+    assert "Ruido en la noche" in html and 'am-pastilla--confirmado">Resuelto</span>' in html
+    assert '<th scope="col">Creado</th>' in html and "hace 1 día" in html
+    assert 'tablero__opcion--activa" href="/solicitudes/?pestana=casos&amp;ver=todos&amp;orden=antiguedad"' in html
+    assert 'href="/solicitudes/?pestana=casos&amp;ver=todos&amp;orden=prioridad"' in html
+
+
+def test_la_pestana_citas_dice_que_todavia_no_esta_disponible():
+    html, _, _ = abrir_dashboard("?pestana=citas")
+
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Citas</span>' in html
+    assert "Las citas todavía no están disponibles" in html
+    assert "<table" not in html and "<button" not in html.split('class="vista"')[-1]
+
+
+def test_sin_permiso_de_casos_no_hay_pestana_casos():
+    html, _, de_casos = abrir_dashboard("?pestana=casos", permisos=["solicitud.bandeja_ver", "reserva.ver_todas"])
+
+    de_casos.assert_not_called()
+    assert "pestana=casos" not in html
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Reservas' in html
+
+
+def test_quien_no_entra_al_dashboard_no_ve_las_solicitudes_de_nadie():
+    """Vigilancia ve franjas, pero la bandeja es de quien tiene `solicitud.bandeja_ver`."""
+    html, de_reservas, de_casos = abrir_dashboard(permisos=["reserva.ver_todas"])
+
+    de_reservas.assert_not_called()
+    de_casos.assert_not_called()
+    assert "No tienes acceso a solicitudes de reserva" in html
+    assert "Dashboard de Gestión de Reservas" not in html and "Pedro Gómez" not in html
+
+
+def test_si_la_api_falla_el_dashboard_lo_dice_y_conserva_las_pestanas():
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_para_bandeja", side_effect=ApiNoDisponible()),
+        mock.patch("cliente_api.casos.listar", return_value=[CASO]),
+    ):
+        html = cliente_con_sesion(permisos=GESTION).get("/solicitudes/").content.decode()
+
+    assert 'role="alert"' in html
+    assert 'href="/solicitudes/?pestana=casos">Casos' in html
+    assert "<table" not in html
 
 
 def test_residente_ve_su_historial_con_estados_y_comentarios():

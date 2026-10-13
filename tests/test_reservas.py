@@ -180,6 +180,61 @@ def test_decidir_solicitud_envia_motivo_y_regresa_a_la_zona():
     assert respuesta["Location"] == f"/reservas/areas/{SALON['id']}/solicitudes/?actualizada=1"
 
 
+def decidir_en_la_zona(datos, permisos=("reserva.aprobar", "reserva.rechazar")):
+    """El formulario de decisión de la tarjeta. Devuelve la respuesta y la llamada a la API, si la hubo."""
+    with (
+        mock.patch("cliente_api.reservas.decidir") as decidir,
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[]),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        respuesta = cliente_con_sesion(permisos=list(permisos)).post(
+            f"/reservas/solicitudes/{EN_TRAMITE['id']}/decision/", {"area": SALON["id"], **datos}
+        )
+    return respuesta, decidir
+
+
+def test_rechazar_pide_categoria_y_con_otro_motivo_pide_el_texto():
+    sin_categoria, sin_llamar = decidir_en_la_zona({"decision": "RECHAZADA", "motivo": "No se puede."})
+    otro_sin_texto, tampoco = decidir_en_la_zona({"decision": "RECHAZADA", "categoria": "OTRO", "motivo": "  "})
+    de_secretaria, ni_esta = decidir_en_la_zona({"decision": "RECHAZADA", "categoria": "DATOS_INCOMPLETOS"})
+
+    sin_llamar.assert_not_called()
+    tampoco.assert_not_called()
+    ni_esta.assert_not_called()
+    assert "Para rechazar, elige el motivo del rechazo." in sin_categoria.content.decode()
+    assert "Con «Otro motivo», escribe cuál es." in otro_sin_texto.content.decode()
+    assert "Para rechazar, elige el motivo del rechazo." in de_secretaria.content.decode()
+
+
+def test_rechazar_con_categoria_la_envia_y_regresa_a_la_zona():
+    respuesta, decidir = decidir_en_la_zona({"decision": "RECHAZADA", "categoria": "NO_DISPONIBLE", "motivo": ""})
+
+    assert decidir.call_args.args[2] == {"decision": "RECHAZADA", "categoria": "NO_DISPONIBLE", "motivo": ""}
+    assert respuesta["Location"] == f"/reservas/areas/{SALON['id']}/solicitudes/?actualizada=1"
+
+
+def test_secretaria_descarta_con_causal_y_comentario():
+    url = f"/reservas/solicitudes/{EN_TRAMITE['id']}/descarte/"
+    with (
+        mock.patch("cliente_api.reservas.descartar") as descartar,
+        mock.patch("cliente_api.reservas.solicitudes_del_area", return_value=[]),
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        secretaria = cliente_con_sesion(permisos=["reserva.ver_todas", "solicitud.rechazar_formal"])
+        sin_comentario = secretaria.post(url, {"area": SALON["id"], "causal": "DATOS_INCOMPLETOS", "comentario": " "})
+        con_otro = secretaria.post(url, {"area": SALON["id"], "causal": "OTRO", "comentario": "No me parece."})
+        descartar.assert_not_called()
+        respuesta = secretaria.post(
+            url, {"area": SALON["id"], "causal": "DATOS_INCOMPLETOS", "comentario": "Falta el número de asistentes."}
+        )
+
+    assert "Para descartar, elige la causal" in sin_comentario.content.decode()
+    assert "Para descartar, elige la causal" in con_otro.content.decode()
+    assert str(descartar.call_args.args[1]) == EN_TRAMITE["id"]
+    assert descartar.call_args.args[2] == {"causal": "DATOS_INCOMPLETOS", "comentario": "Falta el número de asistentes."}
+    assert respuesta["Location"] == f"/reservas/areas/{SALON['id']}/solicitudes/?actualizada=1"
+
+
 def test_reservar_toma_el_bloqueo_y_abre_la_solicitud():
     with mock.patch("cliente_api.reservas.tomar", return_value=EN_TRAMITE) as tomar:
         respuesta = cliente_con_sesion(permisos=RESIDENTE).post(
@@ -497,7 +552,8 @@ APARTADA_PARA_GESTION = {
     "pago": SIN_PAGO,
 }
 ADMINISTRACION = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar", "reserva.declarar_pago"]
-SECRETARIA = ["area.ver", "reserva.ver_todas", "reserva.aprobar", "reserva.rechazar"]
+# La Secretaría no aprueba ni rechaza de fondo: descarta por causal formal (decisión del 2026-10-13).
+SECRETARIA = ["area.ver", "reserva.ver_todas", "solicitud.bandeja_ver", "solicitud.rechazar_formal"]
 FRASE_DEL_PAGO = (
     "Vas a declarar que recibiste el pago de la reserva de Pedro Gómez (Torre 1 – 101) en Salón comunal, "
     "el sábado 26 de diciembre de 2026, de 2:00 p. m. a 6:00 p. m."
@@ -557,8 +613,9 @@ def test_administracion_ve_el_formulario_con_la_frase_completa_y_secretaria_no()
     assert f'action="/reservas/solicitudes/{EN_TRAMITE["id"]}/pago/"' in de_administracion
     assert AVISO_DEL_DINERO in de_secretaria and ">Sin pago declarado</span>" in de_secretaria
     assert "Declarar pago recibido" not in de_secretaria and "Vas a declarar" not in de_secretaria
-    # La decisión de aprobar o rechazar sigue siendo de las dos.
-    assert 'name="decision" value="RESERVADA">Aceptar</button>' in de_secretaria
+    # Aprobar o rechazar de fondo no es de la Secretaría: lo suyo es descartar.
+    assert 'name="decision" value="RESERVADA">Aceptar</button>' in de_administracion
+    assert 'name="decision"' not in de_secretaria
 
 
 def test_una_rechazada_con_pago_declarado_lo_conserva_y_no_ofrece_declarar():
@@ -567,6 +624,46 @@ def test_una_rechazada_con_pago_declarado_lo_conserva_y_no_ofrece_declarar():
     assert ">Pago declarado</span>" in html
     assert ">Retirar la declaración</button>" in html
     assert ">Declarar pago recibido</button>" not in html
+
+
+def test_cada_rol_ve_en_la_tarjeta_solo_lo_que_puede_hacer():
+    de_administracion = ver_zona([APARTADA_PARA_GESTION])
+    de_secretaria = ver_zona([APARTADA_PARA_GESTION], permisos=SECRETARIA, tipo_usuario="Secretaría")
+    de_vigilancia = ver_zona([APARTADA_PARA_GESTION], permisos=["reserva.ver_todas"], tipo_usuario="Vigilancia")
+
+    # La tarjeta tiene el ancla a la que llega la fila del dashboard.
+    assert f'id="solicitud-{APARTADA_PARA_GESTION["id"]}"' in de_administracion
+    assert 'value="RESERVADA">Aceptar</button>' in de_administracion
+    assert 'value="RECHAZADA">Rechazar</button>' in de_administracion
+    assert '<option value="NO_DISPONIBLE">El área no está disponible</option>' in de_administracion
+    assert '<option value="OTRO">Otro motivo</option>' in de_administracion
+    assert ">Descartar</button>" not in de_administracion
+
+    assert ">Aceptar</button>" not in de_secretaria and ">Rechazar</button>" not in de_secretaria
+    assert ">Descartar</button>" in de_secretaria
+    assert '<option value="DATOS_INCOMPLETOS">Datos incompletos</option>' in de_secretaria
+    assert 'value="OTRO"' not in de_secretaria  # el descarte no tiene «otro»
+    assert 'name="comentario"' in de_secretaria and "required" in de_secretaria
+
+    for boton in (">Aceptar</button>", ">Rechazar</button>", ">Descartar</button>"):
+        assert boton not in de_vigilancia
+
+
+def test_la_tarjeta_de_una_rechazada_dice_la_categoria_y_el_comentario():
+    rechazada = {
+        **APARTADA_PARA_GESTION,
+        "estado": "RECHAZADA",
+        "estado_nombre": "Rechazada",
+        "categoria_rechazo": "DATOS_INCOMPLETOS",
+        "categoria_rechazo_nombre": "Datos incompletos",
+        "motivo_decision": "Falta el número de asistentes.",
+    }
+
+    html = ver_zona([rechazada])
+
+    assert "<dt>Motivo del rechazo</dt>" in html and "<dd>Datos incompletos</dd>" in html
+    assert "<dt>Comentario del rechazo</dt>" in html and "Falta el número de asistentes." in html
+    assert ">Aceptar</button>" not in html
 
 
 def test_las_pantallas_de_gestion_del_pago_no_cargan_javascript():

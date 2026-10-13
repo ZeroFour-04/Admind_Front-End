@@ -45,8 +45,16 @@ def solicitudes_para_bandeja(request):
 
 
 def decidir(request, solicitud_id, datos):
-    """POST /reservas/solicitudes/<id>/decision/ → acepta o rechaza una solicitud con motivo."""
+    """POST /reservas/solicitudes/<id>/decision/ → Administración acepta o rechaza una solicitud apartada.
+
+    Aceptar lleva `motivo`. Rechazar lleva `categoria`, y con la categoría `OTRO` también `motivo`.
+    """
     return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/decision/", datos)
+
+
+def descartar(request, solicitud_id, datos):
+    """POST /reservas/solicitudes/<id>/descarte/ → Secretaría descarta con `causal` y `comentario`. 409 si ya se decidió."""
+    return pedir(request, "POST", f"reservas/solicitudes/{solicitud_id}/descarte/", datos)
 
 
 def declarar_pago(request, solicitud_id, archivo=None):

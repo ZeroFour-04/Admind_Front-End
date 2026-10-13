@@ -1,0 +1,44 @@
+{% comment %}
+Pestaña Casos del dashboard (HU-29). Primero los abiertos, por prioridad y luego antigüedad; la vista
+«Por antigüedad» ignora la prioridad. La columna de antigüedad se ve con cualquier filtro.
+{% endcomment %}
+{% if filas %}
+  <div class="am-tabla-caja tabla-solicitudes">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Asunto</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Prioridad</th>
+          <th scope="col">Residente</th>
+          <th scope="col">Vivienda</th>
+          <th scope="col">Creado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td><a class="tabla-solicitudes__enlace" href="{{ fila.url }}">{{ fila.codigo }}</a></td>
+            <td>{{ fila.titulo }}</td>
+            <td><span class="am-pastilla {{ fila.estado_clase }}">{{ fila.estado_visible }}</span></td>
+            <td><span class="am-pastilla {{ fila.prioridad_clase }}">{{ fila.prioridad_visible }}</span></td>
+            <td>{{ fila.autor }}</td>
+            <td>{{ fila.apartamento|default:"Sin vivienda vinculada" }}</td>
+            <td>{{ fila.creado_en|date:"d/m/Y" }} <span class="am-tabla__secundario">{{ fila.antiguedad }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="am-vacio">
+    {% if ver == "abiertos" %}
+      <p class="am-vacio__titulo">No hay casos abiertos</p>
+      <p class="am-vacio__texto">Cuando un residente abra un caso, aparecerá aquí. Los ya cerrados están en «Todos».</p>
+    {% else %}
+      <p class="am-vacio__titulo">Todavía no hay casos</p>
+      <p class="am-vacio__texto">Los casos que abran los residentes aparecerán aquí.</p>
+    {% endif %}
+  </div>
+{% endif %}

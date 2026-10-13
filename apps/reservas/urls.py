@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.calendario, name="calendario"),
     path("areas/<uuid:area_id>/solicitudes/", views.solicitudes_area, name="solicitudes-area"),
     path("solicitudes/<uuid:solicitud_id>/decision/", views.decidir, name="decidir"),
+    path("solicitudes/<uuid:solicitud_id>/descarte/", views.descartar, name="descartar"),
     path("solicitudes/<uuid:solicitud_id>/pago/", views.declarar_pago, name="declarar-pago"),
     path("solicitudes/<uuid:solicitud_id>/pago/retirar/", views.retirar_pago, name="retirar-pago"),
     path("solicitudes/<uuid:solicitud_id>/comprobantes/", views.subir_comprobante, name="subir-comprobante"),

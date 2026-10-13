@@ -1,0 +1,39 @@
+/* SOLICITUDES — el dashboard de gestión: pestañas, filtros y una tabla por tipo de solicitud.
+   Solo variables de design-system/: ningún hex aquí. El acento solo aparece en la pestaña activa,
+   que ya trae `am-pestana`; los filtros se distinguen con peso y fondo neutro (maestro §6.1). */
+
+.solo-lector{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* Cuántas hay pendientes en cada pestaña. */
+.tablero__cuenta{display:inline-block;min-width:1.5em;margin-left:var(--e-1);padding:0 var(--e-2);border-radius:var(--radio-pastilla);background:var(--estado-neutro-fondo);color:var(--texto-medio);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);font-variant-numeric:var(--cifras-tabulares);text-align:center}
+
+/* Filtros y orden: enlaces, uno marcado. */
+.tablero__barra{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--e-3);margin:var(--e-4) 0}
+.tablero__opciones{display:flex;flex-wrap:wrap;gap:var(--e-1);padding:var(--e-1);border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-tarjeta)}
+.tablero__opcion{display:inline-flex;align-items:center;min-height:var(--toque-minimo);padding:0 var(--e-3);border-radius:var(--radio-control);color:var(--texto-medio);font-size:var(--tipo-meta);text-decoration:none;transition:background var(--transicion),color var(--transicion)}
+.tablero__opcion:hover{color:var(--texto-fuerte);background:var(--superficie-hundida)}
+.tablero__opcion--activa{background:var(--superficie-hundida);color:var(--texto-fuerte);font-weight:var(--peso-texto-medio)}
+
+/* La tabla: el texto largo (zona, residente, vivienda) parte en dos renglones; el ID, las pastillas y las
+   fechas no. En pantallas angostas se desplaza de lado en vez de apretar las columnas. */
+.tabla-solicitudes{overflow-x:auto}
+.tabla-solicitudes .am-tabla{width:100%;min-width:760px}
+.tabla-solicitudes th,.tabla-solicitudes td{padding-left:var(--e-3);padding-right:var(--e-3)}
+.tabla-solicitudes td:first-child,.tabla-solicitudes .am-pastilla,.tabla-solicitudes .am-tabla__secundario{white-space:nowrap}
+.tabla-solicitudes .am-tabla__secundario{display:block}
+
+/* La fila entera lleva al detalle: el enlace del ID se estira sobre ella. */
+.tabla-solicitudes tbody tr{position:relative;cursor:pointer}
+.tabla-solicitudes__enlace{color:var(--texto-fuerte);font-weight:var(--peso-texto-medio);font-variant-numeric:var(--cifras-tabulares);text-decoration:none}
+.tabla-solicitudes__enlace::after{content:"";position:absolute;inset:0}
+.tabla-solicitudes__enlace:focus-visible{outline:0}
+.tabla-solicitudes__enlace:focus-visible::after{outline:2px solid var(--acento-anillo);outline-offset:-2px}
+
+/* El detalle de un caso: lo que se lee a la izquierda y lo que se hace a la derecha. */
+.caso-detalle{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:var(--e-5);align-items:start}
+.caso-detalle__pastillas{display:flex;flex-wrap:wrap;gap:var(--e-2)}
+.caso-detalle__acciones{display:flex;flex-direction:column;gap:var(--e-4)}
+.caso-detalle__accion{display:flex;flex-direction:column;gap:var(--e-3)}
+.caso-detalle__accion h3{margin:0;font-size:var(--tipo-cuerpo);font-weight:var(--peso-titular-medio)}
+.caso-detalle__nota{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-medio)}
+@media(max-width:900px){.caso-detalle{grid-template-columns:1fr}}

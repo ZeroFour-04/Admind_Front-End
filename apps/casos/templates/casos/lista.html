@@ -11,11 +11,6 @@
 {% if creado %}
   <div class="aviso-exito" role="status">Tu caso quedó creado y enviado a la administración.</div>
 {% endif %}
-{% if gestion == "rechazar" %}
-  <div class="aviso-exito" role="status">El caso fue rechazado y el residente podrá ver la razón.</div>
-{% elif gestion == "redirigir" %}
-  <div class="aviso-exito" role="status">El caso fue redirigido a Administración.</div>
-{% endif %}
 {% if puede_crear %}
   <div class="vista__acciones">
     <a class="am-btn am-btn--primario" href="{% url 'casos:nuevo' %}">Crear caso</a>
@@ -36,37 +31,20 @@
             <span class="am-pastilla {{ caso.estado_clase }}">{{ caso.estado_visible }}</span>
           </summary>
           <div class="caso__detalle">
-            {% if puede_ver_todos %}
-          <p class="tarjeta-contenido__meta">
-            Residente: {{ caso.autor }} · Apartamento: {{ caso.apartamento|default:"Sin apartamento vinculado" }} ·
-            {{ caso.creado_en|date:"d/m/Y H:i" }}
-          </p>
-            {% endif %}
           <p class="tarjeta-contenido__cuerpo">{{ caso.cuerpo|linebreaksbr }}</p>
           {% if caso.foto_id %}
             <img class="caso__foto" src="{% url 'casos:foto' caso.id caso.foto_id %}" alt="Imagen adjunta al caso: {{ caso.titulo }}" loading="lazy">
           {% endif %}
+          {% if caso.respuesta %}
+            <div class="aviso-exito caso__motivo-rechazo">
+              <strong>Respuesta de la administración</strong>
+              <p>{{ caso.respuesta|linebreaksbr }}</p>
+            </div>
+          {% endif %}
           {% if caso.motivo_rechazo %}
             <div class="am-alerta am-alerta--error caso__motivo-rechazo">
               <strong>Razón del rechazo</strong>
-              <p>{{ caso.motivo_rechazo|linebreaksbr }}</p>
-            </div>
-          {% endif %}
-          {% if puede_gestionar and caso.estado == "ABIERTO" %}
-            <div class="caso__acciones">
-              <details class="caso__rechazo">
-                <summary class="am-btn am-btn--peligro">Rechazar</summary>
-                <form method="post" action="{% url 'casos:rechazar' caso.id %}">
-                  {% csrf_token %}
-                  <label for="motivo-{{ caso.id }}">Razón del rechazo</label>
-                  <textarea id="motivo-{{ caso.id }}" name="motivo" rows="4" maxlength="4000" required></textarea>
-                  <button class="am-btn am-btn--peligro" type="submit">Confirmar rechazo</button>
-                </form>
-              </details>
-              <form method="post" action="{% url 'casos:redirigir' caso.id %}">
-                {% csrf_token %}
-                <button class="am-btn am-btn--secundario" type="submit">Redirigir</button>
-              </form>
+              <p>{% if caso.causal_rechazo_nombre %}{{ caso.causal_rechazo_nombre }}. {% endif %}{{ caso.motivo_rechazo|linebreaksbr }}</p>
             </div>
           {% endif %}
           </div>
@@ -76,16 +54,8 @@
   </ul>
 {% else %}
   <div class="am-vacio">
-    {% if puede_responder %}
-      <p class="am-vacio__titulo">No hay casos redirigidos</p>
-      <p class="am-vacio__texto">Los casos enviados por Secretaría a Administración aparecerán aquí.</p>
-    {% elif puede_ver_todos %}
-      <p class="am-vacio__titulo">No hay casos enviados</p>
-      <p class="am-vacio__texto">Cuando un residente envíe un caso, aparecerá aquí.</p>
-    {% else %}
-      <p class="am-vacio__titulo">Todavía no tienes casos</p>
-      <p class="am-vacio__texto">Cuando envíes un caso, aparecerá aquí para que puedas consultarlo.</p>
-    {% endif %}
+    <p class="am-vacio__titulo">Todavía no tienes casos</p>
+    <p class="am-vacio__texto">Cuando envíes un caso, aparecerá aquí para que puedas consultarlo.</p>
   </div>
 {% endif %}
 {% endblock %}

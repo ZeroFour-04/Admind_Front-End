@@ -42,6 +42,20 @@ TEXTO_POR_AVISO = {
 AVISO_DEL_DINERO = "AdMind no verifica el dinero: el pago lo declara una persona de la administración."
 # Lo decide la API (409 al cuarto). Aquí solo evita ofrecer un formulario que ya no va a funcionar.
 MAXIMO_DE_COMPROBANTES = 3
+# Las mismas claves que la API. De fondo las elige Administración al rechazar; de forma, Secretaría al
+# descartar. La lista de Secretaría no tiene «otro»: lo que no cabe en ella lo decide el administrador.
+CATEGORIAS_DE_RECHAZO = (
+    ("NO_DISPONIBLE", "El área no está disponible"),
+    ("CONDICIONES_NO_CUMPLIDAS", "No se cumplen las condiciones"),
+    ("DOCUMENTACION_INCOMPLETA", "Documentación incompleta"),
+    ("INCUMPLE_REGLAMENTO", "Incumple el reglamento"),
+    ("OTRO", "Otro motivo"),
+)
+CAUSALES_DE_DESCARTE = (
+    ("DATOS_INCOMPLETOS", "Datos incompletos"),
+    ("SOLICITUD_DUPLICADA", "Solicitud duplicada"),
+    ("VIVIENDA_NO_CORRESPONDE", "La vivienda no corresponde"),
+)
 EXTENSION_DE_COMPROBANTE = {"application/pdf": "pdf", "image/png": "png", "image/jpeg": "jpg"}
 TEXTO_DEL_AVISO_DE_PAGO = {
     "declarado": "El pago quedó declarado.",
@@ -233,6 +247,12 @@ def pantalla_solicitudes_area(request, area_id, error=None):
         "aviso_de_pago": TEXTO_DEL_AVISO_DE_PAGO.get(request.GET.get("pago")),
         "aviso_del_dinero": AVISO_DEL_DINERO,
         "error_de_solicitudes": error_de_solicitudes,
+        # Qué formulario se ofrece. Ocultarlo no es lo que impide la acción: eso lo hace la API.
+        "puede_aprobar": tiene_permiso(request, "reserva.aprobar"),
+        "puede_rechazar": tiene_permiso(request, "reserva.rechazar"),
+        "puede_descartar": tiene_permiso(request, "solicitud.rechazar_formal"),
+        "categorias_de_rechazo": CATEGORIAS_DE_RECHAZO,
+        "causales_de_descarte": CAUSALES_DE_DESCARTE,
     })
 
 
@@ -242,19 +262,48 @@ def solicitudes_area(request, area_id):
 
 @require_POST
 def decidir(request, solicitud_id):
+    """«Aceptar» pide el motivo; «Rechazar», una categoría, y con «Otro motivo» también el texto."""
     decision = request.POST.get("decision")
     motivo = request.POST.get("motivo", "").strip()
+    categoria = request.POST.get("categoria", "")
     area_id = request.POST.get("area")
-    if decision not in ("RESERVADA", "RECHAZADA") or not motivo:
-        return pantalla_solicitudes_area(
-            request, area_id, "Selecciona aceptar o rechazar y escribe el motivo de la decisión."
-        )
+    if decision == "RESERVADA":
+        if not motivo:
+            return pantalla_solicitudes_area(request, area_id, "Para aceptar, escribe el motivo o las condiciones.")
+        datos = {"decision": decision, "motivo": motivo}
+    elif decision == "RECHAZADA":
+        if categoria not in dict(CATEGORIAS_DE_RECHAZO):
+            return pantalla_solicitudes_area(request, area_id, "Para rechazar, elige el motivo del rechazo.")
+        if categoria == "OTRO" and not motivo:
+            return pantalla_solicitudes_area(request, area_id, "Con «Otro motivo», escribe cuál es.")
+        datos = {"decision": decision, "categoria": categoria, "motivo": motivo}
+    else:
+        return pantalla_solicitudes_area(request, area_id, "Selecciona aceptar o rechazar.")
     try:
-        api_reservas.decidir(request, solicitud_id, {"decision": decision, "motivo": motivo})
+        api_reservas.decidir(request, solicitud_id, datos)
     except ApiNoDisponible:
         return pantalla_solicitudes_area(request, area_id, MENSAJE_API_NO_DISPONIBLE)
     except ErrorDeApi as error:
-        return pantalla_solicitudes_area(request, area_id, error.mensaje)
+        return pantalla_solicitudes_area(request, area_id, mensaje_del_error(error))
+    return redirect(f"{reverse('reservas:solicitudes-area', kwargs={'area_id': area_id})}?actualizada=1")
+
+
+@require_POST
+def descartar(request, solicitud_id):
+    """«Descartar», de Secretaría: causal de lista cerrada y comentario que va a leer el residente."""
+    area_id = area_del_formulario(request)
+    causal = request.POST.get("causal", "")
+    comentario = request.POST.get("comentario", "").strip()
+    if causal not in dict(CAUSALES_DE_DESCARTE) or not comentario:
+        return pantalla_solicitudes_area(
+            request, area_id, "Para descartar, elige la causal y escribe el comentario para el residente."
+        )
+    try:
+        api_reservas.descartar(request, solicitud_id, {"causal": causal, "comentario": comentario})
+    except ApiNoDisponible:
+        return pantalla_solicitudes_area(request, area_id, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return pantalla_solicitudes_area(request, area_id, mensaje_del_error(error))
     return redirect(f"{reverse('reservas:solicitudes-area', kwargs={'area_id': area_id})}?actualizada=1")
 
 

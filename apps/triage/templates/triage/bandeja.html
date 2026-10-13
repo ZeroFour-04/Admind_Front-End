@@ -1,17 +1,21 @@
 {% extends "base/aplicacion.html" %}
+{% load static %}
 
-{% block titulo %}Solicitudes{% endblock %}
-{% block titulo_vista %}Solicitudes{% endblock %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/solicitudes.css' %}">{% endblock %}
+{% block titulo_vista %}{{ titulo }}{% endblock %}
+{% block estado_vista %}{% endblock %}
 
 {% block contenido %}
+{% if dashboard %}
+  {% include "triage/_dashboard.html" %}
+{% else %}
 {% include "casos/_pestanas.html" with pestana_activa="reservas" %}
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
 {% endif %}
 
-{% if puede_ver_reservas and areas %}
-  {% include "areas/_tabla_areas.html" with areas=areas acciones=False ver_solicitudes=True %}
-{% elif es_residente and solicitudes %}
+{% if es_residente and solicitudes %}
   {% for solicitud in solicitudes %}
     <article class="am-tarjeta tarjeta-contenido">
       <header class="acciones">
@@ -34,6 +38,10 @@
           <dt>Observaciones</dt>
           <dd>{{ solicitud.observaciones }}</dd>
         {% endif %}
+        {% if solicitud.categoria_rechazo_nombre %}
+          <dt>Motivo del rechazo</dt>
+          <dd>{{ solicitud.categoria_rechazo_nombre }}</dd>
+        {% endif %}
         {% if solicitud.motivo_decision %}
           <dt>Comentario de la decisión</dt>
           <dd>{{ solicitud.motivo_decision }}</dd>
@@ -46,15 +54,13 @@
   {% endfor %}
 {% elif not error %}
   <div class="am-vacio">
-    {% if puede_ver_reservas %}
-      <p class="am-vacio__titulo">Todavía no hay zonas comunes</p>
-      <p class="am-vacio__texto">Cuando se registren zonas comunes, aparecerán aquí para consultar sus solicitudes.</p>
-    {% elif es_residente %}
+    {% if es_residente %}
       <p class="am-vacio__titulo">Todavía no tienes solicitudes de reserva</p>
       <p class="am-vacio__texto">Tus solicitudes anteriores aparecerán aquí con su estado y los comentarios de la administración.</p>
     {% else %}
       <p class="am-vacio__titulo">No tienes acceso a solicitudes de reserva</p>
     {% endif %}
   </div>
+{% endif %}
 {% endif %}
 {% endblock %}

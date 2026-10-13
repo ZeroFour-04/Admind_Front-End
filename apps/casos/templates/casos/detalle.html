@@ -1,0 +1,166 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}{% if caso %}{{ caso.titulo }}{% else %}Caso{% endif %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/casos.css' %}"><link rel="stylesheet" href="{% static 'css/solicitudes.css' %}">{% endblock %}
+{% block titulo_vista %}{% if caso %}{{ caso.titulo }}{% else %}Caso{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if aviso %}
+  <div class="aviso-exito" role="status">{{ aviso }}</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if caso %}
+<div class="caso-detalle">
+  <article class="am-tarjeta tarjeta-contenido">
+    <div class="caso-detalle__pastillas">
+      <span class="am-pastilla {{ caso.estado_clase }}">{{ caso.estado_visible }}</span>
+      <span class="am-pastilla {{ caso.prioridad_clase }}">Prioridad: {{ caso.prioridad_visible }}</span>
+    </div>
+    <dl>
+      <dt>Residente</dt>
+      <dd>{{ caso.autor }}</dd>
+      <dt>Vivienda</dt>
+      <dd>{{ caso.apartamento|default:"Sin vivienda vinculada" }}</dd>
+      <dt>Creado</dt>
+      <dd>{{ caso.creado_el|capfirst }}, {{ caso.creado_en|date:"H:i" }}</dd>
+      <dt>Lo que reporta</dt>
+      <dd>{{ caso.cuerpo|linebreaksbr }}</dd>
+      {% if caso.justificacion_prioridad %}
+        <dt>Por qué es urgente</dt>
+        <dd>{{ caso.justificacion_prioridad|linebreaksbr }}</dd>
+      {% endif %}
+      {% if caso.respuesta %}
+        <dt>Respuesta al residente</dt>
+        <dd>{{ caso.respuesta|linebreaksbr }}</dd>
+      {% endif %}
+      {% if caso.motivo_rechazo %}
+        <dt>Razón del rechazo</dt>
+        <dd>{% if caso.causal_rechazo_nombre %}{{ caso.causal_rechazo_nombre }}. {% endif %}{{ caso.motivo_rechazo|linebreaksbr }}</dd>
+      {% endif %}
+      {% if caso.cerrado_por %}
+        <dt>Cerrado por</dt>
+        <dd>{{ caso.cerrado_por }} · {{ caso.cerrado_en|date:"d/m/Y H:i" }}</dd>
+      {% endif %}
+    </dl>
+    {% if caso.foto_id %}
+      <img class="caso__foto" src="{% url 'casos:foto' caso.id caso.foto_id %}" alt="Imagen adjunta al caso: {{ caso.titulo }}" loading="lazy">
+    {% endif %}
+    {% if caso.nota_redireccion %}
+      <div class="caso-detalle__nota">
+        <strong>Nota de Secretaría</strong>
+        <p>{{ caso.nota_redireccion|linebreaksbr }}</p>
+        <span class="tarjeta-contenido__meta">Interna: el residente no la ve.</span>
+      </div>
+    {% endif %}
+  </article>
+
+  <div class="caso-detalle__acciones">
+    {% if not hay_acciones %}
+      <div class="am-tarjeta tarjeta-contenido">
+        <p class="vista__guia">{% if caso.abierto %}Este caso está en manos de la administración. Desde tu rol no hay nada más por hacer.{% else %}Este caso ya está cerrado: no admite más cambios.{% endif %}</p>
+      </div>
+    {% endif %}
+
+    {% if acciones.tomar %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'tomar' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Tomar el caso</h3>
+        <p class="vista__guia">Le dice al residente que ya lo están revisando. No es obligatorio para seguir.</p>
+        <div class="acciones"><button class="am-btn am-btn--secundario" type="submit">Tomar el caso</button></div>
+      </form>
+    {% endif %}
+
+    {% if acciones.responder %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'responder' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Responder y resolver</h3>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="respuesta">Respuesta para el residente</label>
+          <textarea class="am-campo__control" id="respuesta" name="respuesta" rows="4" maxlength="4000" required>{{ escrito.respuesta }}</textarea>
+          <span class="am-campo__ayuda">Sin respuesta escrita el caso no se cierra.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--primario" type="submit">Responder y resolver</button></div>
+      </form>
+    {% endif %}
+
+    {% if acciones.redirigir %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'redirigir' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Redirigir al administrador</h3>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="nota">Nota para el administrador</label>
+          <textarea class="am-campo__control" id="nota" name="nota" rows="3" maxlength="2000">{{ escrito.nota }}</textarea>
+          <span class="am-campo__ayuda">Opcional. El residente no la ve.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--primario" type="submit">Redirigir al administrador</button></div>
+      </form>
+    {% endif %}
+
+    {% if acciones.prioridad %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'prioridad' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Cambiar la prioridad</h3>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="prioridad">Prioridad</label>
+          <select class="am-campo__control" id="prioridad" name="prioridad">
+            {% for clave, nombre in prioridades %}
+              <option value="{{ clave }}"{% if clave == caso.prioridad %} selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="justificacion">Justificación</label>
+          <textarea class="am-campo__control" id="justificacion" name="justificacion" rows="2" maxlength="1000">{{ escrito.justificacion }}</textarea>
+          <span class="am-campo__ayuda">Obligatoria solo para «Urgente». El cambio queda en la auditoría.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--secundario" type="submit">Guardar prioridad</button></div>
+      </form>
+    {% endif %}
+
+    {% if acciones.descartar %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'descartar' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Descartar el caso</h3>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="causal">Causal</label>
+          <select class="am-campo__control" id="causal" name="causal" required>
+            <option value="">Elige una causal</option>
+            {% for clave, nombre in causales %}
+              <option value="{{ clave }}"{% if clave == escrito.causal %} selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="motivo-descarte">Comentario para el residente</label>
+          <textarea class="am-campo__control" id="motivo-descarte" name="motivo" rows="3" maxlength="4000" required>{% if acciones.descartar and not acciones.rechazar %}{{ escrito.motivo }}{% endif %}</textarea>
+          <span class="am-campo__ayuda">Cierra el caso. Si no cabe en ninguna causal, redirígelo.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--peligro" type="submit">Descartar el caso</button></div>
+      </form>
+    {% endif %}
+
+    {% if acciones.rechazar %}
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'rechazar' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
+        <h3>Rechazar el caso</h3>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="motivo-rechazo">Razón del rechazo</label>
+          <textarea class="am-campo__control" id="motivo-rechazo" name="motivo" rows="3" maxlength="4000" required>{{ escrito.motivo }}</textarea>
+          <span class="am-campo__ayuda">El residente la va a leer: cuenta como la respuesta al caso.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--peligro" type="submit">Rechazar el caso</button></div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% if volver %}{{ volver }}{% else %}{% url 'triage:bandeja' %}?pestana=casos{% endif %}">Volver a los casos</a>
+</div>
+{% endblock %}
