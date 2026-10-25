@@ -33,7 +33,10 @@ Pestaña Casos del dashboard (HU-29). Primero los abiertos, por prioridad y lueg
   </div>
 {% else %}
   <div class="am-vacio">
-    {% if ver == "abiertos" %}
+    {% if hay_filtros %}
+      <p class="am-vacio__titulo">Ningún resultado con estos filtros</p>
+      <p class="am-vacio__texto">Cambia los filtros o quítalos para ver todas las casos.</p>
+    {% elif ver == "abiertos" %}
       <p class="am-vacio__titulo">No hay casos abiertos</p>
       <p class="am-vacio__texto">Cuando un residente abra un caso, aparecerá aquí. Los ya cerrados están en «Todos».</p>
     {% else %}

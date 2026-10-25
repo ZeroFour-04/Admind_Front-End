@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
-from apps.casos.presentacion import caso_para_mostrar
+from apps.casos.presentacion import ESTADOS_VISIBLES, PRIORIDADES_VISIBLES, caso_para_mostrar
 from apps.cuentas.sesion import tiene_permiso
 from cliente_api import casos as api_casos
 from cliente_api import reservas as api_reservas
@@ -47,6 +47,13 @@ FILTROS = {
 }
 ORDENES_DE_CASOS = (("prioridad", "Por prioridad"), ("antiguedad", "Por antigüedad"))
 
+# Los filtros de cada pestaña (HU-22). Viajan en la URL; la API los valida y filtra, el front no interpreta nada.
+FILTROS_DE_URL = {
+    "reservas": ("estado", "area", "vivienda", "desde", "hasta", "solicitante"),
+    "casos": ("estado", "prioridad", "desde", "hasta", "solicitante"),
+}
+ESTADOS_DE_RESERVA_FILTRABLES = ("APARTADA", "RESERVADA", "RECHAZADA")
+
 
 def codigo(prefijo, identificador):
     """El ID que se lee en la tabla: `RES-3C4D5E`. Sale del identificador real; no es un consecutivo."""
@@ -76,6 +83,8 @@ def fila_de_reserva(solicitud, hoy):
         "dia": date_format(fecha, r"l j \d\e F").lower(),
         "hora_inicio": time.fromisoformat(solicitud["hora_inicio"]),
         "hora_fin": time.fromisoformat(solicitud["hora_fin"]),
+        "area_id": solicitud["area"]["id"],
+        "unidad_id": solicitud["unidad"]["id"] if solicitud.get("unidad") else "",
         "estado": estado,
         "estado_clase": clase,
         "pendiente": solicitud["estado"] == "APARTADA",
@@ -99,13 +108,60 @@ def fila_de_caso(caso, hoy):
 
 
 def pedir_filas(pedir, preparar, hoy):
-    """Las filas de una pestaña ya listas para la tabla, o el error para mostrar."""
+    """Las filas de una pestaña ya listas para la tabla, el error para mostrar y los errores de los filtros.
+
+    Un 400 es un filtro que no sirve (una fecha mal escrita): se muestra como error del formulario y no
+    como una tabla vacía, que diría que no hay nada.
+    """
     try:
-        return [preparar(fila, hoy) for fila in pedir()], None
+        return [preparar(fila, hoy) for fila in pedir()], None, []
     except ApiNoDisponible:
-        return [], MENSAJE_API_NO_DISPONIBLE
+        return [], MENSAJE_API_NO_DISPONIBLE, []
     except ErrorDeApi as error:
-        return [], error.mensaje
+        if error.estado == 400:
+            return [], None, [mensaje for mensajes in error.campos.values() for mensaje in mensajes] or [error.mensaje]
+        return [], error.mensaje, []
+
+
+def filtros_de(request, pestana):
+    """Los filtros de la URL que existen para esa pestaña, sin los vacíos."""
+    leidos = {nombre: request.GET.get(nombre, "").strip() for nombre in FILTROS_DE_URL.get(pestana, ())}
+    return {nombre: valor for nombre, valor in leidos.items() if valor}
+
+
+def opciones_unicas(filas, id_de, nombre_de):
+    """Los pares (id, nombre) distintos de las filas, por nombre."""
+    vistos = {id_de(fila): nombre_de(fila) for fila in filas if id_de(fila)}
+    return sorted(vistos.items(), key=lambda par: par[1])
+
+
+def campos_del_formulario(pestana, filtros, sin_filtrar):
+    """Los campos del formulario de filtros de la pestaña, con lo que ya eligió quien lo llena.
+
+    Las zonas y viviendas salen de las filas sin filtrar: no hace falta otro permiso ni otra petición.
+    """
+    def campo(nombre, etiqueta, tipo, opciones=()):
+        return {"nombre": nombre, "etiqueta": etiqueta, "tipo": tipo, "valor": filtros.get(nombre, ""), "opciones": opciones}
+
+    if pestana == "reservas":
+        estados = [(clave, ESTADO_DE_RESERVA[clave][0]) for clave in ESTADOS_DE_RESERVA_FILTRABLES]
+        zonas = opciones_unicas(sin_filtrar, lambda fila: fila["area_id"], lambda fila: fila["zona"])
+        viviendas = opciones_unicas(sin_filtrar, lambda fila: fila["unidad_id"], lambda fila: fila["vivienda"])
+        return [
+            campo("estado", "Estado", "select", estados),
+            campo("area", "Zona", "select", zonas),
+            campo("vivienda", "Vivienda", "select", viviendas),
+            campo("solicitante", "Residente", "text"),
+            campo("desde", "Enviada desde", "date"),
+            campo("hasta", "Enviada hasta", "date"),
+        ]
+    return [
+        campo("estado", "Estado", "select", [(clave, nombre) for clave, (nombre, _) in ESTADOS_VISIBLES.items()]),
+        campo("prioridad", "Prioridad", "select", [(clave, nombre) for clave, (nombre, _) in PRIORIDADES_VISIBLES.items()]),
+        campo("solicitante", "Residente", "text"),
+        campo("desde", "Creado desde", "date"),
+        campo("hasta", "Creado hasta", "date"),
+    ]
 
 
 def url_del_dashboard(pestana, **consulta):
@@ -129,38 +185,56 @@ def dashboard(request):
         pestana = "reservas"
     orden = elegido(request, "orden", ORDENES_DE_CASOS)
 
-    # Las dos listas se piden siempre: cada pestaña muestra cuántas tiene pendientes.
-    reservas, error_de_reservas = pedir_filas(
+    filtros = filtros_de(request, pestana)
+    # Las dos listas sin filtrar se piden siempre: las cuentas de las pestañas y las opciones de zona y
+    # vivienda salen de ahí. La pestaña activa pide además la suya con los filtros, si hay.
+    reservas, error_de_reservas, _ = pedir_filas(
         lambda: api_reservas.solicitudes_para_bandeja(request), fila_de_reserva, hoy
     )
     casos, error_de_casos = [], None
     if ve_casos:
-        casos, error_de_casos = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
+        casos, error_de_casos, _ = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
     pendientes = {
         "reservas": sum(fila["pendiente"] for fila in reservas),
         "casos": sum(fila["abierto"] for fila in casos),
     }
 
-    filas, error, ver, filtros = [], None, None, []
-    if pestana in FILTROS:
+    sin_filtrar = reservas
+    errores_de_filtros = []
+    if filtros and pestana == "reservas":
+        reservas, error_de_reservas, errores_de_filtros = pedir_filas(
+            lambda: api_reservas.solicitudes_para_bandeja(request, **filtros), fila_de_reserva, hoy
+        )
+    elif filtros and pestana == "casos":
+        casos, error_de_casos, errores_de_filtros = pedir_filas(
+            lambda: api_casos.listar(request, orden=orden, **filtros), fila_de_caso, hoy
+        )
+
+    filas, error, ver, filtros_de_vista = [], None, None, []
+    # Con un estado elegido «Pendientes / Todas» desaparece: se contradirían.
+    if pestana in FILTROS and "estado" not in filtros:
         ver = elegido(request, "ver", FILTROS[pestana])
         extra = {"orden": orden} if pestana == "casos" else {}
-        filtros = [
-            {"nombre": nombre, "activo": clave == ver, "url": url_del_dashboard(pestana, ver=clave, **extra)}
+        filtros_de_vista = [
+            {
+                "nombre": nombre,
+                "activo": clave == ver,
+                "url": url_del_dashboard(pestana, ver=clave, **extra, **filtros),
+            }
             for clave, nombre in FILTROS[pestana]
         ]
     if pestana == "reservas":
         error = error_de_reservas
-        filas = [fila for fila in reservas if ver == "todas" or fila["pendiente"]]
+        filas = [fila for fila in reservas if ver in (None, "todas") or fila["pendiente"]]
     elif pestana == "casos":
         error = error_de_casos
-        filas = [fila for fila in casos if ver == "todos" or fila["abierto"]]
+        filas = [fila for fila in casos if ver in (None, "todos") or fila["abierto"]]
 
     nombres = {"reservas": "Reservas", "casos": "Casos", "citas": "Citas"}
     ordenes = []
     if pestana == "casos":
         ordenes = [
-            {"nombre": nombre, "activo": clave == orden, "url": url_del_dashboard("casos", ver=ver, orden=clave)}
+            {"nombre": nombre, "activo": clave == orden, "url": url_del_dashboard("casos", ver=ver, orden=clave, **filtros)}
             for clave, nombre in ORDENES_DE_CASOS
         ]
     return render(request, "triage/bandeja.html", {
@@ -176,8 +250,13 @@ def dashboard(request):
             }
             for clave in disponibles
         ],
-        "filtros": filtros,
+        "filtros": filtros_de_vista,
+        "formulario": campos_del_formulario(pestana, filtros, sin_filtrar) if pestana in FILTROS_DE_URL else [],
+        "hay_filtros": bool(filtros),
+        "errores_de_filtros": errores_de_filtros,
+        "quitar_filtros": url_del_dashboard(pestana, ver=ver, orden=orden if pestana == "casos" else None),
         "ordenes": ordenes,
+        "orden": orden,
         "ver": ver,
         "filas": filas,
         "error": error,

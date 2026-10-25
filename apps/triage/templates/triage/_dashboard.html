@@ -29,8 +29,41 @@ y el orden son enlaces: todo viaja en la URL y la pantalla no carga JavaScript.
   </div>
 {% endif %}
 
+{% if formulario %}
+  <form class="filtros-bandeja" method="get" action="{% url 'triage:bandeja' %}" aria-label="Filtrar {{ pestana }}">
+    <input type="hidden" name="pestana" value="{{ pestana }}">
+    {% if ver %}<input type="hidden" name="ver" value="{{ ver }}">{% endif %}
+    {% if pestana == "casos" %}<input type="hidden" name="orden" value="{{ orden }}">{% endif %}
+    <div class="filtros-bandeja__campos">
+      {% for campo in formulario %}
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="filtro-{{ campo.nombre }}">{{ campo.etiqueta }}</label>
+          {% if campo.tipo == "select" %}
+            <select class="am-campo__control" id="filtro-{{ campo.nombre }}" name="{{ campo.nombre }}">
+              <option value="">Todos</option>
+              {% for valor, nombre in campo.opciones %}
+                <option value="{{ valor }}"{% if valor == campo.valor %} selected{% endif %}>{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input class="am-campo__control" type="{{ campo.tipo }}" id="filtro-{{ campo.nombre }}" name="{{ campo.nombre }}" value="{{ campo.valor }}"{% if campo.tipo == "text" %} maxlength="80"{% endif %}>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if errores_de_filtros %}
+      <div class="am-alerta am-alerta--error" role="alert">{{ errores_de_filtros|join:" " }}</div>
+    {% endif %}
+    <div class="acciones">
+      <button class="am-btn am-btn--secundario" type="submit">Filtrar</button>
+      {% if hay_filtros %}<a class="am-btn am-btn--texto" href="{{ quitar_filtros }}">Quitar filtros</a>{% endif %}
+    </div>
+  </form>
+{% endif %}
+
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif errores_de_filtros %}
 {% elif pestana == "reservas" %}
   {% include "triage/_tabla_reservas.html" %}
 {% elif pestana == "casos" %}

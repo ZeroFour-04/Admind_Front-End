@@ -43,7 +43,10 @@ prioridad. El enlace del ID cubre toda la fila y lleva a la tarjeta de la solici
   </div>
 {% else %}
   <div class="am-vacio">
-    {% if ver == "pendientes" %}
+    {% if hay_filtros %}
+      <p class="am-vacio__titulo">Ningún resultado con estos filtros</p>
+      <p class="am-vacio__texto">Cambia los filtros o quítalos para ver todas las reservas.</p>
+    {% elif ver == "pendientes" %}
       <p class="am-vacio__titulo">No hay reservas esperando decisión</p>
       <p class="am-vacio__texto">Cuando un residente envíe una solicitud de reserva, aparecerá aquí. Las ya decididas están en «Todas».</p>
     {% else %}

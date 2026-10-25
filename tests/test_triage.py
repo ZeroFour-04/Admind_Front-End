@@ -2,7 +2,9 @@
 from datetime import date
 from unittest import mock
 
-from cliente_api.http import ApiNoDisponible
+import pytest
+
+from cliente_api.http import ApiNoDisponible, ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
 
@@ -277,3 +279,118 @@ def test_solicitud_del_residente_muestra_resultado_y_comentario():
 
     assert "Tu solicitud fue rechazada." in html
     assert "Comentario de la administración: No se adjuntó el soporte." in html
+
+
+# HU-22: filtros por pestaña
+
+
+FILTROS_DE_RESERVAS = [
+    {},
+    {"estado": "APARTADA"},
+    {"area": "3c4d5e6f-0000-4000-8000-000000000001"},
+    {"vivienda": "7a1b2c3d-0000-4000-8000-000000000101"},
+    {"solicitante": "Pedro"},
+    {"desde": "2026-10-01", "hasta": "2026-10-06"},
+]
+FILTROS_DE_CASOS = [
+    {},
+    {"estado": "ABIERTO"},
+    {"prioridad": "URGENTE"},
+    {"solicitante": "Lucía"},
+    {"desde": "2026-10-01", "hasta": "2026-10-06"},
+]
+
+
+def con_filtros(pestana, filtros):
+    return f"?pestana={pestana}&ver=todas&" + "&".join(f"{clave}={valor}" for clave, valor in filtros.items())
+
+
+@pytest.mark.parametrize("filtros", FILTROS_DE_RESERVAS)
+def test_hu22_con_cualquier_filtro_la_antiguedad_sigue_visible_en_reservas(filtros):
+    html, de_reservas, _ = abrir_dashboard(con_filtros("reservas", filtros))
+
+    assert "<th scope=\"col\">Solicitada</th>" in html
+    assert "hace 5 días" in html and "hace 1 día" in html
+    if filtros:
+        de_reservas.assert_called_with(mock.ANY, **filtros)
+
+
+@pytest.mark.parametrize("filtros", FILTROS_DE_CASOS)
+def test_hu22_con_cualquier_filtro_la_antiguedad_sigue_visible_en_casos(filtros):
+    html, _, de_casos = abrir_dashboard(con_filtros("casos", filtros).replace("ver=todas", "ver=todos"))
+
+    assert "<th scope=\"col\">Creado</th>" in html
+    assert "hace 1 día" in html
+    if filtros:
+        de_casos.assert_called_with(mock.ANY, orden="prioridad", **filtros)
+
+
+def test_hu22_la_bandeja_no_tiene_aprobar_responder_ni_exportar():
+    for pestana in ("reservas", "casos", "citas"):
+        html, _, _ = abrir_dashboard(f"?pestana={pestana}&ver=todas")
+        minusculas = html.lower()
+
+        assert not any(palabra in minusculas for palabra in ("aprobar", "responder", "exportar", "descargar"))
+        # El único formulario que escribe es el de salir de la sesión, que es de la barra y no de la bandeja.
+        assert minusculas.count('method="post"') == 1 and 'action="/salir/"' in minusculas
+
+
+def test_hu22_cada_pestana_tiene_su_formulario_de_filtros_y_reservas_no_tiene_prioridad():
+    reservas, _, _ = abrir_dashboard("?pestana=reservas")
+    casos, _, _ = abrir_dashboard("?pestana=casos")
+
+    assert 'name="vivienda"' in reservas and 'name="area"' in reservas and 'name="prioridad"' not in reservas
+    assert 'name="prioridad"' in casos and 'name="vivienda"' not in casos
+    # Las zonas y viviendas del selector salen de las filas de la bandeja, sin otra petición.
+    assert '<option value="3c4d5e6f-0000-4000-8000-000000000001">Salón comunal</option>' in reservas
+    assert ">Torre 1 – 101</option>" in reservas
+
+
+def test_hu22_los_filtros_viajan_en_la_url_y_los_enlaces_los_conservan():
+    html, _, _ = abrir_dashboard("?pestana=casos&prioridad=URGENTE&solicitante=Luc%C3%ADa")
+
+    assert 'value="Lucía"' in html and '<option value="URGENTE" selected>Urgente</option>' in html
+    assert "prioridad=URGENTE" in html and "Quitar filtros" in html
+    # El enlace de «Por antigüedad» no pierde los filtros.
+    assert any("orden=antiguedad" in enlace and "prioridad=URGENTE" in enlace for enlace in html.split('href="'))
+
+
+def test_hu22_con_un_estado_elegido_pendientes_y_todas_desaparecen():
+    con_estado, _, _ = abrir_dashboard("?pestana=reservas&estado=RESERVADA")
+    sin_estado, _, _ = abrir_dashboard("?pestana=reservas")
+
+    assert "Pendientes" not in con_estado and "Aprobada" in con_estado
+    assert "Pendientes" in sin_estado
+
+
+def test_hu22_un_filtro_invalido_se_muestra_como_error_y_no_como_tabla_vacia():
+    def solo_sin_filtros(request, **filtros):
+        if filtros:
+            raise ErrorDeApi(400, {"desde": ["Introduzca una fecha válida."]})
+        return [PENDIENTE]
+
+    with (
+        mock.patch("cliente_api.reservas.solicitudes_para_bandeja", side_effect=solo_sin_filtros),
+        mock.patch("cliente_api.casos.listar", return_value=[CASO]),
+        mock.patch("apps.triage.views.timezone.localdate", return_value=HOY),
+    ):
+        html = cliente_con_sesion(permisos=GESTION).get("/solicitudes/?pestana=reservas&desde=ayer").content.decode()
+
+    assert "Introduzca una fecha válida." in html
+    assert "Ningún resultado" not in html and "Todavía no hay solicitudes" not in html
+    assert 'value="ayer"' in html
+
+
+def test_hu22_sin_resultados_con_filtros_lo_dice_distinto_a_no_haber_nada():
+    html, _, _ = abrir_dashboard("?pestana=casos&prioridad=BAJA", casos=())
+
+    assert "Ningún resultado con estos filtros" in html
+    assert "Todavía no hay casos" not in html
+
+
+def test_hu22_las_cuentas_de_las_pestanas_salen_de_la_lista_sin_filtrar():
+    sin_filtro, _, _ = abrir_dashboard("?pestana=casos")
+    filtrado, _, de_casos = abrir_dashboard("?pestana=casos&estado=RESUELTO")
+
+    assert sin_filtro.count('class="tablero__cuenta"') == filtrado.count('class="tablero__cuenta"')
+    assert de_casos.call_count == 2
