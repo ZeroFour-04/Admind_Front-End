@@ -1,0 +1,48 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Versiones del documento{% endblock %}
+{% block titulo_vista %}Versiones: {% if tipo == "manual" %}manual de convivencia{% else %}reglamento{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if versiones %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Archivo</th>
+          <th>Subido</th>
+          <th>Por</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for version in versiones %}
+          <tr>
+            <td><b>{{ version.nombre }}</b><br><span class="tarjeta-contenido__meta">{{ version.peso|filesizeformat }}</span></td>
+            <td>{{ version.subido_en|date:"d/m/Y H:i" }}</td>
+            <td>{{ version.subido_por }}</td>
+            <td>{% if version.vigente %}<span class="am-pastilla am-pastilla--confirmado">Vigente</span>{% else %}<span class="am-pastilla am-pastilla--neutro">Archivada</span>{% endif %}</td>
+            <td><a class="am-btn am-btn--secundario" href="{% url 'documentos:archivo-de-version' tipo version.id %}" target="_blank" rel="noopener">Descargar {{ version.nombre }}</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="am-campo__ayuda">Cada descarga queda en la auditoría con quién la hizo y cuándo.</p>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay versiones</p>
+    <p class="am-vacio__texto">Cuando se suba el primer archivo de este documento, aparecerá aquí.</p>
+  </div>
+{% endif %}
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'documentos:lista' %}">Volver a Documentos</a>
+</div>
+{% endblock %}

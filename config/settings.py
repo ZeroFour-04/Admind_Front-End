@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.cuentas",
     "apps.conjuntos",
+    "apps.documentos",
     "apps.paneles",
     "apps.reservas",
     "apps.reglas",

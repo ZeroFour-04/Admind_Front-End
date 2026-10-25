@@ -25,6 +25,9 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
   {% endif %}
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
+  {% if "documento.ver" in request.session.permisos or "documento.subir" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'documentos' %} am-es-activo{% endif %}" href="{% url 'documentos:lista' %}"{% if actual == 'documentos' %} aria-current="page"{% endif %}>Documentos</a>
+  {% endif %}
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>
   <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
