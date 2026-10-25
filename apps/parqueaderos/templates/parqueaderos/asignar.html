@@ -1,0 +1,40 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}{% if parqueadero.asignado_a %}Reasignar{% else %}Asignar{% endif %} parqueadero{% endblock %}
+{% block titulo_vista %}{% if parqueadero.asignado_a %}Reasignar{% else %}Asignar{% endif %} el parqueadero {{ parqueadero.codigo }}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  <p>
+    {% if parqueadero.asignado_a %}
+      Hoy es de <b>{{ parqueadero.asignado_a }}</b>. Al elegir otra vivienda, esa asignación se cierra hoy y queda en el historial.
+    {% else %}
+      Este parqueadero está sin asignar.
+    {% endif %}
+  </p>
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+    <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}"{% if formulario.unidad.errors %} aria-invalid="true"{% endif %}>
+      {% for valor, etiqueta in formulario.unidad.field.choices %}
+        <option value="{{ valor }}"{% if formulario.unidad.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+    {% if formulario.unidad.errors %}<span class="am-campo__error" role="alert">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+  </div>
+  <p class="am-campo__ayuda">
+    {% if tope %}Tope por vivienda: {{ tope }}.{% else %}El conjunto no ha definido un tope por vivienda.{% endif %}
+    Asignar registra un hecho administrativo; no constituye un derecho sobre el puesto.
+  </p>
+  <div class="acciones">
+    <button class="am-btn am-btn--primario" type="submit">{% if parqueadero.asignado_a %}Reasignar{% else %}Asignar{% endif %}</button>
+    <a class="am-btn am-btn--secundario" href="{% url 'parqueaderos:lista' %}">Volver a Parqueaderos</a>
+  </div>
+</form>
+{% endblock %}

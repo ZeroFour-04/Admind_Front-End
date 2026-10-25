@@ -63,6 +63,18 @@ class DiaLimiteDePagoForm(ParametrosForm):
     )
 
 
+class ParqueaderosPorViviendaForm(ParametrosForm):
+    """Cuántos parqueaderos de residentes puede tener una vivienda, por tipo de vehículo (HU-34)."""
+
+    carro = forms.IntegerField(label="Parqueaderos de carro por vivienda", min_value=0)
+    moto = forms.IntegerField(label="Parqueaderos de moto por vivienda", min_value=0)
+    bicicleta = forms.IntegerField(
+        label="Parqueaderos de bicicleta por vivienda",
+        min_value=0,
+        help_text="Con 0 no se asigna ningún parqueadero de ese vehículo. Solo limita las asignaciones nuevas.",
+    )
+
+
 class UnaReservaPorDiaForm(ParametrosForm):
     """Sin parámetros: definirla la activa."""
 
@@ -111,6 +123,7 @@ FORMULARIO_POR_TIPO = {
     "DIA_LIMITE_DE_PAGO": DiaLimiteDePagoForm,
     "CUPO_POR_UNIDAD": CupoPorUnidadForm,
     "ACOMPANANTES": AcompanantesForm,
+    "PARQUEADEROS_POR_VIVIENDA": ParqueaderosPorViviendaForm,
     "UNA_RESERVA_POR_DIA": UnaReservaPorDiaForm,
     "SIN_FRANJAS_SEGUIDAS": SinFranjasSeguidasForm,
 }
