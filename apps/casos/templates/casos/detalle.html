@@ -60,6 +60,14 @@
   </article>
 
   <div class="caso-detalle__acciones">
+    {% if puede_registrar_infraccion %}
+      <div class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        <h3>Infracción</h3>
+        <p class="vista__guia">Si lo que reporta el caso es una infracción, regístrala: se comunica al propietario y al arrendatario de la vivienda. El sistema no sanciona.</p>
+        <div class="acciones"><a class="am-btn am-btn--secundario" href="{% url 'infracciones:nueva' %}?caso={{ caso.id }}">Registrar infracción</a></div>
+      </div>
+    {% endif %}
+
     {% if not hay_acciones %}
       <div class="am-tarjeta tarjeta-contenido">
         <p class="vista__guia">{% if caso.abierto %}Este caso está en manos de la administración. Desde tu rol no hay nada más por hacer.{% else %}Este caso ya está cerrado: no admite más cambios.{% endif %}</p>
