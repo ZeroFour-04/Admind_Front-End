@@ -39,9 +39,15 @@ def solicitudes_del_area(request, area_id):
     return pedir(request, "GET", f"reservas/areas/{area_id}/solicitudes/")
 
 
-def solicitudes_para_bandeja(request):
-    """GET /reservas/bandeja/ → reservas enviadas, aceptadas o rechazadas del conjunto activo."""
-    return pedir(request, "GET", "reservas/bandeja/")
+def solicitudes_para_bandeja(request, **filtros):
+    """GET /reservas/bandeja/ → reservas enviadas, aceptadas o rechazadas del conjunto activo.
+
+    Los `filtros` (`estado`, `area`, `vivienda`, `desde`, `hasta`, `solicitante`) reducen las filas sin
+    cambiar el orden por antigüedad; la API los valida y responde 400 si no sirven.
+    """
+    parametros = {clave: valor for clave, valor in filtros.items() if valor}
+    consulta = f"?{urlencode(parametros)}" if parametros else ""
+    return pedir(request, "GET", f"reservas/bandeja/{consulta}")
 
 
 def decidir(request, solicitud_id, datos):

@@ -14,7 +14,7 @@ El dashboard de gestión («Dashboard de Gestión de Reservas»). Lo usan Admini
 | **Casos** | `cliente_api.casos.listar` | ID, asunto, estado, prioridad, residente, vivienda, creado | Al detalle del caso (`casos:detalle`) |
 | **Citas** | Nada: el módulo no existe (HU-31) | — | Estado vacío que lo dice |
 
-- Cada pestaña muestra cuántas tiene pendientes. Los filtros (`?ver=`) y el orden de los casos (`?orden=`) son enlaces: la pantalla no carga JavaScript.
+- Cada pestaña muestra cuántas tiene pendientes. Los filtros rápidos (`?ver=`) y el orden de los casos (`?orden=`) son enlaces, y cada pestaña tiene un formulario `GET` de filtros (`estado`, `prioridad` o `area` y `vivienda`, residente y fechas) que viaja en la URL y valida la API: la pantalla no carga JavaScript. Con un estado elegido, «Pendientes / Todas» desaparece. Las zonas y viviendas del selector salen de las filas sin filtrar.
 - Reservas no tiene prioridad: va primero la que más lleva esperando. Casos va por prioridad y luego antigüedad, con la vista «Por antigüedad» a un clic.
 - El ID es un prefijo y los seis primeros caracteres del identificador (`RES-3C4D5E`); no es un consecutivo.
 - Los nombres de los estados y sus pastillas están en `views.py` (reservas) y en `apps/casos/presentacion.py` (casos).
@@ -25,7 +25,7 @@ Quien no tiene `solicitud.bandeja_ver` no ve el dashboard. Un residente ve su hi
 
 - La pestaña Citas con sus filas, cuando exista el módulo (HU-31)
 - La vista combinada de los tres tipos (HU-22), si el equipo la quiere
-- Buscador y orden por columna
+- Orden por columna
 
 ## Lo que no va
 
