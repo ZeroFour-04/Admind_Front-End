@@ -1,0 +1,65 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Infracciones{% endblock %}
+{% block titulo_vista %}Registro de infracciones{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if aviso %}
+  <div class="aviso-exito" role="status">{{ aviso }}</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% include "infracciones/_aviso_de_r11.html" %}
+
+{% if puede_registrar %}
+  <div class="acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'infracciones:nueva' %}">Registrar infracción</a>
+  </div>
+{% endif %}
+
+{% if registros %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Vivienda</th>
+          <th>Hecho</th>
+          <th>Fecha del hecho</th>
+          <th>Comunicado</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for registro in registros %}
+          <tr>
+            <td><b>{% if registro.anulado %}<s>{{ registro.vivienda }}</s>{% else %}{{ registro.vivienda }}{% endif %}</b></td>
+            <td>{% if registro.anulado %}<s>{{ registro.descripcion_hecho|truncatechars:80 }}</s>{% else %}{{ registro.descripcion_hecho|truncatechars:80 }}{% endif %}</td>
+            <td>{{ registro.fecha_hecho|date:"d/m/Y" }}</td>
+            <td>{{ registro.fecha_notificacion|date:"d/m/Y H:i" }}</td>
+            <td>
+              {% if registro.anulado %}
+                <span class="am-pastilla am-pastilla--neutro">Anulado</span>
+                <br><span class="tarjeta-contenido__meta">Motivo: {{ registro.anulacion_motivo|truncatechars:60 }}</span>
+              {% elif registro.abierto %}
+                <span class="am-pastilla am-pastilla--tramite">Abierto</span>
+              {% else %}
+                <span class="am-pastilla am-pastilla--confirmado">Cerrado</span>
+              {% endif %}
+            </td>
+            <td><a class="am-btn am-btn--secundario" href="{% url 'infracciones:detalle' registro.id %}">Ver registro de {{ registro.vivienda }}</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay infracciones registradas</p>
+    <p class="am-vacio__texto">{% if puede_registrar %}Cuando registres una, se comunicará al propietario y al arrendatario de la vivienda.{% else %}Cuando la administración registre una, aparecerá aquí.{% endif %}</p>
+  </div>
+{% endif %}
+{% endblock %}

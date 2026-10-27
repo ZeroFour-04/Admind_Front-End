@@ -1,0 +1,83 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Registro de infracción{% endblock %}
+{% block titulo_vista %}Registro de infracción{% if registro %}: {{ registro.vivienda }}{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% include "infracciones/_aviso_de_r11.html" %}
+
+{% if registro %}
+  <article class="am-tarjeta tarjeta-contenido">
+    <p>
+      {% if registro.anulado %}<span class="am-pastilla am-pastilla--neutro">Anulado</span>
+      {% elif registro.abierto %}<span class="am-pastilla am-pastilla--tramite">Abierto</span>
+      {% else %}<span class="am-pastilla am-pastilla--confirmado">Cerrado</span>{% endif %}
+    </p>
+    <dl>
+      <dt>Vivienda</dt>
+      <dd>{% if registro.anulado %}<s>{{ registro.vivienda }}</s>{% else %}{{ registro.vivienda }}{% endif %}</dd>
+      <dt>Fecha del hecho</dt>
+      <dd>{{ registro.fecha_hecho|date:"d/m/Y" }}</dd>
+      <dt>Qué ocurrió</dt>
+      <dd>{% if registro.anulado %}<s>{{ registro.descripcion_hecho|linebreaksbr }}</s>{% else %}{{ registro.descripcion_hecho|linebreaksbr }}{% endif %}</dd>
+      <dt>Comunicado a la vivienda</dt>
+      <dd>{{ registro.fecha_notificacion|date:"d/m/Y H:i" }}</dd>
+      <dt>Registrado por</dt>
+      <dd>{{ registro.registrado_por }} · {{ registro.registrado_en|date:"d/m/Y H:i" }}</dd>
+      {% if registro.cierre_fecha %}
+        <dt>Cierre</dt>
+        <dd>{{ registro.cierre_fecha|date:"d/m/Y H:i" }} · {{ registro.cerrado_por }}</dd>
+        <dt>Comentario del cierre</dt>
+        <dd>{{ registro.cierre_comentario|linebreaksbr }}</dd>
+      {% endif %}
+      {% if registro.anulado %}
+        <dt>Anulación</dt>
+        <dd>{{ registro.anulado_en|date:"d/m/Y H:i" }} · {{ registro.anulado_por }}</dd>
+        <dt>Motivo de la anulación</dt>
+        <dd>{{ registro.anulacion_motivo|linebreaksbr }}</dd>
+      {% endif %}
+    </dl>
+  </article>
+
+  {% if formulario_de_cierre %}
+    <form method="post" action="{% url 'infracciones:cerrar' registro.id %}" class="am-tarjeta tarjeta-contenido am-formulario" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" with formulario=formulario_de_cierre %}
+      <h3>Cerrar el registro</h3>
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ formulario_de_cierre.comentario.id_for_label }}">{{ formulario_de_cierre.comentario.label }}</label>
+        <textarea class="am-campo__control" id="{{ formulario_de_cierre.comentario.id_for_label }}" name="comentario" rows="3" maxlength="2000" required>{{ formulario_de_cierre.comentario.value|default_if_none:'' }}</textarea>
+        <span class="am-campo__ayuda">Cerrar avisa a la vivienda. No cambia el hecho ni la fecha en que se comunicó.</span>
+        {% if formulario_de_cierre.comentario.errors %}<span class="am-campo__error" role="alert">{{ formulario_de_cierre.comentario.errors|join:" " }}</span>{% endif %}
+      </div>
+      <div class="acciones"><button class="am-btn am-btn--primario" type="submit">Cerrar registro</button></div>
+    </form>
+  {% endif %}
+
+  {% if formulario_de_anulacion %}
+    <details class="confirmar-accion"{% if formulario_de_anulacion.errors %} open{% endif %}>
+      <summary>Anular este registro</summary>
+      <form method="post" action="{% url 'infracciones:anular' registro.id %}" class="am-formulario" novalidate>
+        {% csrf_token %}
+        {% include "componentes/errores_formulario.html" with formulario=formulario_de_anulacion %}
+        <p>Anular es para un registro equivocado. Sigue en la lista, tachado y con su motivo; no se borra.</p>
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="{{ formulario_de_anulacion.motivo.id_for_label }}">{{ formulario_de_anulacion.motivo.label }}</label>
+          <textarea class="am-campo__control" id="{{ formulario_de_anulacion.motivo.id_for_label }}" name="motivo" rows="3" maxlength="2000" required>{{ formulario_de_anulacion.motivo.value|default_if_none:'' }}</textarea>
+          {% if formulario_de_anulacion.motivo.errors %}<span class="am-campo__error" role="alert">{{ formulario_de_anulacion.motivo.errors|join:" " }}</span>{% endif %}
+        </div>
+        <button class="am-btn am-btn--secundario" type="submit">Anular registro</button>
+      </form>
+    </details>
+  {% endif %}
+{% endif %}
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'infracciones:lista' %}">Volver a Infracciones</a>
+</div>
+{% endblock %}
