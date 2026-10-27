@@ -25,7 +25,7 @@ RESERVA = {
 }
 
 
-GESTION = ["solicitud.bandeja_ver", "reserva.ver_todas", "caso.ver_todos"]
+GESTION = ["solicitud.bandeja_ver", "reserva.ver_todas", "caso.ver_todos", "cita.ver_todas"]
 HOY = date(2026, 10, 6)
 PENDIENTE = {
     **RESERVA,
@@ -66,13 +66,28 @@ RESUELTO = {
     "prioridad": "NORMAL",
     "cerrado_en": "2026-10-05T18:00:00-05:00",
 }
+CITA = {
+    "id": "afafaf00-0000-4000-8000-000000000001",
+    "fecha": "2026-10-12",
+    "hora_inicio": "09:00:00",
+    "hora_fin": "11:00:00",
+    "estado": "AGENDADA",
+    "residente": "Laura Gómez",
+}
 
 
-def abrir_dashboard(consulta="", permisos=GESTION, reservas=(PENDIENTE, APROBADA), casos=(CASO, RESUELTO)):
+def abrir_dashboard(
+    consulta="",
+    permisos=GESTION,
+    reservas=(PENDIENTE, APROBADA),
+    casos=(CASO, RESUELTO),
+    citas=(CITA,),
+):
     """El dashboard con la API simulada y el día fijo, para que la antigüedad no dependa de cuándo se corre."""
     with (
         mock.patch("cliente_api.reservas.solicitudes_para_bandeja", return_value=list(reservas)) as de_reservas,
         mock.patch("cliente_api.casos.listar", return_value=list(casos)) as de_casos,
+        mock.patch("cliente_api.citas.bandeja", return_value=list(citas)),
         mock.patch("apps.triage.views.timezone.localdate", return_value=HOY),
     ):
         html = cliente_con_sesion(permisos=permisos).get(f"/solicitudes/{consulta}").content.decode()
@@ -87,7 +102,7 @@ def test_gestion_ve_el_dashboard_con_tres_pestanas_y_cuantas_hay_pendientes():
     assert 'aria-label="Tipos de solicitud"' in html
     assert '<span class="am-pestana am-es-activa" aria-current="page">Reservas <span class="tablero__cuenta">1<' in html
     assert '<a class="am-pestana" href="/solicitudes/?pestana=casos">Casos <span class="tablero__cuenta">1<' in html
-    assert '<a class="am-pestana" href="/solicitudes/?pestana=citas">Citas</a>' in html
+    assert '<a class="am-pestana" href="/solicitudes/?pestana=citas">Citas <span class="tablero__cuenta">1<' in html
     # La pantalla no carga JavaScript: pestañas y filtros son enlaces.
     assert "alpine" not in html.lower()
 
@@ -151,12 +166,14 @@ def test_los_casos_se_pueden_ver_todos_y_por_antiguedad_sin_perder_la_columna():
     assert 'href="/solicitudes/?pestana=casos&amp;ver=todos&amp;orden=prioridad"' in html
 
 
-def test_la_pestana_citas_dice_que_todavia_no_esta_disponible():
+def test_la_pestana_citas_muestra_las_citas_agendadas():
     html, _, _ = abrir_dashboard("?pestana=citas")
 
-    assert '<span class="am-pestana am-es-activa" aria-current="page">Citas</span>' in html
-    assert "Las citas todavía no están disponibles" in html
-    assert "<table" not in html and "<button" not in html.split('class="vista"')[-1]
+    assert '<span class="am-pestana am-es-activa" aria-current="page">Citas <span class="tablero__cuenta">1<' in html
+    assert "<th scope=\"col\">Día y franja</th>" in html
+    assert "CIT-AFAFAF" in html
+    assert "Lunes 12 de octubre" in html and "09:00 a 11:00" in html
+    assert "Laura Gómez" in html and "Agendada" in html
 
 
 def test_sin_permiso_de_casos_no_hay_pestana_casos():
@@ -165,6 +182,12 @@ def test_sin_permiso_de_casos_no_hay_pestana_casos():
     de_casos.assert_not_called()
     assert "pestana=casos" not in html
     assert '<span class="am-pestana am-es-activa" aria-current="page">Reservas' in html
+
+
+def test_sin_permiso_de_citas_no_hay_pestana_citas():
+    html, _, _ = abrir_dashboard(permisos=["solicitud.bandeja_ver", "reserva.ver_todas"])
+
+    assert "pestana=citas" not in html
 
 
 def test_quien_no_entra_al_dashboard_no_ve_las_solicitudes_de_nadie():

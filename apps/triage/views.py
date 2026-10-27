@@ -15,6 +15,7 @@ from django.utils.formats import date_format
 from apps.casos.presentacion import caso_para_mostrar
 from apps.cuentas.sesion import tiene_permiso
 from cliente_api import casos as api_casos
+from cliente_api import citas as api_citas
 from cliente_api import reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
@@ -98,6 +99,24 @@ def fila_de_caso(caso, hoy):
     }
 
 
+def fila_de_cita(cita, hoy):
+    fecha = date.fromisoformat(cita["fecha"])
+    estado, clase = {
+        "AGENDADA": ("Agendada", "am-pastilla--confirmado"),
+        "ATENDIDA": ("Atendida", "am-pastilla--neutro"),
+    }[cita["estado"]]
+    return {
+        **cita,
+        "codigo": codigo("CIT", cita["id"]),
+        "dia": date_format(fecha, r"l j \d\e F").lower(),
+        "hora_inicio": time.fromisoformat(cita["hora_inicio"]),
+        "hora_fin": time.fromisoformat(cita["hora_fin"]),
+        "estado": estado,
+        "estado_clase": clase,
+        "pendiente": cita["estado"] == "AGENDADA",
+    }
+
+
 def pedir_filas(pedir, preparar, hoy):
     """Las filas de una pestaña ya listas para la tabla, o el error para mostrar."""
     try:
@@ -123,7 +142,11 @@ def dashboard(request):
     """Una pestaña por tipo de solicitud, cada una con su tabla. La pestaña y los filtros viajan en la URL."""
     hoy = timezone.localdate()
     ve_casos = tiene_permiso(request, "caso.ver_todos")
-    disponibles = [pestana for pestana in PESTANAS if pestana != "casos" or ve_casos]
+    ve_citas = tiene_permiso(request, "cita.ver_todas")
+    disponibles = [
+        pestana for pestana in PESTANAS
+        if (pestana != "casos" or ve_casos) and (pestana != "citas" or ve_citas)
+    ]
     pestana = request.GET.get("pestana")
     if pestana not in disponibles:
         pestana = "reservas"
@@ -136,9 +159,13 @@ def dashboard(request):
     casos, error_de_casos = [], None
     if ve_casos:
         casos, error_de_casos = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
+    citas, error_de_citas = [], None
+    if ve_citas:
+        citas, error_de_citas = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
     pendientes = {
         "reservas": sum(fila["pendiente"] for fila in reservas),
         "casos": sum(fila["abierto"] for fila in casos),
+        "citas": sum(fila["pendiente"] for fila in citas),
     }
 
     filas, error, ver, filtros = [], None, None, []
@@ -155,6 +182,9 @@ def dashboard(request):
     elif pestana == "casos":
         error = error_de_casos
         filas = [fila for fila in casos if ver == "todos" or fila["abierto"]]
+    elif pestana == "citas":
+        error = error_de_citas
+        filas = citas
 
     nombres = {"reservas": "Reservas", "casos": "Casos", "citas": "Citas"}
     ordenes = []

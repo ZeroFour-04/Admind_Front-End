@@ -104,6 +104,18 @@
     {% if acciones.prioridad %}
       <form method="post" action="{% url 'casos:gestionar' caso.id 'prioridad' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
         {% csrf_token %}
+        <h3>¿Es urgente?</h3>
+        <input type="hidden" name="prioridad" value="URGENTE">
+        <div class="am-campo">
+          <label class="am-campo__etiqueta" for="justificacion-urgente">Justificación</label>
+          <textarea class="am-campo__control" id="justificacion-urgente" name="justificacion" rows="2" maxlength="1000" required>{{ escrito.justificacion }}</textarea>
+          <span class="am-campo__ayuda">Cuando lo marcas como urgente, queda al frente de la bandeja del administrador.</span>
+        </div>
+        <div class="acciones"><button class="am-btn am-btn--naranja" type="submit">¿Es urgente?</button></div>
+      </form>
+
+      <form method="post" action="{% url 'casos:gestionar' caso.id 'prioridad' %}" class="am-tarjeta tarjeta-contenido caso-detalle__accion">
+        {% csrf_token %}
         <h3>Cambiar la prioridad</h3>
         <div class="am-campo">
           <label class="am-campo__etiqueta" for="prioridad">Prioridad</label>

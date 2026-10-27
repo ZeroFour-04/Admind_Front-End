@@ -17,4 +17,5 @@ urlpatterns = [
     path("unidades/", include("apps.unidades.urls")),
     path("usuarios/", include("apps.usuarios.urls")),
     path("visitantes/", include("apps.visitantes.urls")),
+    path("citas/", include("apps.citas.urls")),
 ]

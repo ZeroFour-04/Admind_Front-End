@@ -32,6 +32,13 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   {% if "caso.crear" in request.session.permisos or "caso.ver_todos" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'casos' %} am-es-activo{% endif %}" href="{% url 'casos:lista' %}"{% if actual == 'casos' %} aria-current="page"{% endif %}>Casos</a>
   {% endif %}
+  {% if "cita.gestionar_horario" in request.session.permisos or "cita.agendar_propia" in request.session.permisos %}
+  {% if "cita.gestionar_horario" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'citas' %} am-es-activo{% endif %}" href="{% url 'citas:horario' %}"{% if actual == 'citas' %} aria-current="page"{% endif %}>Citas</a>
+  {% else %}
+  <a class="am-lateral__item{% if actual == 'citas' %} am-es-activo{% endif %}" href="{% url 'citas:agenda' %}"{% if actual == 'citas' %} aria-current="page"{% endif %}>Citas</a>
+  {% endif %}
+  {% endif %}
   {% if "ingreso.registrar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}>Ingreso a zonas</a>
   {% elif "ingreso.ver_historico" in request.session.permisos %}
