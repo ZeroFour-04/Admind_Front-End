@@ -1,0 +1,47 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Historial del parqueadero{% endblock %}
+{% block titulo_vista %}Historial del parqueadero{% if parqueadero %} {{ parqueadero.codigo }}{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if asignaciones %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Vivienda</th>
+          <th>Desde</th>
+          <th>Hasta</th>
+          <th>Registró</th>
+          <th>Cerró</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignacion in asignaciones %}
+          <tr>
+            <td><b>{{ asignacion.vivienda }}</b></td>
+            <td>{{ asignacion.vigencia_desde|date:"d/m/Y" }}</td>
+            <td>{% if asignacion.vigencia_hasta %}{{ asignacion.vigencia_hasta|date:"d/m/Y" }}{% else %}<span class="am-pastilla am-pastilla--confirmado">Vigente</span>{% endif %}</td>
+            <td>{{ asignacion.registrado_por }}</td>
+            <td>{{ asignacion.cerrado_por|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Este parqueadero nunca se ha asignado</p>
+    <p class="am-vacio__texto">Cuando se asigne a una vivienda, aquí quedará cada asignación con su fecha, aunque después cambie.</p>
+  </div>
+{% endif %}
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'parqueaderos:lista' %}">Volver a Parqueaderos</a>
+</div>
+{% endblock %}
