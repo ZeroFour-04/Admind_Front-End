@@ -1,0 +1,51 @@
+{% comment %}
+Tabla de áreas (HU-09). La usan la lista y el paso de áreas del asistente.
+Parámetros: areas y acciones (si se muestran los botones de gestión).
+{% endcomment %}
+<div class="am-tabla-caja">
+  <table class="am-tabla">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Cómo se usa</th>
+        <th>Horario</th>
+        <th>Estado</th>
+        {% if acciones or ver_solicitudes %}<th>Acciones</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for area in areas %}
+        <tr>
+          <td>{{ area.nombre }}</td>
+          <td>{% if area.modo_uso == "ingreso" %}Con ingreso{% else %}Con reserva{% endif %}</td>
+          <td class="am-num">{{ area.hora_apertura }} a {{ area.hora_cierre }} <span class="am-tabla__secundario">{% if area.modo_uso == "ingreso" %}permanencia de {{ area.permanencia_maxima_minutos }} min{% else %}franjas de {{ area.duracion_franja_minutos }} min{% endif %} · aforo {{ area.aforo_maximo }}</span></td>
+          <td>
+            {% if not area.activo %}
+              <span class="am-pastilla am-pastilla--neutro">Inactiva</span>
+            {% elif area.en_mantenimiento %}
+              <span class="am-pastilla am-pastilla--tramite">En mantenimiento</span>
+            {% else %}
+              <span class="am-pastilla am-pastilla--confirmado">Disponible</span>
+            {% endif %}
+          </td>
+          {% if acciones or ver_solicitudes %}
+            <td>
+              <div class="acciones acciones--derecha">
+                {% if ver_solicitudes %}
+                  <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitudes-area' area.id %}">Solicitudes</a>
+                {% endif %}
+                {% if acciones and area.activo %}
+                  <a class="am-btn am-btn--secundario" href="{% url 'areas:editar' area.id %}">Editar</a>
+                  <form method="post" action="{% url 'areas:desactivar' area.id %}">
+                    {% csrf_token %}
+                    <button class="am-btn am-btn--texto" type="submit">Desactivar</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

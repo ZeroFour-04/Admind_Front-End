@@ -1,0 +1,121 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Solicitudes de zona común{% endblock %}
+{% block titulo_vista %}Solicitudes de zona común{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if actualizada %}
+  <div class="aviso-exito" role="status">La decisión quedó guardada.</div>
+{% endif %}
+{% if aviso_de_pago %}
+  <div class="aviso-exito" role="status">{{ aviso_de_pago }}</div>
+{% endif %}
+
+{% if area %}
+  <p class="vista__guia">Solicitudes para {{ area.nombre }}.</p>
+  {% for solicitud in solicitudes %}
+    <article class="am-tarjeta tarjeta-contenido" id="solicitud-{{ solicitud.id }}">
+      <header class="acciones">
+        <h2>{{ solicitud.residente.nombre }}</h2>
+        <span class="am-pastilla {% if solicitud.estado == 'APARTADA' %}am-pastilla--tramite{% elif solicitud.completada %}am-pastilla--neutro{% elif solicitud.estado == 'RESERVADA' %}am-pastilla--confirmado{% else %}am-pastilla--error{% endif %}">{% if solicitud.completada %}Completada{% else %}{{ solicitud.estado_nombre }}{% endif %}</span>
+      </header>
+      <dl>
+        <dt>Fecha y horario</dt>
+        <dd>{{ solicitud.fecha }} · {{ solicitud.hora_inicio }} a {{ solicitud.hora_fin }}</dd>
+        <dt>Unidad</dt>
+        <dd>{% if solicitud.unidad %}{{ solicitud.unidad.nombre }}{% else %}No indicada{% endif %}</dd>
+        <dt>Motivo del residente</dt>
+        <dd>{{ solicitud.motivo }}</dd>
+        <dt>Asistentes</dt>
+        <dd>{{ solicitud.asistentes|default:"No indicados" }}</dd>
+        {% if solicitud.observaciones %}
+          <dt>Observaciones</dt>
+          <dd>{{ solicitud.observaciones }}</dd>
+        {% endif %}
+        {% if solicitud.categoria_rechazo_nombre %}
+          <dt>Motivo del rechazo</dt>
+          <dd>{{ solicitud.categoria_rechazo_nombre }}</dd>
+        {% endif %}
+        {% if solicitud.motivo_decision %}
+          <dt>{% if solicitud.estado == "RECHAZADA" %}Comentario del rechazo{% else %}Motivo de la decisión{% endif %}</dt>
+          <dd>{{ solicitud.motivo_decision }}</dd>
+        {% endif %}
+        {% if solicitud.decidida_por %}
+          <dt>Decidida por</dt>
+          <dd>{{ solicitud.decidida_por.nombre }} · {{ solicitud.decidida_en|date:"d/m/Y H:i" }}</dd>
+        {% endif %}
+      </dl>
+      {% include "reservas/_pago.html" with pago=solicitud.pago id_de_solicitud=solicitud.id aviso=aviso_del_dinero para_gestion=True puede_declarar=solicitud.puede_declarar puede_retirar=solicitud.puede_retirar frase=solicitud.frase_del_pago area_id=area.id %}
+      {% if solicitud.estado == "APARTADA" and puede_aprobar %}
+        <form method="post" action="{% url 'reservas:decidir' solicitud.id %}" class="am-formulario">
+          {% csrf_token %}
+          <input type="hidden" name="area" value="{{ area.id }}">
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="motivo-{{ solicitud.id }}">Motivo de la decisión o condiciones del alquiler</label>
+            <textarea class="am-campo__control" id="motivo-{{ solicitud.id }}" name="motivo" rows="3" maxlength="1000">{{ area.condiciones_alquiler }}</textarea>
+            <span class="am-campo__ayuda">Al aceptar, puedes revisar y ajustar las reglas de renta configuradas para esta zona. Al rechazar es el comentario para el residente, y solo es obligatorio con «Otro motivo».</span>
+          </div>
+          {% if puede_rechazar %}
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="categoria-{{ solicitud.id }}">Motivo del rechazo</label>
+            <select class="am-campo__control" id="categoria-{{ solicitud.id }}" name="categoria">
+              <option value="">Solo si vas a rechazar</option>
+              {% for clave, nombre in categorias_de_rechazo %}
+                <option value="{{ clave }}">{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          <div class="acciones">
+            <button class="am-btn am-btn--primario" type="submit" name="decision" value="RESERVADA">Aceptar</button>
+            {% if puede_rechazar %}
+            <button class="am-btn am-btn--secundario" type="submit" name="decision" value="RECHAZADA">Rechazar</button>
+            {% endif %}
+          </div>
+        </form>
+      {% endif %}
+      {% if solicitud.estado == "APARTADA" and puede_descartar %}
+        <form method="post" action="{% url 'reservas:descartar' solicitud.id %}" class="am-formulario">
+          {% csrf_token %}
+          <input type="hidden" name="area" value="{{ area.id }}">
+          <p class="vista__guia">Descarta la solicitud si no está en condiciones de tramitarse. Aprobarla o rechazarla de fondo le corresponde a la administración.</p>
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="causal-{{ solicitud.id }}">Causal del descarte</label>
+            <select class="am-campo__control" id="causal-{{ solicitud.id }}" name="causal" required>
+              <option value="">Elige una causal</option>
+              {% for clave, nombre in causales_de_descarte %}
+                <option value="{{ clave }}">{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="comentario-{{ solicitud.id }}">Comentario para el residente</label>
+            <textarea class="am-campo__control" id="comentario-{{ solicitud.id }}" name="comentario" rows="3" maxlength="1000" required></textarea>
+            <span class="am-campo__ayuda">El residente lo va a leer en su solicitud y en el aviso. La franja queda libre.</span>
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--secundario" type="submit">Descartar</button>
+          </div>
+        </form>
+      {% endif %}
+    </article>
+  {% empty %}
+    {% if not error_de_solicitudes %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">No hay solicitudes para esta zona común</p>
+      <p class="am-vacio__texto">Las solicitudes enviadas por los residentes aparecerán aquí.</p>
+    </div>
+    {% endif %}
+  {% endfor %}
+  <div class="acciones">
+    {% if puede_descartar or puede_aprobar %}
+    <a class="am-btn am-btn--secundario" href="{% url 'triage:bandeja' %}">Volver al dashboard</a>
+    {% endif %}
+    <a class="am-btn am-btn--secundario" href="{% url 'areas:lista' %}">Volver a áreas comunes</a>
+  </div>
+{% endif %}
+{% endblock %}

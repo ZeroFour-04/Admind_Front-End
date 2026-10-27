@@ -1,0 +1,40 @@
+{% comment %}
+El dashboard de gestión: una pestaña por tipo de solicitud y, debajo, su tabla. Las pestañas, los filtros
+y el orden son enlaces: todo viaja en la URL y la pantalla no carga JavaScript.
+{% endcomment %}
+<nav class="am-pestanas" aria-label="Tipos de solicitud">
+  {% for item in pestanas %}
+    {% if item.activa %}
+      <span class="am-pestana am-es-activa" aria-current="page">{{ item.nombre }}{% if item.pendientes %} <span class="tablero__cuenta">{{ item.pendientes }}<span class="solo-lector"> pendientes</span></span>{% endif %}</span>
+    {% else %}
+      <a class="am-pestana" href="{{ item.url }}">{{ item.nombre }}{% if item.pendientes %} <span class="tablero__cuenta">{{ item.pendientes }}<span class="solo-lector"> pendientes</span></span>{% endif %}</a>
+    {% endif %}
+  {% endfor %}
+</nav>
+
+{% if filtros %}
+  <div class="tablero__barra">
+    <nav class="tablero__opciones" aria-label="Qué se muestra">
+      {% for filtro in filtros %}
+        <a class="tablero__opcion{% if filtro.activo %} tablero__opcion--activa{% endif %}" href="{{ filtro.url }}"{% if filtro.activo %} aria-current="true"{% endif %}>{{ filtro.nombre }}</a>
+      {% endfor %}
+    </nav>
+    {% if ordenes %}
+      <nav class="tablero__opciones" aria-label="Orden de la tabla">
+        {% for orden in ordenes %}
+          <a class="tablero__opcion{% if orden.activo %} tablero__opcion--activa{% endif %}" href="{{ orden.url }}"{% if orden.activo %} aria-current="true"{% endif %}>{{ orden.nombre }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif pestana == "reservas" %}
+  {% include "triage/_tabla_reservas.html" %}
+{% elif pestana == "casos" %}
+  {% include "triage/_tabla_casos.html" %}
+{% else %}
+  {% include "triage/_citas.html" %}
+{% endif %}

@@ -1,0 +1,46 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Áreas comunes{% endblock %}
+{% block titulo_vista %}Áreas comunes{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if creada %}
+  <div class="aviso-exito" role="status">Área creada.</div>
+{% endif %}
+{% if cambio_de_modo %}
+  <div class="aviso-exito" role="status">
+    «{{ cambio_de_modo.nombre }}» ahora se usa {% if cambio_de_modo.modo_uso == "ingreso" %}con ingreso{% else %}con reserva{% endif %}.
+    {% if cambio_de_modo.modo_uso == "ingreso" and cambio_de_modo.reservas_por_cumplir %}
+      Tiene {{ cambio_de_modo.reservas_por_cumplir }} reserva{{ cambio_de_modo.reservas_por_cumplir|pluralize }} apartada{{ cambio_de_modo.reservas_por_cumplir|pluralize }} o reservada{{ cambio_de_modo.reservas_por_cumplir|pluralize }} de hoy en adelante, que sigue{{ cambio_de_modo.reservas_por_cumplir|pluralize:"n" }} válida{{ cambio_de_modo.reservas_por_cumplir|pluralize }}.
+      {% if puede_ver_solicitudes %}<a href="{% url 'reservas:solicitudes-area' cambio_de_modo.area_id %}">Revisarlas</a>{% endif %}
+    {% endif %}
+    {% if cambio_de_modo.modo_uso == "reserva" and cambio_de_modo.personas_adentro %}
+      Hay {{ cambio_de_modo.personas_adentro }} persona{{ cambio_de_modo.personas_adentro|pluralize }} adentro: sigue{{ cambio_de_modo.personas_adentro|pluralize:"n" }} adentro hasta que portería registre la salida o se cumpla el tiempo.
+    {% endif %}
+    {% if cambio_de_modo.reglas_retiradas %}
+      Se retiraron las reglas del área que eran solo del modo anterior: {{ cambio_de_modo.reglas_retiradas|join:", " }}.
+    {% endif %}
+  </div>
+{% endif %}
+{% if puede_gestionar and areas %}
+  <div class="vista__acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear área</a>
+  </div>
+{% endif %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if areas %}
+  {% include "areas/_tabla_areas.html" with acciones=puede_gestionar ver_solicitudes=puede_ver_solicitudes %}
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay áreas comunes</p>
+    <p class="am-vacio__texto">El salón comunal, la piscina o el BBQ: las áreas que se pueden reservar aparecen aquí.</p>
+    {% if puede_gestionar %}
+      <a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear la primera área</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

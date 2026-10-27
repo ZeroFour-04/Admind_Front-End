@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+{% load conjuntos %}
+
+{% block titulo %}Elige un conjunto{% endblock %}
+
+{% block cuerpo %}
+{% include "componentes/barra_superior.html" with sin_conjunto=True %}
+<main class="vista vista--sin-lateral">
+  <div class="vista__encabezado">
+    <h1>Elige un conjunto</h1>
+  </div>
+  <p class="vista__guia">Tienes acceso a estos conjuntos. Todo lo que veas y registres después pertenece al que elijas.</p>
+
+  {% if error %}
+    <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+  {% endif %}
+  {% if puede_crear %}
+    <div class="acciones">
+      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:nuevo' %}">Crear conjunto</a>
+    </div>
+  {% endif %}
+
+  {% if conjuntos %}
+    <ul class="rejilla-tarjetas" role="list">
+      {% for conjunto in conjuntos %}
+        {# Cada tarjeta lleva el color de su conjunto: el mismo que verá en la barra al entrar (HU-26). #}
+        <li class="am-tarjeta tarjeta-conjunto"{% atributos_de_acento conjunto %}>
+          <span class="tarjeta-conjunto__franja" aria-hidden="true"></span>
+          <div class="tarjeta-conjunto__cabeza">
+            {% include "conjuntos/_foto.html" with conjunto=conjunto tamano="tarjeta" %}
+            <h2>{{ conjunto.nombre }}</h2>
+          </div>
+          {% if conjunto.direccion %}<p class="tarjeta-conjunto__dato">{{ conjunto.direccion }}</p>{% endif %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="conjunto" value="{{ conjunto.id }}">
+            <button class="am-btn am-btn--primario" type="submit">Entrar al conjunto</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif not error %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">Todavía no tienes acceso a ningún conjunto</p>
+      <p class="am-vacio__texto">Cuando la administración de un conjunto te asigne un rol, aparecerá aquí.</p>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

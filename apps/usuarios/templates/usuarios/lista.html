@@ -1,0 +1,104 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Usuarios{% endblock %}
+{% block titulo_vista %}Usuarios{% endblock %}
+{% block estado_vista %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/usuarios.css' %}">{% endblock %}
+
+{% block contenido %}
+<div class="vista__acciones">
+  <a class="am-btn am-btn--primario" href="{% url 'usuarios:registrar' %}">Registrar persona</a>
+</div>
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif usuarios %}
+  {# Los usuarios se agrupan por rol, se buscan y se ordenan en el navegador (static/js/directorio-usuarios.js). #}
+  <div class="directorio-usuarios" x-data="directorioDeUsuarios()">
+    <div class="barra-directorio">
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="buscar-usuarios">Buscar un usuario</label>
+        <input class="am-campo__control" type="search" id="buscar-usuarios" x-model.debounce.120ms="consulta"
+               autocomplete="off" spellcheck="false" aria-describedby="buscar-usuarios-ayuda"
+               placeholder="Un nombre, un correo, una cédula o una vivienda">
+        <span class="am-campo__ayuda" id="buscar-usuarios-ayuda">La lista se filtra mientras escribes.</span>
+      </div>
+      <button class="am-btn am-btn--secundario" type="button" @click="alternarTodos()" x-show="grupos.length > 1" x-cloak
+              x-text="todosAbiertos ? 'Contraer todos' : 'Expandir todos'"></button>
+    </div>
+
+    <p class="vista__guia" role="status" x-text="resumen" x-show="resumen" x-cloak></p>
+
+    <template x-for="grupo in grupos" :key="grupo.rol">
+      <section class="am-tarjeta grupo-usuarios" :aria-labelledby="'titulo-' + grupo.rol">
+        <h2 class="grupo-usuarios__titulo" :id="'titulo-' + grupo.rol">
+          <button class="grupo-usuarios__boton" type="button" :aria-expanded="estaAbierto(grupo.rol)"
+                  :aria-controls="'cuerpo-' + grupo.rol" @click="alternar(grupo.rol)">
+            <svg class="grupo-usuarios__flecha" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span x-text="grupo.titulo"></span>
+            <span class="conteo-grupo" x-text="conteoDe(grupo)"></span>
+          </button>
+        </h2>
+
+        <div class="grupo-usuarios__cuerpo" :id="'cuerpo-' + grupo.rol" x-show="estaAbierto(grupo.rol)" x-cloak>
+          <div class="am-campo campo-orden">
+            <label class="am-campo__etiqueta" :for="'orden-' + grupo.rol">Ordenar por</label>
+            <select class="am-campo__control" :id="'orden-' + grupo.rol" @change="orden[grupo.rol] = $event.target.value">
+              <template x-for="opcion in opcionesDe(grupo)" :key="opcion.valor">
+                <option :value="opcion.valor" x-text="opcion.etiqueta" :selected="opcion.valor === ordenDe(grupo.rol)"></option>
+              </template>
+            </select>
+          </div>
+
+          <div class="am-tabla-caja tabla-desplazable">
+            <table class="am-tabla">
+              <thead>
+                <tr>
+                  <th class="col-nombre">Nombre</th>
+                  <th>Correo</th>
+                  <th x-show="grupo.conViviendas">Agrupación</th>
+                  <th x-show="grupo.conViviendas">Vivienda</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="usuario in grupo.filas" :key="usuario.id">
+                  <tr>
+                    <td class="col-nombre" x-text="usuario.nombre"></td>
+                    <td x-text="usuario.correo"></td>
+                    <td x-show="grupo.conViviendas" x-text="usuario.agrupaciones || '—'"></td>
+                    <td x-show="grupo.conViviendas" x-text="usuario.viviendas || 'Sin vivienda'"></td>
+                    <td><a class="am-btn am-btn--secundario" :href="usuario.url">Ver todos los datos</a></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <div class="am-vacio" x-show="escribiendo && !grupos.length" x-cloak>
+      <p class="am-vacio__titulo">No encontramos usuarios con esa búsqueda</p>
+      <p class="am-vacio__texto">Prueba con menos palabras: solo un nombre, un apellido o la vivienda.</p>
+    </div>
+  </div>
+{% else %}
+<div class="am-vacio">
+  <p class="am-vacio__titulo">Todavía no hay usuarios para mostrar</p>
+  <p class="am-vacio__texto">Los usuarios que agregues aparecerán aquí.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if usuarios %}
+    {{ usuarios|json_script:"usuarios-datos" }}
+    {{ grupos|json_script:"usuarios-grupos" }}
+  {% endif %}
+  <script src="{% static 'js/busqueda.js' %}" defer></script>
+  <script src="{% static 'js/directorio-usuarios.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Publicar anuncio{% endblock %}
+{% block titulo_vista %}Publicar anuncio{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.titulo %}
+  {% include "anuncios/_campo_cuerpo.html" with campo=formulario.cuerpo %}
+
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.fotos.id_for_label }}">{{ formulario.fotos.label }}</label>
+    <input class="am-campo__control campo-archivo" type="file" id="{{ formulario.fotos.id_for_label }}" name="{{ formulario.fotos.html_name }}"
+           accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple
+           aria-describedby="{{ formulario.fotos.id_for_label }}-ayuda {{ formulario.fotos.id_for_label }}-datos{% if formulario.fotos.errors %} {{ formulario.fotos.id_for_label }}-error{% endif %}"
+           {% if formulario.fotos.errors %}aria-invalid="true"{% endif %}>
+    <span class="am-campo__ayuda" id="{{ formulario.fotos.id_for_label }}-ayuda">Opcional. Hasta 4 fotos PNG, JPG o WebP, de hasta 5 MB cada una. Después de publicar no se pueden cambiar.</span>
+    {# Ley 1581: el sistema no puede saber qué muestra una foto; lo advierte a quien la sube. #}
+    <span class="am-campo__ayuda" id="{{ formulario.fotos.id_for_label }}-datos">Una foto donde se reconoce a una persona es un dato personal: publícala solo con su permiso.</span>
+    {% if formulario.fotos.errors %}<span class="am-campo__error" id="{{ formulario.fotos.id_for_label }}-error">{{ formulario.fotos.errors|join:" " }}</span>{% endif %}
+  </div>
+
+  <fieldset class="opciones-alcance">
+    <legend class="am-campo__etiqueta">{{ formulario.alcance.label }}</legend>
+    {% for valor, nombre in formulario.fields.alcance.choices %}
+      <label class="opciones-alcance__opcion">
+        <input type="radio" name="{{ formulario.alcance.html_name }}" value="{{ valor }}"
+               {% if formulario.alcance.value == valor %}checked{% endif %}>
+        <span>
+          <b>{{ nombre }}</b>
+          {% if valor == "conjunto" %}
+            <span class="am-campo__ayuda">Lo reciben todas las personas con un rol en el conjunto.</span>
+          {% else %}
+            <span class="am-campo__ayuda">Lo reciben el propietario y el arrendatario de esa vivienda, vivan o no ahí.</span>
+          {% endif %}
+        </span>
+      </label>
+    {% endfor %}
+    {% if formulario.alcance.errors %}<span class="am-campo__error">{{ formulario.alcance.errors|join:" " }}</span>{% endif %}
+  </fieldset>
+
+  {% if ofrece_vivienda %}
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+      <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}"
+              aria-describedby="{{ formulario.unidad.id_for_label }}-ayuda{% if formulario.unidad.errors %} {{ formulario.unidad.id_for_label }}-error{% endif %}"
+              {% if formulario.unidad.errors %}aria-invalid="true"{% endif %}>
+        {% for valor, nombre in formulario.fields.unidad.choices %}
+          <option value="{{ valor }}"{% if formulario.unidad.value|stringformat:"s" == valor|stringformat:"s" %} selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+      </select>
+      <span class="am-campo__ayuda" id="{{ formulario.unidad.id_for_label }}-ayuda">
+        Solo si el anuncio es para una vivienda.{% if not hay_viviendas %} Este conjunto todavía no tiene viviendas registradas.{% endif %}
+      </span>
+      {% if formulario.unidad.errors %}<span class="am-campo__error" id="{{ formulario.unidad.id_for_label }}-error">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+    </div>
+  {% endif %}
+
+  {# R14: lo único que separa el uso correcto del anuncio dirigido de un atajo. #}
+  <div class="aviso-info" role="note">
+    <p><b>Una infracción no se comunica con un anuncio dirigido.</b> Se comunica desde el módulo de infracciones.</p>
+  </div>
+  <p class="am-campo__ayuda">Al publicar se avisa una sola vez, en AdMind y por correo. Si después editas el texto, no se vuelve a avisar.</p>
+
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'anuncios:lista' %}">Cancelar</a>
+    <button class="am-btn am-btn--primario" type="submit">Publicar</button>
+  </div>
+</form>
+{% endblock %}

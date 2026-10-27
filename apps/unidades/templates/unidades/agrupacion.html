@@ -1,0 +1,30 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}{{ nombre }}{% endblock %}
+{% block titulo_vista %}{{ nombre }}{% endblock %}
+{% block estado_vista %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/unidades.css' %}">{% endblock %}
+
+{% block contenido %}
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'unidades:lista' %}">Volver a Unidades</a>
+</div>
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if unidades %}
+  <div class="directorio" x-data="directorioDeUnidades({ limite: 0, hayAgrupaciones: false })">
+    {% include "unidades/_buscador.html" %}
+    {% include "unidades/_resultados.html" with con_agrupacion=False %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if unidades %}{{ unidades|json_script:"unidades-datos" }}{% endif %}
+  <script src="{% static 'js/unidades.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endblock %}

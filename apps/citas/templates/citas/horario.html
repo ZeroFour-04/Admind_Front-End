@@ -1,0 +1,126 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Citas{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/citas.css' %}">{% endblock %}
+{% block titulo_vista %}Citas{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if guardado %}
+  <div class="aviso-exito" role="status">El horario de atención quedó guardado.</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+<section class="am-tarjeta citas-horario">
+  <div class="citas-horario__introduccion">
+    <h2>Horario de atención</h2>
+    {% if editando %}
+      <p>Define cuándo pueden agendar una cita con Administración. Puedes dejar días sin atención y marcar el almuerzo o un descanso.</p>
+    {% endif %}
+  </div>
+  {% if tiene_horario and not editando %}
+    <dl class="citas-resumen">
+      {% for dia in dias_resumen %}
+        <div class="citas-resumen__dia">
+          <dt>{{ dia.nombre }}</dt>
+          <dd>
+            {% if dia.configuracion.activo %}
+              <span>{{ dia.configuracion.hora_inicio|slice:":5" }} a {{ dia.configuracion.hora_fin|slice:":5" }}</span>
+              {% if dia.configuracion.descanso_inicio and dia.configuracion.descanso_fin %}
+                <span class="citas-resumen__descanso">Almuerzo o descanso: {{ dia.configuracion.descanso_inicio|slice:":5" }} a {{ dia.configuracion.descanso_fin|slice:":5" }}</span>
+              {% else %}
+                <span class="citas-resumen__descanso">Sin almuerzo o descanso configurado</span>
+              {% endif %}
+            {% else %}
+              <span>No hay atención</span>
+            {% endif %}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+    <div class="citas-formulario__acciones">
+      <a class="am-btn am-btn--primario" href="{% url 'citas:horario' %}?editar=1">Editar horario</a>
+    </div>
+  {% else %}
+  {% if tiene_horario %}
+    <p><a class="am-btn am-btn--secundario" href="{% url 'citas:horario' %}">Cancelar edición</a></p>
+  {% endif %}
+  <form method="post" class="citas-formulario">
+    {% csrf_token %}
+    {% if formulario.non_field_errors %}
+      <div class="am-alerta am-alerta--error" role="alert">{{ formulario.non_field_errors }}</div>
+    {% endif %}
+    <fieldset class="citas-formulario__modos">
+      <legend>{{ formulario.modo.label }}</legend>
+      {% for radio in formulario.modo %}
+        <label class="citas-opcion">
+          {{ radio.tag }}
+          <span>{{ radio.choice_label }}</span>
+        </label>
+      {% endfor %}
+      {% if formulario.modo.errors %}<p class="am-campo__error">{{ formulario.modo.errors|join:" " }}</p>{% endif %}
+    </fieldset>
+
+    <section class="citas-configuracion" data-configuracion="comun">
+      <h3>Horario que se aplicará</h3>
+      <div class="citas-campos">
+        {% for campo in formulario %}
+          {% if campo.name == "hora_inicio" or campo.name == "hora_fin" or campo.name == "descanso_inicio" or campo.name == "descanso_fin" %}
+            <div class="am-campo">
+              <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+              {{ campo }}
+              {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="citas-rango" data-rango-dias>
+        <h3>Días de atención</h3>
+        <div class="citas-campos">
+          {% for campo in formulario %}
+            {% if campo.name == "dia_inicio" or campo.name == "dia_fin" %}
+              <div class="am-campo">
+                <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+                {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="citas-configuracion" data-configuracion="por_dia">
+      <h3>Horario por día</h3>
+      <p class="citas-ayuda">Activa cada día que atiendes. Si no tiene almuerzo o descanso, deja esas horas vacías.</p>
+      <div class="citas-dias">
+        {% for dia in dias %}
+          <fieldset class="citas-dia">
+            <legend>{{ dia.nombre }}</legend>
+            <label class="citas-dia__activo">{{ dia.activo }} {{ dia.activo.label }}</label>
+            <div class="citas-campos">
+              {% for campo in dia.campos %}
+                <div class="am-campo">
+                  <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.errors %}<span class="am-campo__error">{{ campo.errors|join:" " }}</span>{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endfor %}
+      </div>
+    </section>
+    <div class="citas-formulario__acciones">
+      <button class="am-btn am-btn--primario" type="submit">{% if tiene_horario %}Guardar cambios{% else %}Guardar horario{% endif %}</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/citas.js' %}" defer></script>
+{% endblock %}

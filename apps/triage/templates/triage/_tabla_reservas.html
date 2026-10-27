@@ -1,0 +1,54 @@
+{% comment %}
+Pestaña Reservas del dashboard (HU-14). La que más lleva esperando va primero: entre reservas no hay
+prioridad. El enlace del ID cubre toda la fila y lleva a la tarjeta de la solicitud, donde se decide.
+{% endcomment %}
+{% if filas %}
+  <div class="am-tabla-caja tabla-solicitudes">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Zona</th>
+          <th scope="col">Día y franja</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Residente</th>
+          <th scope="col">Vivienda</th>
+          <th scope="col">Solicitada</th>
+          <th scope="col">Pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td><a class="tabla-solicitudes__enlace" href="{{ fila.url }}">{{ fila.codigo }}</a></td>
+            <td>{{ fila.zona }}</td>
+            <td>{{ fila.dia|capfirst }} <span class="am-tabla__secundario">{{ fila.hora_inicio|time:"H:i" }} a {{ fila.hora_fin|time:"H:i" }}</span></td>
+            <td><span class="am-pastilla {{ fila.estado_clase }}">{{ fila.estado }}</span></td>
+            <td>{{ fila.residente }}</td>
+            <td>{{ fila.vivienda|default:"No indicada" }}</td>
+            <td>{{ fila.enviada|date:"d/m/Y" }} <span class="am-tabla__secundario">{{ fila.antiguedad }}</span></td>
+            <td>
+              {% if not fila.con_pago %}
+                <span class="am-tabla__secundario">No aplica</span>
+              {% elif fila.pago_declarado %}
+                <span class="am-pastilla am-pastilla--confirmado">Declarado</span>
+              {% else %}
+                <span class="am-pastilla am-pastilla--neutro">Sin declarar</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="am-vacio">
+    {% if ver == "pendientes" %}
+      <p class="am-vacio__titulo">No hay reservas esperando decisión</p>
+      <p class="am-vacio__texto">Cuando un residente envíe una solicitud de reserva, aparecerá aquí. Las ya decididas están en «Todas».</p>
+    {% else %}
+      <p class="am-vacio__titulo">Todavía no hay solicitudes de reserva</p>
+      <p class="am-vacio__texto">Las solicitudes que envíen los residentes aparecerán aquí.</p>
+    {% endif %}
+  </div>
+{% endif %}

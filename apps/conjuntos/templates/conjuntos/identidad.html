@@ -1,0 +1,93 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Color y foto{% endblock %}
+{% block titulo_vista %}Color y foto del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% else %}
+  {% if guardado %}<div class="aviso-exito" role="status">Cambios guardados.</div>{% endif %}
+  <p class="vista__guia">El color y la foto ayudan a reconocer en qué conjunto estás trabajando. Los ven todas las personas del conjunto.</p>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-color">
+    <h2 id="titulo-color">Color</h2>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="color">
+      {% include "componentes/errores_formulario.html" with formulario=color %}
+      {% include "conjuntos/_selector_acento.html" with campo=color.acento campo_color=color.color %}
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Guardar color</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-foto">
+    <h2 id="titulo-foto">Foto</h2>
+    <div class="vista-previa-foto">
+      {% if conjunto.logo %}
+        {% include "conjuntos/_foto.html" with conjunto=conjunto tamano="grande" alt="Foto actual de "|add:conjunto.nombre %}
+      {% else %}
+        {% include "conjuntos/_foto.html" with conjunto=conjunto tamano="grande" %}
+        <p>Sin foto. En la barra y en el selector se muestran sus iniciales junto al nombre: <b>{{ conjunto.nombre }}</b></p>
+      {% endif %}
+    </div>
+
+    {# Con JavaScript, la foto se encuadra aquí y se sube ya cuadrada. Sin él, sube tal cual y la API rechaza la que no sea 1:1. #}
+    <form method="post" enctype="multipart/form-data" class="am-formulario" novalidate x-data="recortadorDeFoto" @submit="enviar">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="logo">
+      {% include "componentes/errores_formulario.html" with formulario=logo %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ logo.archivo.id_for_label }}">{{ logo.archivo.label }}</label>
+        <input class="am-campo__control campo-archivo" type="file" id="{{ logo.archivo.id_for_label }}" name="{{ logo.archivo.html_name }}"
+               accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required x-ref="archivo" @change="cargar"
+               aria-describedby="{{ logo.archivo.id_for_label }}-ayuda{% if logo.archivo.errors %} {{ logo.archivo.id_for_label }}-error{% endif %}"
+               {% if logo.archivo.errors %}aria-invalid="true"{% endif %}>
+        <span class="am-campo__ayuda" id="{{ logo.archivo.id_for_label }}-ayuda">PNG, JPG o WebP de hasta 512 KB. Se guarda cuadrada (1:1): al elegirla puedes encuadrarla.</span>
+        {% if logo.archivo.errors %}<span class="am-campo__error" id="{{ logo.archivo.id_for_label }}-error">{{ logo.archivo.errors|join:" " }}</span>{% endif %}
+      </div>
+
+      {# Se muestra con hidden y no con x-show: x-show lo deja para el siguiente cuadro de animación, y el recortador mediría el cuadro antes, todavía oculto. #}
+      <div class="recortador" hidden :hidden="!lista">
+        <p class="am-campo__etiqueta" id="recortador-titulo">Encuadre</p>
+        <div class="recortador__marco" x-ref="marco" tabindex="0" role="group" aria-labelledby="recortador-titulo" aria-describedby="recortador-ayuda"
+             @pointerdown="empezar" @pointermove="arrastrar" @pointerup="soltar" @pointercancel="soltar"
+             @keydown.arrow-left.prevent="mover(-8, 0)" @keydown.arrow-right.prevent="mover(8, 0)"
+             @keydown.arrow-up.prevent="mover(0, -8)" @keydown.arrow-down.prevent="mover(0, 8)">
+          <template x-if="url"><img :src="url" :style="estilo" alt="" draggable="false"></template>
+        </div>
+        <span class="am-campo__ayuda" id="recortador-ayuda">Arrastra la foto, o usa las flechas, para elegir qué parte queda dentro del cuadro.</span>
+        <label class="am-campo__etiqueta" for="recortador-zoom">Acercar</label>
+        <input class="recortador__zoom" id="recortador-zoom" type="range" min="1" max="4" step="0.01" :value="zoom" @input="acercar(+$event.target.value)">
+      </div>
+
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit" :disabled="enviando">{% if conjunto.logo %}Cambiar foto{% else %}Subir foto{% endif %}</button>
+      </div>
+    </form>
+
+    {% if conjunto.logo %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="quitar_logo">
+        <button class="am-btn am-btn--secundario" type="submit">Quitar foto</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-resumen' %}">Volver al conjunto</a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not error %}
+  <script src="{% static 'js/identidad.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Guarda tus códigos de respaldo{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Guarda tus códigos de respaldo</h1>
+<div class="aviso-exito" role="status">La verificación en dos pasos quedó activa.</div>
+<p class="tarjeta-sin-sesion__texto">Si pierdes el celular, entra con uno de estos códigos. Cada uno sirve una sola vez. <strong>Esta es la única vez que los vas a ver</strong>: cópialos o imprímelos ahora.</p>
+
+<ul class="codigos-de-respaldo" role="list">
+  {% for codigo in codigos %}<li><code>{{ codigo }}</code></li>{% endfor %}
+</ul>
+
+<a class="am-btn am-btn--primario formulario__envio" href="{% url 'cuentas:continuar' %}">Ya los guardé, continuar</a>
+{% endblock %}

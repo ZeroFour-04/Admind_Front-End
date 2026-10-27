@@ -1,0 +1,15 @@
+.am-btn--naranja{background:linear-gradient(180deg,#fbbf24 0%,#f59e0b 100%);color:#fff;border-color:#d97706;box-shadow:0 8px 18px rgba(217,119,6,.28);font-weight:700;letter-spacing:.02em}
+.am-btn--naranja:hover,.am-btn--naranja.am-es-hover{background:linear-gradient(180deg,#f59e0b 0%,#d97706 100%);color:#fff;transform:translateY(-1px);box-shadow:0 10px 22px rgba(217,119,6,.36)}
+.am-btn--naranja:focus-visible{outline:3px solid rgba(245,158,11,.45);outline-offset:2px}
+.caso__foto{display:block;max-width:min(100%,640px);max-height:480px;margin-top:var(--e-3);border-radius:var(--radio-control);object-fit:contain}
+.caso__tarjeta{padding:0}
+.caso__resumen{display:flex;align-items:center;justify-content:space-between;gap:var(--e-3);padding:var(--e-4);cursor:pointer;list-style:none}
+.caso__resumen::-webkit-details-marker{display:none}
+.caso__resumen>span:first-child{display:grid;gap:var(--e-1)}
+.caso__detalle{padding:0 var(--e-4) var(--e-4)}
+.caso__acciones{display:flex;align-items:flex-start;gap:var(--e-2);margin-top:var(--e-3)}
+.caso__rechazo>form{display:grid;gap:var(--e-2);min-width:min(100%,420px);padding:var(--e-3) 0}
+.caso__rechazo textarea{width:100%;resize:vertical}
+.caso__motivo-rechazo{margin-top:var(--e-3)}
+.caso__motivo-rechazo p{margin-bottom:0}
+@media(max-width:600px){.caso__resumen{align-items:flex-start}.caso__acciones{flex-direction:column}}

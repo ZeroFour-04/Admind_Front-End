@@ -1,0 +1,40 @@
+{% comment %}
+Tabla de viviendas que se filtra con el buscador. Se pinta desde `visibles` (Alpine): el filtro es solo
+de presentación, los datos son los de la API. Parámetros: puede_gestionar y con_agrupacion.
+{% endcomment %}
+<p class="vista__guia" role="status" x-text="resumen" x-show="resumen" x-cloak></p>
+
+<div class="am-tabla-caja tabla-desplazable" x-show="visibles.length" x-cloak>
+  <table class="am-tabla">
+    <thead>
+      <tr>
+        <th>Vivienda</th>
+        {% if con_agrupacion %}<th>Agrupación</th>{% endif %}
+        {% if puede_gestionar %}<th>Propietario</th><th>Arrendatario</th>{% endif %}
+        <th class="am-col-num">Vínculos vigentes</th>
+        {% if puede_gestionar %}<th>Acciones</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      <template x-for="unidad in visibles" :key="unidad.id">
+        <tr>
+          <td x-text="unidad.nombre"></td>
+          {% if con_agrupacion %}<td x-text="unidad.agrupacion || 'Sin agrupar'"></td>{% endif %}
+          {% if puede_gestionar %}
+            <td x-text="unidad.propietarios || 'Sin registrar'"></td>
+            <td x-text="unidad.arrendatarios || 'Sin registrar'"></td>
+          {% endif %}
+          <td class="am-col-num am-num" x-text="unidad.vinculos"></td>
+          {% if puede_gestionar %}
+            <td><a class="am-btn am-btn--secundario" :href="unidad.url">Ver vínculos</a></td>
+          {% endif %}
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</div>
+
+<div class="am-vacio" x-show="!visibles.length" x-cloak>
+  <p class="am-vacio__titulo">No encontramos viviendas con esa búsqueda</p>
+  <p class="am-vacio__texto">Prueba con menos palabras: solo el número de la vivienda{% if puede_gestionar %}, un apellido o la cédula{% endif %}.</p>
+</div>

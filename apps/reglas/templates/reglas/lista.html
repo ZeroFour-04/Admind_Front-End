@@ -1,0 +1,75 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Reglas{% endblock %}
+{% block titulo_vista %}{% if en_asistente %}Reglas de reserva del conjunto{% else %}Reglas de reserva{% endif %}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if en_asistente %}
+  {% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if tablero %}
+  <section aria-labelledby="reglas-del-conjunto">
+    <h2 id="reglas-del-conjunto">Reglas del conjunto</h2>
+    <p class="vista__guia">Valen para todas las áreas. Cada una se define una sola vez.{% if en_asistente %} Para quedar operativo, el conjunto necesita la anticipación máxima definida.{% endif %}</p>
+    <div class="am-tabla-caja tabla-desplazable">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th scope="col">Regla</th>
+            <th scope="col">Hoy</th>
+            {% if puede_configurar %}<th scope="col">Acciones</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in tablero.alfas %}{% include "reglas/_fila.html" with area=None %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% for grupo in tablero.por_area %}
+    <section aria-labelledby="area-{{ forloop.counter }}">
+      <h2 id="area-{{ forloop.counter }}">{{ grupo.area.nombre }}</h2>
+      <p class="vista__guia">
+        {% if grupo.area.modo_uso == "ingreso" %}
+          Con ingreso: abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, con permanencia máxima de {{ grupo.area.permanencia_maxima_minutos }} minutos y aforo de {{ grupo.area.aforo_maximo }} personas adentro a la vez.
+        {% else %}
+          Abre de {{ grupo.area.hora_apertura }} a {{ grupo.area.hora_cierre }}, en franjas de {{ grupo.area.duracion_franja_minutos }} minutos, con aforo de {{ grupo.area.aforo_maximo }} personas.
+        {% endif %}
+        {% if puede_gestionar_areas %}<a href="{% url 'areas:editar' grupo.area.id %}">Cambiar horario o aforo</a>{% endif %}
+      </p>
+      <div class="am-tabla-caja tabla-desplazable">
+        <table class="am-tabla">
+          <thead>
+            <tr>
+              <th scope="col">Regla</th>
+              <th scope="col">Hoy</th>
+              {% if puede_configurar %}<th scope="col">Acciones</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in grupo.filas %}{% include "reglas/_fila.html" with area=grupo.area %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% empty %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">Todavía no hay áreas comunes</p>
+      <p class="am-vacio__texto">Las reglas de cada área aparecen aquí cuando el área exista.</p>
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if en_asistente %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-areas' %}">Volver</a>
+    <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-reglamento' %}">Continuar</a>
+  </div>
+{% endif %}
+{% endblock %}

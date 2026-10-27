@@ -1,0 +1,10 @@
+{% extends "base/base.html" %}
+
+{% block cuerpo %}
+<main class="pagina-sin-sesion">
+  <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos">AdMind</a>
+  <div class="am-tarjeta tarjeta-sin-sesion">
+    {% block contenido %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

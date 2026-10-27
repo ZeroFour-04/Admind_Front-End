@@ -1,0 +1,95 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Parqueaderos{% endblock %}
+{% block titulo_vista %}Parqueaderos{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if aviso %}
+  <div class="aviso-exito" role="status">{{ aviso }}</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if puede_gestionar %}
+  <form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% include "componentes/campo.html" with campo=formulario.codigo ayuda="Por ejemplo, V-01. Se guarda en mayúsculas y no se repite." %}
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
+      <select class="am-campo__control" id="{{ formulario.tipo.id_for_label }}" name="{{ formulario.tipo.html_name }}">
+        {% for valor, etiqueta in formulario.tipo.field.choices %}
+          <option value="{{ valor }}"{% if formulario.tipo.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      {% if formulario.tipo.errors %}<span class="am-campo__error" role="alert">{{ formulario.tipo.errors|join:" " }}</span>{% endif %}
+    </div>
+    <label class="am-opcion">
+      <input type="checkbox" name="{{ formulario.accesible.html_name }}" id="{{ formulario.accesible.id_for_label }}"{% if formulario.accesible.value %} checked{% endif %}>
+      {{ formulario.accesible.label }}
+    </label>
+    {% include "componentes/campo.html" with campo=formulario.notas ayuda="Opcional. Por ejemplo, «junto a la portería»." %}
+    <p class="am-campo__ayuda">Un parqueadero de visitantes no se asigna a un apartamento: lo ocupa la visita mientras no registre su salida.</p>
+    <div class="acciones">
+      <button class="am-btn am-btn--primario" type="submit">Crear parqueadero</button>
+    </div>
+  </form>
+{% endif %}
+
+{% if parqueaderos %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Accesible</th>
+          <th>Notas</th>
+          <th>Estado</th>
+          {% if puede_gestionar %}<th>Acciones</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for parqueadero in parqueaderos %}
+          <tr>
+            <td><b>{{ parqueadero.codigo }}</b></td>
+            <td>{% if parqueadero.tipo == "visitantes" %}Visitantes{% else %}Residentes{% endif %}</td>
+            <td>{% if parqueadero.accesible %}Sí{% else %}No{% endif %}</td>
+            <td>{{ parqueadero.notas|default:"—" }}</td>
+            <td>
+              {% if parqueadero.tipo != "visitantes" %}
+                <span class="am-pastilla am-pastilla--neutro">Sin asignar</span>
+              {% elif parqueadero.ocupado %}
+                <span class="am-pastilla am-pastilla--tramite">Ocupado</span>
+              {% else %}
+                <span class="am-pastilla am-pastilla--confirmado">Libre</span>
+              {% endif %}
+            </td>
+            {% if puede_gestionar %}
+              <td>
+                <details class="confirmar-accion">
+                  <summary>Retirar</summary>
+                  <form method="post" action="{% url 'parqueaderos:desactivar' parqueadero.id %}">
+                    {% csrf_token %}
+                    <p>Vas a retirar el parqueadero <b>{{ parqueadero.codigo }}</b>. Ya no se ofrecerá a las visitas ni se podrá volver a usar ese código.</p>
+                    <button class="am-btn am-btn--secundario" type="submit">Retirar {{ parqueadero.codigo }}</button>
+                  </form>
+                </details>
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay parqueaderos</p>
+    <p class="am-vacio__texto">
+      {% if puede_gestionar %}Crea el primero con el formulario de arriba. Los de visitantes los ofrece portería al registrar una visita con vehículo.{% else %}Cuando la administración los cree, aparecerán aquí.{% endif %}
+    </p>
+  </div>
+{% endif %}
+{% endblock %}

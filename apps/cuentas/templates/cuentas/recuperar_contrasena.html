@@ -1,0 +1,25 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Recuperar contraseña{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Recuperar contraseña</h1>
+
+{% if enviado %}
+  <div class="aviso-exito" role="status">{{ enviado }}</div>
+  <p class="tarjeta-sin-sesion__texto">Revisa tu bandeja de entrada y la de correo no deseado. El enlace sirve una sola vez y vence en una hora.</p>
+{% else %}
+  <p class="tarjeta-sin-sesion__texto">Escribe el correo con el que inicias sesión. Te llega un enlace de un solo uso para crear una contraseña nueva.</p>
+
+  <form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% include "componentes/campo.html" with campo=formulario.correo tipo="email" autocompletar="username" %}
+    <button type="submit" class="am-btn am-btn--primario formulario__envio">Enviar enlace</button>
+  </form>
+{% endif %}
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:ingreso' %}">Volver a iniciar sesión</a>
+</p>
+{% endblock %}

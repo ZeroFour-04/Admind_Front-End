@@ -1,0 +1,94 @@
+{% comment %}
+El bloque «Pago» de una solicitud de reserva (HU-16). Se escribe una vez y lo usan la tarjeta de gestión
+(solicitudes_area.html) y el detalle del residente (solicitud.html).
+
+Parámetros: pago (con fechas reales), id_de_solicitud, aviso (el texto fijo del dinero, que sale de views.py),
+para_gestion (muestra los nombres de quien declaró y quien subió), error (opcional).
+Solo gestión: puede_declarar, puede_retirar, frase y area_id (a donde vuelve la pantalla).
+Solo el residente: puede_subir.
+
+Sin JavaScript: la confirmación de contenido es la frase que está junto al botón. Qué se ofrece lo decide la API
+con su respuesta; el front solo muestra.
+{% endcomment %}
+<section class="bloque-pago" aria-labelledby="pago-{{ id_de_solicitud }}">
+  <h3 id="pago-{{ id_de_solicitud }}">Pago</h3>
+  <div class="aviso-info" role="note"><p>{{ aviso }}</p></div>
+  {% if error %}<div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>{% endif %}
+  <p>
+    {% if pago.declarado %}
+      <span class="am-pastilla am-pastilla--confirmado">Pago declarado</span>
+    {% else %}
+      <span class="am-pastilla am-pastilla--neutro">Sin pago declarado</span>
+    {% endif %}
+  </p>
+  {% if pago.declarado %}
+    <p>
+      {% if para_gestion %}Declarado por {{ pago.declarado_por }}{% else %}Pago declarado por la administración{% endif %}
+      el {{ pago.declarado_en|date:"l j \d\e F \d\e Y"|lower }}, a las {{ pago.declarado_en|time:"H:i" }}.
+    </p>
+  {% endif %}
+
+  {% if pago.comprobantes %}
+    <p class="tarjeta-contenido__meta">Comprobantes</p>
+    <ul>
+      {% for comprobante in pago.comprobantes %}
+        <li>
+          <a href="{% url 'reservas:comprobante' comprobante.id %}" target="_blank" rel="noopener">{{ comprobante.nombre }}</a>
+          · {% if para_gestion %}subido por {{ comprobante.subido_por }}{% elif comprobante.del_residente %}subido por ti{% else %}subido por la administración{% endif %}
+          el {{ comprobante.subido_en|date:"j \d\e F \d\e Y"|lower }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="tarjeta-contenido__meta">Todavía no hay comprobantes.</p>
+  {% endif %}
+
+  {% if puede_declarar %}
+    <form method="post" action="{% url 'reservas:declarar-pago' id_de_solicitud %}" enctype="multipart/form-data" class="am-formulario">
+      {% csrf_token %}
+      <input type="hidden" name="area" value="{{ area_id }}">
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="comprobante-{{ id_de_solicitud }}">Comprobante, si lo tienes</label>
+        <input class="am-campo__control campo-archivo" type="file" id="comprobante-{{ id_de_solicitud }}" name="archivo"
+               accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+               aria-describedby="comprobante-{{ id_de_solicitud }}-ayuda">
+        <span class="am-campo__ayuda" id="comprobante-{{ id_de_solicitud }}-ayuda">PDF, JPG o PNG de hasta 5 MB.</span>
+      </div>
+      <p>Vas a declarar que recibiste el pago de {{ frase }}</p>
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Declarar pago recibido</button>
+      </div>
+    </form>
+  {% endif %}
+
+  {% if puede_retirar %}
+    <form method="post" action="{% url 'reservas:retirar-pago' id_de_solicitud %}" class="am-formulario">
+      {% csrf_token %}
+      <input type="hidden" name="area" value="{{ area_id }}">
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="retiro-{{ id_de_solicitud }}">Motivo para retirar la declaración</label>
+        <textarea class="am-campo__control" id="retiro-{{ id_de_solicitud }}" name="motivo" rows="2" maxlength="1000" required></textarea>
+      </div>
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Retirar la declaración</button>
+      </div>
+    </form>
+  {% endif %}
+
+  {% if puede_subir %}
+    <form method="post" action="{% url 'reservas:subir-comprobante' id_de_solicitud %}" enctype="multipart/form-data" class="am-formulario">
+      {% csrf_token %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="comprobante-{{ id_de_solicitud }}">Comprobante de pago</label>
+        <input class="am-campo__control campo-archivo" type="file" id="comprobante-{{ id_de_solicitud }}" name="archivo" required
+               accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+               aria-describedby="comprobante-{{ id_de_solicitud }}-ayuda">
+        <span class="am-campo__ayuda" id="comprobante-{{ id_de_solicitud }}-ayuda">PDF, JPG o PNG de hasta 5 MB.</span>
+      </div>
+      <p>Subir el comprobante no confirma el pago: lo declara la administración cuando lo verifique.</p>
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Subir comprobante</button>
+      </div>
+    </form>
+  {% endif %}
+</section>

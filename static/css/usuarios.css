@@ -1,0 +1,31 @@
+/* USUARIOS — directorio agrupado por rol, con buscador y orden por grupo. Solo variables de design-system/:
+   ningún hex aquí. El acento no aparece: el acento tiene cuatro sitios y este no es uno (maestro §6.1). */
+
+[x-cloak]{display:none}
+
+.directorio-usuarios{display:flex;flex-direction:column;gap:var(--e-5)}
+
+.barra-directorio{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--e-4)}
+.barra-directorio .am-campo{flex:1 1 320px;max-width:560px}
+
+/* Un grupo por rol: el encabezado es un botón que recoge o abre su tabla. */
+.grupo-usuarios{overflow:hidden}
+.grupo-usuarios__titulo{margin:0;font-size:inherit}
+.grupo-usuarios__boton{display:flex;align-items:center;gap:var(--e-3);width:100%;min-height:var(--toque-minimo);padding:var(--e-2) var(--e-4);border:0;background:none;font:inherit;font-weight:var(--peso-texto-medio);color:var(--texto-fuerte);text-align:left;cursor:pointer;transition:background var(--transicion)}
+.grupo-usuarios__boton:hover{background:var(--superficie-hundida)}
+.grupo-usuarios__flecha{flex:none;color:var(--texto-medio);transition:transform var(--transicion)}
+.grupo-usuarios__boton[aria-expanded="true"] .grupo-usuarios__flecha{transform:rotate(90deg)}
+.grupo-usuarios__cuerpo{display:flex;flex-direction:column;gap:var(--e-4);padding:var(--e-4);border-top:1px solid var(--borde)}
+
+/* Cuántas personas tiene el grupo: un dato, no el protagonista del encabezado. */
+.conteo-grupo{min-width:var(--e-7);padding:var(--e-1) var(--e-2);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-fuerte);text-align:center;font-variant-numeric:var(--cifras-tabulares)}
+
+.campo-orden{max-width:280px}
+
+/* Un nombre no se parte en dos líneas: si la tabla no cabe, se desplaza. */
+.am-tabla .col-nombre{white-space:nowrap}
+
+@media (max-width:480px){
+  .grupo-usuarios__cuerpo{padding:var(--e-3)}
+  .campo-orden{max-width:none}
+}

@@ -1,0 +1,28 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Problemas con la verificación en dos pasos{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Problemas con la verificación en dos pasos</h1>
+
+{% if enviado %}
+  <div class="aviso-exito" role="status">{{ enviado }}</div>
+  <p class="tarjeta-sin-sesion__texto">Revisa tu bandeja de entrada y la de correo no deseado. El enlace sirve una sola vez y vence en una hora.</p>
+{% else %}
+  <p class="tarjeta-sin-sesion__texto">Si perdiste el celular o borraste la aplicación de autenticación, prueba primero con uno de tus códigos de respaldo.</p>
+  <p class="tarjeta-sin-sesion__texto">Si tampoco los tienes, te enviamos un enlace al correo de tu cuenta para quitar la verificación en dos pasos. Cuando vuelvas a entrar la configuras de nuevo.</p>
+
+  {% if error %}
+    <div class="aviso-error" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="formulario">
+    {% csrf_token %}
+    <button type="submit" class="am-btn am-btn--primario formulario__envio">Enviar enlace a mi correo</button>
+  </form>
+{% endif %}
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:verificar-segundo-factor' %}">Volver a escribir el código</a>
+</p>
+{% endblock %}

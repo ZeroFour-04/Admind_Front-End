@@ -1,0 +1,184 @@
+/* ESTRUCTURA — disposición de las páginas y piezas compartidas entre pantallas.
+   Solo variables de design-system/: ningún hex aquí. */
+
+ul[role="list"]{list-style:none;margin:0;padding:0}
+
+/* ---------- Páginas sin sesión: ingreso y recuperación ---------------- */
+.pagina-sin-sesion{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-5);padding:var(--e-6) var(--e-4)}
+.tarjeta-sin-sesion{width:100%;max-width:400px;padding:var(--e-7) var(--e-6);display:flex;flex-direction:column;gap:var(--e-5)}
+.tarjeta-sin-sesion .vista__encabezado{margin:0}
+.tarjeta-sin-sesion__texto{color:var(--texto-medio)}
+.tarjeta-sin-sesion__pie{text-align:center}
+
+.formulario{display:flex;flex-direction:column;gap:var(--e-5)}
+.formulario .am-campo{max-width:none}
+.formulario__envio{width:100%}
+
+/* Error general de un formulario. Es estado, así que usa los colores de error, nunca el acento. */
+.aviso-error{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--estado-error-fondo);color:var(--estado-error-texto);font-weight:var(--peso-texto-medio)}
+/* Confirmación de que algo salió bien. También es estado. */
+.aviso-exito{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--estado-confirmado-fondo);color:var(--estado-confirmado-texto);font-weight:var(--peso-texto-medio)}
+
+/* ---------- Segundo factor (HU-02) ------------------------------------ */
+.pasos-configuracion{margin:0;padding-left:var(--e-5);display:flex;flex-direction:column;gap:var(--e-2);color:var(--texto-medio)}
+.qr-segundo-factor{align-self:center;background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-control);padding:var(--e-2)}
+.clave-manual{color:var(--texto-medio)}
+.clave-manual code{word-break:break-all;color:var(--texto-fuerte)}
+.codigos-de-respaldo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-2)}
+.codigos-de-respaldo code{display:block;padding:var(--e-2) var(--e-3);background:var(--superficie-hundida);border-radius:var(--radio-control);text-align:center;letter-spacing:.08em;color:var(--texto-fuerte)}
+
+/* ---------- Barra superior: que sus partes bajen de línea en pantallas angostas */
+.am-barra__fila{flex-wrap:wrap;row-gap:var(--e-2)}
+.am-barra__derecha form{margin:0}
+.am-barra__tipo-usuario{font-size:var(--tipo-meta);color:var(--texto-medio);white-space:nowrap}
+.am-barra__perfil{display:inline-flex;align-items:center;justify-content:center;flex:none;width:var(--toque-minimo);height:var(--toque-minimo);border:1px solid var(--borde-fuerte);border-radius:50%;background:var(--superficie-tarjeta);color:var(--texto-medio);text-decoration:none}
+.am-barra__perfil:hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
+.am-barra__perfil svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.confirmacion-eliminar{width:min(100% - var(--e-6),460px);padding:0;border:1px solid var(--borde);border-radius:var(--radio-caja);background:var(--superficie-tarjeta);color:var(--texto-fuerte);box-shadow:var(--sombra-flotante)}
+.confirmacion-eliminar::backdrop{background:var(--tinta-a28)}
+.confirmacion-eliminar .am-modal__pie{margin:0}
+
+/* ---------- Aplicación: lateral y vista ------------------------------- */
+.aplicacion{display:grid;grid-template-columns:auto minmax(0,1fr);min-height:calc(100vh - 65px)}
+.vista{width:100%;max-width:var(--ancho-contenido);padding:var(--e-7) var(--e-6);display:flex;flex-direction:column;gap:var(--e-5)}
+.vista--sin-lateral{margin-inline:auto}
+.vista__encabezado{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-3)}
+.vista__guia{font-size:var(--tipo-guia);color:var(--texto-medio)}
+
+.acciones{display:flex;flex-wrap:wrap;gap:var(--e-3)}
+.acciones--derecha{justify-content:flex-end}
+
+.rejilla-tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--e-4)}
+.tarjeta-conjunto{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e-3);padding:var(--e-6)}
+.tarjeta-conjunto__dato{color:var(--texto-suave)}
+.tarjeta-conjunto .am-btn{margin-top:auto;text-decoration:none}
+
+.pila{display:flex;flex-direction:column;gap:var(--e-4)}
+.tarjeta-contenido{display:flex;flex-direction:column;gap:var(--e-2);padding:var(--e-5) var(--e-6)}
+.tarjeta-contenido__meta{font-size:var(--tipo-meta);color:var(--texto-suave)}
+
+.tabla-desplazable{overflow-x:auto}
+
+/* Los enlaces con forma de botón no se subrayan. */
+a.am-btn--primario,a.am-btn--secundario{text-decoration:none}
+a.am-btn--primario:hover{color:var(--acento-tinta)}
+a.am-btn--secundario:hover{color:var(--texto-fuerte)}
+
+/* Piezas del menú en pantallas angostas: fuera de ese ancho no se ven. */
+.am-barra__menu,.am-lateral__cerrar{display:none;align-items:center;justify-content:center;flex:none;width:var(--toque-minimo);height:var(--toque-minimo);padding:0;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-tarjeta);color:var(--texto-medio);cursor:pointer}
+.am-barra__menu:hover,.am-lateral__cerrar:hover{background:var(--superficie-hundida);color:var(--texto-fuerte)}
+.am-barra__menu svg,.am-lateral__cerrar svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.am-lateral__cerrar{border-color:transparent}
+.am-lateral__cabeza,.am-lateral__pie,.velo-lateral{display:none}
+
+/* Bajo 900px el lateral es un panel que sale desde la izquierda, sobre un velo. Lo abre el botón
+   de la barra superior (static/js/lateral.js pone y quita `am-es-abierto`). */
+@media (max-width:900px){
+  .aplicacion{grid-template-columns:minmax(0,1fr)}
+  .am-barra__menu,.am-lateral__cerrar{display:inline-flex}
+  /* La barra en una sola fila: lo que no cabe está en el pie del lateral, y el nombre del conjunto se recorta. */
+  .am-barra__fila{flex-wrap:nowrap;column-gap:var(--e-3)}
+  .am-barra__marca,.am-barra__derecha{flex:none}
+  .am-barra--con-menu .am-barra__cambiar,.am-barra--con-menu .am-barra__tipo-usuario{display:none}
+  .am-barra__conjunto{min-width:0}
+  .am-barra__conjunto b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .am-lateral{position:fixed;inset:0 auto 0 0;z-index:20;width:min(280px,calc(100vw - var(--e-9)));min-width:0;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--sombra-flotante);transform:translateX(-100%);visibility:hidden;transition:transform var(--transicion),visibility var(--transicion)}
+  /* Al abrir, la visibilidad cambia de inmediato: así el foco puede entrar al panel sin esperar. */
+  .am-lateral.am-es-abierto{transform:none;visibility:visible;transition:transform var(--transicion)}
+  .am-lateral__cabeza{display:flex;align-items:center;justify-content:space-between;gap:var(--e-3);padding-left:var(--e-3);margin-bottom:var(--e-2);font-weight:var(--peso-texto-medio);color:var(--texto-fuerte)}
+  .am-lateral__pie{display:flex;flex-direction:column;gap:2px;margin-top:auto;border-top:1px solid var(--borde)}
+  .velo-lateral{display:block;position:fixed;inset:0;z-index:19;background:var(--tinta-a28);opacity:0;visibility:hidden;transition:opacity var(--transicion),visibility var(--transicion)}
+  .am-lateral.am-es-abierto + .velo-lateral{opacity:1;visibility:visible}
+  /* Con el menú abierto la página de atrás no se desplaza. */
+  html:has(.am-lateral.am-es-abierto){overflow:hidden}
+  .vista{padding:var(--e-6) var(--e-4)}
+}
+@media (max-width:480px){
+  .am-barra__fila{padding-inline:var(--e-4)}
+  .am-barra__conjunto{padding-left:0;border-left:0}
+  /* Con menú, la marca está en la cabeza del lateral: aquí el ancho es para el conjunto. */
+  .am-barra--con-menu .am-barra__marca{display:none}
+  .tarjeta-sin-sesion{padding:var(--e-6) var(--e-4)}
+  .vista{padding-inline:var(--e-3)}
+}
+
+/* ---------- Conjunto: color, asistente y requisitos (HU-03, HU-26) ----- */
+/* La franja de cada tarjeta del selector lleva el acento de su conjunto: es la misma
+   franja identificadora de la barra, el cuarto sitio del acento (maestro §6.1). */
+.tarjeta-conjunto{position:relative;overflow:hidden}
+.tarjeta-conjunto__franja{position:absolute;inset:0 0 auto 0;height:4px;background:var(--acento-600)}
+
+.selector-acento{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.selector-acento__opciones{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:var(--e-2)}
+.selector-acento__opcion{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo);padding:0 var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+.selector-acento__opcion:has(input:checked){border-color:var(--acento-600);box-shadow:0 0 0 1px var(--acento-600)}
+.selector-acento__opcion input{accent-color:var(--acento-600)}
+.selector-acento__muestra,.muestra-acento{display:inline-block;flex:none;width:16px;height:16px;border-radius:50%;background:var(--acento-600);box-shadow:inset 0 0 0 1px var(--tinta-a14);vertical-align:middle}
+/* Color propio (HU-21): el selector del navegador, y la advertencia si el texto blanco se leería mal.
+   La advertencia usa los colores de "en trámite": avisa, no bloquea. */
+.selector-acento__propio{display:flex;align-items:center;gap:var(--e-3)}
+.selector-acento__rueda{width:var(--toque-minimo);height:var(--toque-minimo);padding:2px;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-tarjeta);cursor:pointer}
+.aviso-legibilidad{margin:0;padding:var(--e-2) var(--e-3);border-radius:var(--radio-control);background:var(--estado-tramite-fondo);color:var(--estado-tramite-texto)}
+
+.pasos-asistente{flex-wrap:wrap}
+.lista-simple{display:flex;flex-direction:column;gap:var(--e-1)}
+.requisitos{display:flex;flex-direction:column}
+.requisitos__item{display:flex;justify-content:space-between;align-items:center;gap:var(--e-3);padding:var(--e-3) 0;border-bottom:1px solid var(--borde)}
+.requisitos__item:last-child{border-bottom:0}
+details.tarjeta-contenido summary{cursor:pointer;font-weight:var(--peso-texto-medio)}
+/* Confirmación sin JavaScript: «Retirar» o «Registrar salida» abre, dentro de la fila, la frase de qué se hace y el botón. */
+.confirmar-accion summary{cursor:pointer;font-weight:var(--peso-texto-medio);min-height:var(--toque-minimo);display:flex;align-items:center}
+.confirmar-accion form{display:flex;flex-direction:column;gap:var(--e-2);padding-bottom:var(--e-2)}
+
+/* ---------- Foto del conjunto (HU-21) ---------------------------------- */
+/* Siempre cuadrada. Sin foto, un marcador con las iniciales en neutros: la foto no es acento,
+   no cuenta entre los cuatro sitios del maestro §6.1. Una foto vieja que no sea cuadrada se
+   recorta al centro al mostrarla. */
+.am-barra__conjunto.barra-conjunto--con-foto{flex-direction:row;align-items:center;gap:var(--e-3)}
+.foto-conjunto{display:inline-flex;align-items:center;justify-content:center;flex:none;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-medio);font-weight:var(--peso-texto-medio);line-height:1;letter-spacing:.02em;vertical-align:middle;user-select:none}
+.foto-conjunto--barra{width:32px;font-size:.8125rem}
+.foto-conjunto--tarjeta,.foto-conjunto--resumen{width:48px;font-size:1.125rem}
+.foto-conjunto--grande{width:128px;font-size:2.5rem}
+.tarjeta-conjunto__cabeza{display:flex;align-items:center;gap:var(--e-3)}
+.resumen-foto{display:flex;align-items:center;gap:var(--e-3)}
+.vista-previa-foto{display:flex;align-items:center;gap:var(--e-4);flex-wrap:wrap;padding:var(--e-4);border:1px dashed var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-medio)}
+.vista-previa-foto p{margin:0;flex:1 1 200px}
+.campo-archivo{padding:var(--e-2) var(--e-3)}
+/* Recortador: el cuadro muestra lo que quedará en la foto. La imagen se mueve por debajo. */
+.recortador{display:flex;flex-direction:column;gap:var(--e-2);max-width:256px}
+.recortador[hidden]{display:none}
+.recortador__marco{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-hundida);cursor:grab;touch-action:none}
+.recortador__marco:active{cursor:grabbing}
+.recortador__marco img{position:absolute;top:0;left:0;max-width:none;pointer-events:none;user-select:none}
+.recortador__zoom{width:100%;accent-color:var(--texto-fuerte)}
+/* Un formulario dentro de una tarjeta de contenido usa el relleno de la tarjeta, no el suyo. */
+.tarjeta-contenido .am-formulario{padding:0}
+
+/* ---------- Anuncios y notificaciones (HU-25) ------------------------- */
+.tarjeta-contenido__cuerpo{white-space:pre-line}
+.campo-texto-largo{min-height:calc(var(--toque-minimo) * 3);padding:var(--e-2) var(--e-3);resize:vertical;font:inherit;line-height:var(--alto-corto)}
+.formulario-anuncio .am-campo{max-width:none}
+.opciones-alcance{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.opciones-alcance__opcion{display:flex;align-items:flex-start;gap:var(--e-3);min-height:var(--toque-minimo);padding:var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+/* La opción elegida se marca con neutros: el acento solo va en sus cuatro sitios (maestro §6.1). */
+.opciones-alcance__opcion:has(input:checked){border-color:var(--texto-medio);box-shadow:0 0 0 1px var(--texto-medio)}
+.opciones-alcance__opcion input{margin-top:3px;accent-color:var(--texto-fuerte)}
+.opciones-alcance__opcion > span{display:flex;flex-direction:column;gap:var(--e-1)}
+/* Aviso informativo. Es información, no acción: usa los colores de info, nunca el acento. */
+.aviso-info{padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--info-fondo);color:var(--info-texto)}
+/* Fotos de un anuncio: miniaturas recortadas a la misma proporción. Nunca menos de dos por fila,
+   para que en un teléfono no ocupen una pantalla cada una. La foto completa se abre aparte. */
+.fotos-anuncio{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(calc(var(--toque-minimo) * 4),calc(50% - var(--e-1))),1fr));gap:var(--e-2);list-style:none;margin:0;padding:0}
+.fotos-anuncio__enlace{display:block;border-radius:var(--radio-control)}
+.fotos-anuncio img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-hundida)}
+/* Paso «Viviendas» del asistente (HU-39). La opción elegida se marca con neutros: el acento solo va en sus cuatro sitios (maestro §6.1). */
+.opciones-vivienda{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2)}
+.opciones-vivienda__rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--e-2)}
+.opciones-vivienda__opcion{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo);padding:var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control);cursor:pointer}
+.opciones-vivienda__opcion:has(input:checked){border-color:var(--texto-medio);box-shadow:0 0 0 1px var(--texto-medio)}
+.opciones-vivienda__opcion input{accent-color:var(--texto-fuerte)}
+.icono-vivienda{flex:none;color:var(--texto-medio);vertical-align:middle}
+.campos-en-fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--e-4)}
+.frase-estructura{margin:0;padding:var(--e-3) var(--e-4);border-radius:var(--radio-control);background:var(--superficie-hundida);color:var(--texto-fuerte);font-weight:var(--peso-texto-medio)}
+.estructura{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--e-2);list-style:none;margin:0;padding:0}
+.estructura__item{display:flex;align-items:center;gap:var(--e-2);padding:var(--e-2) var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control)}

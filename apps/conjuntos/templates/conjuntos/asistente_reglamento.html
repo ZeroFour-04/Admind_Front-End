@@ -1,0 +1,54 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Reglamento del conjunto{% endblock %}
+{% block titulo_vista %}Reglamento del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if subido %}
+  <p class="aviso-exito" role="status">El reglamento quedó cargado.</p>
+{% endif %}
+
+{% if reglamento.cargado %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-reglamento">
+    <h2 id="titulo-reglamento">{{ reglamento.nombre }}</h2>
+    <p class="tarjeta-contenido__meta">{{ reglamento.peso|filesizeformat }} · lo subió {{ reglamento.subido_por }} el {{ reglamento.subido_en|date:"l j \d\e F \d\e Y"|lower }}</p>
+    <div class="acciones">
+      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:reglamento-archivo' %}" target="_blank" rel="noopener">Ver el reglamento</a>
+    </div>
+    <p class="tarjeta-contenido__meta">Si subes otro, este se conserva: el vigente pasa a ser el más reciente.</p>
+  </section>
+{% elif not error %}
+  <p class="vista__guia">Todavía no hay reglamento. El conjunto lo necesita para quedar operativo.</p>
+{% endif %}
+
+<details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or not reglamento.cargado %} open{% endif %}>
+  <summary>{% if reglamento.cargado %}Reemplazar el reglamento{% else %}Subir el reglamento{% endif %}</summary>
+  <form method="post" enctype="multipart/form-data" class="am-formulario" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.archivo.id_for_label }}">{{ formulario.archivo.label }}</label>
+      <input class="am-campo__control campo-archivo" type="file" id="{{ formulario.archivo.id_for_label }}" name="{{ formulario.archivo.html_name }}"
+             accept=".pdf,application/pdf" required
+             aria-describedby="{{ formulario.archivo.id_for_label }}-ayuda{% if formulario.archivo.errors %} {{ formulario.archivo.id_for_label }}-error{% endif %}"
+             {% if formulario.archivo.errors %}aria-invalid="true"{% endif %}>
+      <span class="am-campo__ayuda" id="{{ formulario.archivo.id_for_label }}-ayuda">Un PDF de hasta 10 MB.</span>
+      {% if formulario.archivo.errors %}<span class="am-campo__error" id="{{ formulario.archivo.id_for_label }}-error">{{ formulario.archivo.errors|join:" " }}</span>{% endif %}
+    </div>
+    <div class="acciones">
+      <button class="am-btn am-btn--secundario" type="submit">{% if reglamento.cargado %}Reemplazar{% else %}Subir{% endif %}</button>
+    </div>
+  </form>
+</details>
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-reglas' %}">Volver</a>
+  <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-resumen' %}">Continuar</a>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Verificación en dos pasos{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Verificación en dos pasos</h1>
+<p class="tarjeta-sin-sesion__texto">Escribe el código que muestra tu aplicación de autenticación. Si no tienes el celular a mano, usa uno de tus códigos de respaldo.</p>
+
+<form method="post" class="formulario" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.codigo autocompletar="one-time-code" ayuda="6 números de la aplicación, u 8 letras y números de un código de respaldo." %}
+  <button type="submit" class="am-btn am-btn--primario formulario__envio">Verificar</button>
+</form>
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:problemas-segundo-factor' %}">¿Problemas con la verificación en dos pasos?</a>
+</p>
+
+<form method="post" action="{% url 'cuentas:salir' %}" class="tarjeta-sin-sesion__pie">
+  {% csrf_token %}
+  <button type="submit" class="am-btn am-btn--texto">Salir</button>
+</form>
+{% endblock %}

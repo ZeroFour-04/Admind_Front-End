@@ -1,0 +1,254 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Viviendas del conjunto{% endblock %}
+{% block titulo_vista %}Viviendas del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+{% if creadas is not None %}
+  <p class="aviso-exito" role="status">Se crearon {{ creadas }} viviendas.{% if sigue == "casa" %} Ahora describe las casas.{% endif %}</p>
+{% endif %}
+
+{% if existentes.total %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-existentes">
+    <h2 id="titulo-existentes">Lo que ya tiene el conjunto</h2>
+    {% if existentes.agrupaciones %}
+      <ul class="estructura" role="list">
+        {% for agrupacion in existentes.agrupaciones %}
+          <li class="estructura__item">
+            {% include "conjuntos/_icono_vivienda.html" with tipo=agrupacion.tipo_vivienda %}
+            <span><b>{{ agrupacion.nombre_completo }}</b> <span class="tarjeta-contenido__meta">{{ agrupacion.viviendas }} vivienda{{ agrupacion.viviendas|pluralize }}</span></span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <p class="tarjeta-contenido__meta">{{ existentes.total }} vivienda{{ existentes.total|pluralize }} en total{% if existentes.sin_agrupar %}, {{ existentes.sin_agrupar }} sin agrupación{% endif %}.</p>
+  </section>
+{% elif not error %}
+  <p class="vista__guia">Describe cómo es el conjunto y el sistema crea sus viviendas de una vez. Necesita al menos una para quedar operativo.</p>
+{% endif %}
+
+{% if vista_previa %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-previa">
+    <h2 id="titulo-previa">Así va a quedar</h2>
+    <div class="am-tabla-caja">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th>Agrupación</th>
+            <th>Primera</th>
+            <th>Última</th>
+            <th>Viviendas nuevas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in vista_previa.agrupaciones %}
+            <tr>
+              <td>{% include "conjuntos/_icono_vivienda.html" with tipo=vista_previa.tipo_vivienda %} {{ fila.nombre|default:"Sin agrupación" }}</td>
+              <td>{{ fila.primera }}</td>
+              <td>{{ fila.ultima }}</td>
+              <td class="am-num">{{ fila.nuevas }}{% if fila.nuevas != fila.viviendas %} <span class="am-tabla__secundario">de {{ fila.viviendas }}</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if vista_previa.repetidas %}
+      <p class="aviso-info">{{ vista_previa.repetidas }} ya existen y no se vuelven a crear.</p>
+    {% endif %}
+    {% if vista_previa.nuevas %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="crear">
+        <input type="hidden" name="especificacion" value="{{ descripcion_json }}">
+        <input type="hidden" name="sigue" value="{{ sigue }}">
+        <div class="acciones">
+          <button class="am-btn am-btn--primario" type="submit">Crear {{ vista_previa.nuevas }} vivienda{{ vista_previa.nuevas|pluralize }}</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="vista__guia">Todas estas viviendas ya existen. No hay nada que crear.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+<form method="post" class="am-formulario am-tarjeta" novalidate
+      x-data="asistenteDeViviendas" @input="alinear()" @change="alinear()">
+  {% csrf_token %}
+  <input type="hidden" name="accion" value="previsualizar">
+  <input type="hidden" name="especificacion" :value="JSON.stringify(especificacion)">
+  <input type="hidden" name="estado" :value="JSON.stringify(estado)">
+  <input type="hidden" name="sigue" :value="mixto ? 'casa' : ''">
+
+  <fieldset class="opciones-vivienda">
+    <legend class="am-campo__etiqueta">¿Qué viviendas tiene el conjunto?</legend>
+    <div class="opciones-vivienda__rejilla">
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="que-tiene" :checked="tipo === 'apartamento' && !mixto" @change="elegirTipo('apartamento', false)">
+        {% include "conjuntos/_icono_vivienda.html" with tipo="apartamento" %} Apartamentos
+      </label>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="que-tiene" :checked="tipo === 'casa'" @change="elegirTipo('casa', false)">
+        {% include "conjuntos/_icono_vivienda.html" with tipo="casa" %} Casas
+      </label>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="que-tiene" :checked="mixto" @change="elegirTipo('apartamento', true)">
+        {% include "conjuntos/_icono_vivienda.html" with tipo="apartamento" %}
+        {% include "conjuntos/_icono_vivienda.html" with tipo="casa" %} Apartamentos y casas
+      </label>
+    </div>
+    <p class="am-campo__ayuda" x-show="mixto" style="display:none">Empieza por los apartamentos. Al crearlos, sigues con las casas.</p>
+  </fieldset>
+
+  <fieldset class="opciones-vivienda" x-show="tipo" style="display:none">
+    <legend class="am-campo__etiqueta">¿Cómo se agrupan?</legend>
+    <p class="am-campo__ayuda">Con la palabra que usa el conjunto.</p>
+    <div class="opciones-vivienda__rejilla">
+      <template x-for="opcion in etiquetas" :key="opcion">
+        <label class="opciones-vivienda__opcion">
+          <input type="radio" name="agrupacion" :checked="agrupa && etiqueta === opcion" @change="agrupa = true; etiqueta = opcion">
+          <span x-text="plural(opcion)"></span>
+        </label>
+      </template>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="agrupacion" :checked="agrupa && etiqueta === 'otra'" @change="agrupa = true; etiqueta = 'otra'"> Otra palabra
+      </label>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="agrupacion" :checked="!agrupa" @change="agrupa = false; etiqueta = ''; distintas(false)"> No se agrupan
+      </label>
+    </div>
+    <div class="am-campo" x-show="agrupa && etiqueta === 'otra'" style="display:none">
+      <label class="am-campo__etiqueta" for="otra-palabra">¿Cómo la llaman? En singular</label>
+      <input class="am-campo__control" id="otra-palabra" type="text" maxlength="30" x-model="otra">
+    </div>
+  </fieldset>
+
+  <fieldset class="opciones-vivienda" x-show="agrupa && palabraDeAgrupacion" style="display:none">
+    <legend class="am-campo__etiqueta">¿Cómo se identifican?</legend>
+    <div class="opciones-vivienda__rejilla">
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="modo" value="numeros" x-model="modo"> Con números: 1, 2, 3
+      </label>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="modo" value="letras" x-model="modo"> Con letras: A, B, C
+      </label>
+      <label class="opciones-vivienda__opcion">
+        <input type="radio" name="modo" value="nombres" x-model="modo"> Con nombre propio
+      </label>
+    </div>
+    <div class="am-campo" x-show="modo !== 'nombres'">
+      <label class="am-campo__etiqueta" for="cuantas-agrupaciones">¿Cuántas <span x-text="plural(palabraDeAgrupacion).toLowerCase()"></span> son?</label>
+      <input class="am-campo__control" id="cuantas-agrupaciones" type="number" inputmode="numeric" min="1"
+             :max="modo === 'letras' ? 26 : 60" x-model.number="cuantas">
+    </div>
+    <div class="am-campo" x-show="modo === 'nombres'" style="display:none">
+      <label class="am-campo__etiqueta" for="nombres-agrupaciones">Escribe un nombre por línea</label>
+      <textarea class="am-campo__control campo-texto-largo" id="nombres-agrupaciones" x-model="nombres"
+                aria-describedby="nombres-agrupaciones-ayuda"></textarea>
+      <span class="am-campo__ayuda" id="nombres-agrupaciones-ayuda">Solo el nombre: Esmeralda, no Bloque Esmeralda.</span>
+    </div>
+  </fieldset>
+
+  <fieldset class="opciones-alcance" x-show="tipo" style="display:none">
+    <legend class="am-campo__etiqueta">¿Cómo se numeran?</legend>
+    <label class="opciones-alcance__opcion" x-show="tipo === 'apartamento'">
+      <input type="radio" name="patron" value="piso_consecutivo" x-model="patron">
+      <span><b>Piso y consecutivo</b> <span class="am-campo__ayuda">101, 102… 201, 202.</span></span>
+    </label>
+    <label class="opciones-alcance__opcion">
+      <input type="radio" name="patron" value="consecutivo" x-model="patron">
+      <span><b>Consecutivo</b> <span class="am-campo__ayuda">1, 2, 3… y vuelve a empezar en cada agrupación.</span></span>
+    </label>
+    <label class="opciones-alcance__opcion" x-show="agrupa">
+      <input type="radio" name="patron" value="corrido" x-model="patron">
+      <span><b>Consecutivo corrido</b> <span class="am-campo__ayuda">La numeración sigue de una agrupación a la siguiente.</span></span>
+    </label>
+    <label class="opciones-alcance__opcion">
+      <input type="radio" name="patron" value="lista" x-model="patron">
+      <span><b>Los escribo yo</b> <span class="am-campo__ayuda">Para lo que no sigue un patrón, como PH o 1A.</span></span>
+    </label>
+  </fieldset>
+
+  <fieldset class="opciones-vivienda" x-show="patron" style="display:none">
+    <legend class="am-campo__etiqueta">¿Cuántas son?</legend>
+    <div class="campos-en-fila" x-show="iguales && patron !== 'lista'">
+      <div class="am-campo" x-show="porPisos">
+        <label class="am-campo__etiqueta" for="pisos">Pisos</label>
+        <input class="am-campo__control" id="pisos" type="number" inputmode="numeric" min="1" max="60" x-model.number="pisos">
+      </div>
+      <div class="am-campo" x-show="porPisos">
+        <label class="am-campo__etiqueta" for="por-piso">Apartamentos por piso</label>
+        <input class="am-campo__control" id="por-piso" type="number" inputmode="numeric" min="1" max="40" x-model.number="porPiso">
+      </div>
+      <div class="am-campo" x-show="!porPisos" style="display:none">
+        <label class="am-campo__etiqueta" for="cantidad">Viviendas</label>
+        <input class="am-campo__control" id="cantidad" type="number" inputmode="numeric" min="1" max="500" x-model.number="cantidad">
+      </div>
+    </div>
+    <div class="am-campo" x-show="porPisos">
+      <label class="am-campo__etiqueta" for="primer-piso">¿Desde qué piso hay apartamentos?</label>
+      <input class="am-campo__control" id="primer-piso" type="number" inputmode="numeric" min="1" max="20" x-model.number="primerPiso"
+             aria-describedby="primer-piso-ayuda">
+      <span class="am-campo__ayuda" id="primer-piso-ayuda">2 si el primer piso es recepción, locales o parqueadero.</span>
+    </div>
+    <div class="am-campo" x-show="patron === 'corrido'" style="display:none">
+      <label class="am-campo__etiqueta" for="desde">¿En qué número empieza?</label>
+      <input class="am-campo__control" id="desde" type="number" inputmode="numeric" min="1" max="9999" x-model.number="desde">
+    </div>
+    <div class="am-campo" x-show="patron === 'lista'" style="display:none">
+      <label class="am-campo__etiqueta" for="lista-de-numeros">Un número por línea</label>
+      <textarea class="am-campo__control campo-texto-largo" id="lista-de-numeros" x-model="lista"></textarea>
+    </div>
+    <label class="opciones-alcance__opcion" x-show="agrupa && filas.length > 1 && patron !== 'lista'" style="display:none">
+      <input type="checkbox" :checked="!iguales" @change="distintas($event.target.checked)">
+      <span><b>No todas son iguales</b></span>
+    </label>
+    <div class="am-tabla-caja" x-show="!iguales && patron !== 'lista'" style="display:none">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th>Agrupación</th>
+            <th x-show="porPisos">Pisos</th>
+            <th x-show="porPisos">Apartamentos por piso</th>
+            <th x-show="!porPisos">Viviendas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="fila in filas" :key="fila.nombre">
+            <tr>
+              <td x-text="palabraDeAgrupacion + ' ' + fila.nombre"></td>
+              <td x-show="porPisos"><input class="am-campo__control" type="number" inputmode="numeric" min="1" max="60" x-model.number="fila.pisos" :aria-label="'Pisos de ' + palabraDeAgrupacion + ' ' + fila.nombre"></td>
+              <td x-show="porPisos"><input class="am-campo__control" type="number" inputmode="numeric" min="1" max="40" x-model.number="fila.porPiso" :aria-label="'Apartamentos por piso de ' + palabraDeAgrupacion + ' ' + fila.nombre"></td>
+              <td x-show="!porPisos"><input class="am-campo__control" type="number" inputmode="numeric" min="1" max="500" x-model.number="fila.cantidad" :aria-label="'Viviendas de ' + palabraDeAgrupacion + ' ' + fila.nombre"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </fieldset>
+
+  <p class="frase-estructura" role="status" x-show="listo" x-text="frase" style="display:none"></p>
+  <div class="acciones">
+    <button class="am-btn am-btn--secundario" type="submit" :disabled="!listo">Ver cómo queda</button>
+  </div>
+</form>
+
+<noscript><p class="aviso-info">Este paso necesita JavaScript. Sin él, las viviendas se registran una por una en Unidades.</p></noscript>
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-datos' %}">Volver</a>
+  <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-administracion' %}">Continuar</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ estado|json_script:"estado-inicial" }}
+  <script src="{% static 'js/viviendas.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endblock %}

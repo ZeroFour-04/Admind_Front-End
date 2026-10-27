@@ -1,0 +1,46 @@
+{% comment %}
+BarraSuperior. Con `sin_conjunto`, solo la marca y Salir (pantalla del selector).
+El nombre, el color y la foto del conjunto activo salen de la sesión. Sin foto, sus iniciales (HU-21).
+Con `con_menu`, el botón que abre el lateral en pantallas angostas (bajo 900px; arriba no se ve).
+En ese ancho la barra queda en una sola fila: «Cambiar de conjunto» y el tipo de usuario pasan al pie
+del lateral, el nombre del conjunto se recorta con puntos suspensivos y, bajo 480px, la marca va en
+la cabeza del lateral.
+{% endcomment %}
+<header class="am-barra{% if con_menu %} am-barra--con-menu{% endif %}">
+  <div class="am-barra__franja" aria-hidden="true"></div>
+  <div class="am-barra__fila">
+    {% if con_menu %}
+    <button type="button" class="am-barra__menu" aria-label="Abrir el menú de secciones" aria-controls="menu-lateral" aria-expanded="false" data-abrir-menu>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+        <path d="M4 7h16M4 12h16M4 17h16"></path>
+      </svg>
+    </button>
+    {% endif %}
+    <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos">AdMind</a>
+    {% if not sin_conjunto %}
+      {% with conjunto=request.session.conjunto_activo %}
+      <div class="am-barra__conjunto{% if conjunto %} barra-conjunto--con-foto{% endif %}">
+        {# Sin alt: el nombre va al lado. Si la imagen no llega, no queda un hueco con texto repetido. #}
+        {% if conjunto %}{% include "conjuntos/_foto.html" with conjunto=conjunto tamano="barra" %}{% endif %}
+        <b>{{ conjunto.nombre|default:"Conjunto activo" }}</b>
+      </div>
+      {% endwith %}
+    {% endif %}
+    <div class="am-barra__derecha">
+      {% if not sin_conjunto %}
+        <a class="am-btn am-btn--texto am-barra__cambiar" href="{% url 'conjuntos:selector' %}">Cambiar de conjunto</a>
+        <span class="am-barra__tipo-usuario">{{ request.session.tipo_usuario|default:"Usuario" }}</span>
+        <a class="am-barra__perfil" href="{% url 'cuentas:perfil' %}" aria-label="Ver perfil del usuario">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path>
+          </svg>
+        </a>
+      {% endif %}
+      <form method="post" action="{% url 'cuentas:salir' %}">
+        {% csrf_token %}
+        <button type="submit" class="am-btn am-btn--secundario">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

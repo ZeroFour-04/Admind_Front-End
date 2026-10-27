@@ -1,0 +1,61 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Casos{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/casos.css' %}">{% endblock %}
+{% block titulo_vista %}Casos{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "casos/_pestanas.html" with es_residente=puede_crear pestana_activa="casos" %}
+{% if creado %}
+  <div class="aviso-exito" role="status">Tu caso quedó creado y enviado a la administración.</div>
+{% endif %}
+{% if puede_crear %}
+  <div class="vista__acciones">
+    <a class="am-btn am-btn--primario" href="{% url 'casos:nuevo' %}">Crear caso</a>
+  </div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif casos %}
+  <ul class="pila" role="list">
+    {% for caso in casos %}
+      <li>
+        <details class="am-tarjeta tarjeta-contenido caso__tarjeta">
+          <summary class="caso__resumen">
+            <span>
+              <strong>{{ caso.titulo }}</strong>
+              <span class="tarjeta-contenido__meta">Fecha: {{ caso.creado_en|date:"d/m/Y H:i" }}</span>
+            </span>
+            <span class="am-pastilla {{ caso.estado_clase }}">{{ caso.estado_visible }}</span>
+          </summary>
+          <div class="caso__detalle">
+          <p class="tarjeta-contenido__cuerpo">{{ caso.cuerpo|linebreaksbr }}</p>
+          {% if caso.foto_id %}
+            <img class="caso__foto" src="{% url 'casos:foto' caso.id caso.foto_id %}" alt="Imagen adjunta al caso: {{ caso.titulo }}" loading="lazy">
+          {% endif %}
+          {% if caso.respuesta %}
+            <div class="aviso-exito caso__motivo-rechazo">
+              <strong>Respuesta de la administración</strong>
+              <p>{{ caso.respuesta|linebreaksbr }}</p>
+            </div>
+          {% endif %}
+          {% if caso.motivo_rechazo %}
+            <div class="am-alerta am-alerta--error caso__motivo-rechazo">
+              <strong>Razón del rechazo</strong>
+              <p>{% if caso.causal_rechazo_nombre %}{{ caso.causal_rechazo_nombre }}. {% endif %}{{ caso.motivo_rechazo|linebreaksbr }}</p>
+            </div>
+          {% endif %}
+          </div>
+        </details>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no tienes casos</p>
+    <p class="am-vacio__texto">Cuando envíes un caso, aparecerá aquí para que puedas consultarlo.</p>
+  </div>
+{% endif %}
+{% endblock %}

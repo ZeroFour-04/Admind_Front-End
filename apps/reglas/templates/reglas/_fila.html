@@ -1,0 +1,56 @@
+{% comment %}
+Una fila del tablero de reglas: una regla posible, lo que vale hoy y sus acciones.
+Parámetros: fila (tipo, nombre, descripcion, nota, regla), area (None si es del conjunto), puede_configurar y volver.
+{% endcomment %}
+<tr>
+  <td>
+    <b>{{ fila.nombre }}</b>
+    <span class="am-tabla__secundario">{{ fila.descripcion }}{% if fila.nota %} {{ fila.nota }}{% endif %}</span>
+  </td>
+  <td>
+    {% if fila.tipo == "DIAS_QUE_NO_ABRE" and fila.regla %}
+      <ul class="lista-simple" role="list">
+        {% for renglon in fila.regla.renglones %}
+          <li>
+            {% if renglon.dia %}{{ renglon.dia }}{% elif renglon.desde == renglon.hasta %}{{ renglon.desde|date:"j \d\e F \d\e Y"|lower }}{% else %}Del {{ renglon.desde|date:"j \d\e F \d\e Y"|lower }} al {{ renglon.hasta|date:"j \d\e F \d\e Y"|lower }}{% endif %}: {{ renglon.motivo }}
+            {% if puede_configurar %}
+              <form method="post" action="{% url 'reglas:quitar-dia' fila.regla.id forloop.counter0 %}">
+                {% csrf_token %}
+                <input type="hidden" name="volver" value="{{ volver }}">
+                <button class="am-btn am-btn--texto" type="submit">Quitar</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if fila.regla.reservas_afectadas %}
+        <span class="am-tabla__secundario">{{ fila.regla.reservas_afectadas }} reserva{{ fila.regla.reservas_afectadas|pluralize }} ya apartada{{ fila.regla.reservas_afectadas|pluralize }} cae{{ fila.regla.reservas_afectadas|pluralize:"n" }} en estos días. <a href="{% url 'reservas:solicitudes-area' area.id %}">Revisarlas</a></span>
+      {% endif %}
+    {% elif fila.regla %}
+      {{ fila.regla.descripcion }}
+      <span class="am-tabla__secundario">desde el {{ fila.regla.vigencia_desde|date:"j \d\e F \d\e Y"|lower }}, por {{ fila.regla.creada_por }}</span>
+    {% elif fila.tipo == "DIAS_QUE_NO_ABRE" %}
+      Abre todos los días
+    {% else %}
+      Sin definir
+    {% endif %}
+  </td>
+  {% if puede_configurar %}
+    <td>
+      <div class="acciones">
+        {% if fila.tipo == "DIAS_QUE_NO_ABRE" %}
+          <a class="am-btn am-btn--secundario" href="{% url 'reglas:agregar-dia' area.id %}{% if volver %}?volver={{ volver }}{% endif %}">Agregar día</a>
+        {% elif fila.regla %}
+          <a class="am-btn am-btn--secundario" href="{% url 'reglas:editar' fila.regla.id %}{% if volver %}?volver={{ volver }}{% endif %}">Cambiar</a>
+          <form method="post" action="{% url 'reglas:retirar' fila.regla.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="volver" value="{{ volver }}">
+            <button class="am-btn am-btn--texto" type="submit">Quitar</button>
+          </form>
+        {% else %}
+          <a class="am-btn am-btn--secundario" href="{% url 'reglas:definir' fila.tipo %}?{% if area %}area={{ area.id }}&amp;{% endif %}volver={{ volver }}">Definir</a>
+        {% endif %}
+      </div>
+    </td>
+  {% endif %}
+</tr>

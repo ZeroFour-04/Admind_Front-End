@@ -1,0 +1,66 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Unidades{% endblock %}
+{% block titulo_vista %}Unidades{% endblock %}
+{% block estado_vista %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/unidades.css' %}">{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if unidades %}
+  <div class="directorio" x-data="directorioDeUnidades({ limite: 100, hayAgrupaciones: {{ hay_agrupaciones|yesno:'true,false' }} })">
+    {% include "unidades/_buscador.html" %}
+
+    {% if hay_agrupaciones %}
+      <ul class="agrupaciones" role="list" aria-label="Agrupaciones del conjunto" x-show="mostrarRecuadros">
+        {% for recuadro in recuadros %}
+          <li>
+            <a class="am-tesela tesela-enlace" href="{{ recuadro.url }}">
+              <span class="tesela-enlace__cabeza">
+                <span class="am-tesela__titulo">{{ recuadro.nombre }}</span>
+                <span class="recuadro-conteo">{{ recuadro.total }}</span>
+              </span>
+              <span class="am-tesela__pie">
+                {{ recuadro.viviendas|capfirst }}{% if recuadro.sin_vinculos %} · {{ recuadro.sin_vinculos }} sin vínculos{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <section aria-label="Resultados de la búsqueda" x-show="verResultados" x-cloak>
+      {% include "unidades/_resultados.html" with con_agrupacion=True %}
+    </section>
+  </div>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay viviendas registradas</p>
+    <p class="am-vacio__texto">Cada vivienda guarda quién es su propietario, quién la arrienda y quién vive ahí.</p>
+  </div>
+{% endif %}
+
+{% if puede_gestionar %}
+  <details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or not unidades %} open{% endif %}>
+    <summary>Registrar apartamento</summary>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" %}
+      {% include "componentes/campo.html" with campo=formulario.nombre ayuda="Como lo conoce el conjunto, por ejemplo «Torre 1 – 101»." %}
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Registrar apartamento</button>
+      </div>
+    </form>
+  </details>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if unidades %}{{ unidades|json_script:"unidades-datos" }}{% endif %}
+  <script src="{% static 'js/unidades.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endblock %}

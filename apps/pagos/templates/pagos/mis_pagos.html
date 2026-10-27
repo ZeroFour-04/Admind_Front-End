@@ -1,0 +1,100 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Pagos{% endblock %}
+{% block titulo_vista %}Mis pagos de administración{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+<div class="aviso-info" role="note"><p>{{ aviso_del_dinero }}</p></div>
+{% if reportado %}
+  <div class="aviso-exito" role="status">Tu comprobante quedó reportado. La administración lo revisará y lo confirmará.</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% for tarjeta in tarjetas %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="vivienda-{{ forloop.counter }}">
+    <h2 id="vivienda-{{ forloop.counter }}">{{ tarjeta.unidad.nombre }}</h2>
+    <div class="am-tabla-caja tabla-desplazable">
+      <table class="am-tabla">
+        <thead>
+          <tr>
+            <th scope="col">Mes</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Reportó</th>
+            <th scope="col">Confirmó</th>
+            <th scope="col">Comprobante</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mes in tarjeta.periodos %}
+            <tr>
+              <td>{{ mes.mes|capfirst }}</td>
+              <td><span class="am-pastilla {{ mes.clase }}">{{ mes.etiqueta }}</span></td>
+              <td>
+                {% if mes.reportado_por %}{{ mes.reportado_por }} <span class="am-tabla__secundario">{{ mes.reportado_en|date:"j \d\e F, H:i"|lower }}</span>{% else %}—{% endif %}
+              </td>
+              <td>
+                {% if mes.confirmado_por %}{{ mes.confirmado_por }} <span class="am-tabla__secundario">{{ mes.confirmado_en|date:"j \d\e F, H:i"|lower }}</span>{% else %}—{% endif %}
+              </td>
+              <td>
+                {% if mes.comprobante %}
+                  <a href="{% url 'pagos:comprobante' mes.comprobante.id %}" target="_blank" rel="noopener">{{ mes.comprobante.nombre }}</a>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% empty %}
+  {% if not error %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">No tienes una vivienda registrada</p>
+      <p class="am-vacio__texto">Habla con la administración para que te vincule a tu vivienda.</p>
+    </div>
+  {% endif %}
+{% endfor %}
+
+{% if formulario %}
+  <form method="post" action="{% url 'pagos:administracion' %}" enctype="multipart/form-data" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+    {% csrf_token %}
+    <h2>Reportar un pago</h2>
+    {% include "componentes/errores_formulario.html" %}
+    {% if una_sola_vivienda %}
+      <input type="hidden" name="{{ formulario.unidad.html_name }}" value="{{ tarjetas.0.unidad.id }}">
+    {% else %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+        <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}" required>
+          {% for valor, nombre in formulario.unidad.field.choices %}
+            <option value="{{ valor }}"{% if formulario.unidad.value|stringformat:"s" == valor %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+        {% if formulario.unidad.errors %}<span class="am-campo__error" role="alert">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+      </div>
+    {% endif %}
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.periodo.id_for_label }}">{{ formulario.periodo.label }}</label>
+      <select class="am-campo__control" id="{{ formulario.periodo.id_for_label }}" name="{{ formulario.periodo.html_name }}" required>
+        {% for valor, nombre in formulario.periodo.field.choices %}
+          <option value="{{ valor }}"{% if formulario.periodo.value == valor %} selected{% endif %}>{{ nombre|capfirst }}</option>
+        {% endfor %}
+      </select>
+      {% if formulario.periodo.errors %}<span class="am-campo__error" role="alert">{{ formulario.periodo.errors|join:" " }}</span>{% endif %}
+    </div>
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.archivo.id_for_label }}">{{ formulario.archivo.label }}</label>
+      {{ formulario.archivo }}
+      <span class="am-campo__ayuda">PDF, JPG o PNG de hasta 5 MB.</span>
+      {% if formulario.archivo.errors %}<span class="am-campo__error" role="alert">{{ formulario.archivo.errors|join:" " }}</span>{% endif %}
+    </div>
+    <p class="am-campo__ayuda">Subir el comprobante no confirma el pago: lo confirma la administración cuando lo verifique.</p>
+    <div class="acciones">
+      <button class="am-btn am-btn--primario" type="submit">Subir comprobante</button>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

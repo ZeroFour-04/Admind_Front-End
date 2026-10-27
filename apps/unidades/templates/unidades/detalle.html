@@ -1,0 +1,224 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}{{ unidad.nombre|default:"Apartamento" }}{% endblock %}
+{% block titulo_vista %}{{ unidad.nombre|default:"Apartamento" }}{% endblock %}
+{% block estado_vista %}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/unidades.css' %}">{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if unidad %}
+  <section aria-labelledby="titulo-vigentes">
+    <h2 id="titulo-vigentes">Vigentes</h2>
+    {% if unidad.vigentes %}
+      <div class="am-tabla-caja">
+        <table class="am-tabla">
+          <thead>
+            <tr><th>Persona</th><th>Vínculo</th><th>Residencia</th><th>Desde</th><th>Cerrar</th></tr>
+          </thead>
+          <tbody>
+            {% for vinculo in unidad.vigentes %}
+              <tr>
+                <td>{{ vinculo.persona.nombre }}</td>
+                <td>{{ vinculo.tipo_nombre }}</td>
+                <td>{% if vinculo.reside %}Vive aquí{% else %}No vive aquí{% endif %}</td>
+                <td class="am-num">{{ vinculo.vigencia_desde|date:"j M Y" }}</td>
+                <td>
+                  <form method="post" action="{% url 'unidades:cerrar-vinculo' unidad.id vinculo.id %}" class="acciones">
+                    {% csrf_token %}
+                    <label class="am-campo">
+                      <span class="am-campo__etiqueta">{{ cierre.vigencia_hasta.label }}</span>
+                      <input class="am-campo__control" type="date" name="vigencia_hasta" value="{{ cierre.vigencia_hasta.initial|date:'Y-m-d' }}" required>
+                    </label>
+                    <button class="am-btn am-btn--secundario" type="submit">Cerrar vínculo</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">Este apartamento no tiene vínculos vigentes.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="titulo-historicos">
+    <h2 id="titulo-historicos">Históricos</h2>
+    {% if unidad.historicos %}
+      <div class="am-tabla-caja">
+        <table class="am-tabla">
+          <thead>
+            <tr><th>Persona</th><th>Vínculo</th><th>Residencia</th><th>Desde</th><th>Hasta</th></tr>
+          </thead>
+          <tbody>
+            {% for vinculo in unidad.historicos %}
+              <tr>
+                <td>{{ vinculo.persona.nombre }}</td>
+                <td>{{ vinculo.tipo_nombre }}</td>
+                <td>{% if vinculo.reside %}Vive aquí{% else %}No vive aquí{% endif %}</td>
+                <td class="am-num">{{ vinculo.vigencia_desde|date:"j M Y" }}</td>
+                <td class="am-num">{{ vinculo.vigencia_hasta|date:"j M Y"|default:"Sin cerrar" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="vista__guia">Sin vínculos anteriores.</p>
+    {% endif %}
+  </section>
+
+  {% if residente_creado %}
+    <div class="aviso-exito" role="status">Se creó la cuenta de {{ residente_creado }} con el rol Residente. Elige el tipo de vínculo y agrégalo a {{ unidad.nombre }}.</div>
+  {% endif %}
+
+  <details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or residente_creado or abrir_alta %} open{% endif %}>
+    <summary>Agregar vínculo</summary>
+    <form method="post" class="am-formulario" novalidate>
+      {% csrf_token %}
+      {% include "componentes/errores_formulario.html" %}
+
+      {# La persona se busca y se elige en el navegador (static/js/vinculos.js); sin JavaScript queda la lista. #}
+      <div class="am-campo selector-persona" x-data="selectorDePersona" data-elegida="{{ formulario.persona.value|default_if_none:'' }}">
+        <label class="am-campo__etiqueta" for="buscar-persona">{{ formulario.persona.label }}</label>
+        <noscript>
+          <select class="am-campo__control" id="{{ formulario.persona.id_for_label }}" name="{{ formulario.persona.html_name }}" aria-label="{{ formulario.persona.label }}"
+                  {% if formulario.persona.errors %}aria-invalid="true"{% endif %}>
+            {% for valor, nombre in formulario.fields.persona.choices %}
+              <option value="{{ valor }}"{% if formulario.persona.value|stringformat:"s" == valor|stringformat:"s" %} selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+          <span class="am-campo__ayuda">Solo aparecen las personas con un rol en el conjunto. A alguien nuevo, regístralo primero en Usuarios.</span>
+        </noscript>
+
+        {# Solo existe con alguien elegido: sin JavaScript, el valor sale del <select> de arriba. #}
+        <template x-if="elegida">
+          <input type="hidden" name="{{ formulario.persona.html_name }}" :value="elegida">
+        </template>
+
+        <template x-if="persona">
+          <div class="persona-elegida">
+            <span class="persona-elegida__datos">
+              <b x-text="persona.nombre"></b>
+              <span class="am-campo__ayuda" x-text="persona.correo"></span>
+            </span>
+            <button class="am-btn am-btn--secundario" type="button" @click="cambiar()">Cambiar</button>
+          </div>
+        </template>
+
+        <div class="selector-persona__busqueda" :hidden="!!persona" x-cloak>
+          <input class="am-campo__control" type="search" id="buscar-persona"
+                 x-model.debounce.120ms="consulta" @keydown.enter.prevent="elegirPrimera()"
+                 autocomplete="off" spellcheck="false" placeholder="Nombre, correo o cédula"
+                 aria-describedby="buscar-persona-ayuda{% if formulario.persona.errors %} buscar-persona-error{% endif %}"
+                 {% if formulario.persona.errors %}aria-invalid="true"{% endif %}>
+          <span class="am-campo__ayuda" id="buscar-persona-ayuda">
+            Solo aparecen las personas con un rol en el conjunto. Escribe para filtrar y toca a quien quieras vincular.
+          </span>
+          <ul class="selector-persona__lista" role="list" aria-label="Personas del conjunto" x-show="visibles.length">
+            <template x-for="opcion in visibles" :key="opcion.id">
+              <li>
+                <button class="opcion-persona" type="button" @click="elegir(opcion.id)">
+                  <span class="opcion-persona__nombre" x-text="opcion.nombre"></span>
+                  <span class="opcion-persona__correo" x-text="opcion.correo"></span>
+                </button>
+              </li>
+            </template>
+          </ul>
+          <p class="am-campo__ayuda" role="status" x-text="resumen" x-show="resumen" x-cloak></p>
+        </div>
+
+        {% if formulario.persona.errors %}<span class="am-campo__error" id="buscar-persona-error">{{ formulario.persona.errors|join:" " }}</span>{% endif %}
+
+        {% if puede_crear_residente %}
+          <div class="selector-persona__nuevo">
+            <button class="am-btn am-btn--secundario" type="button" data-abrir-modal="modal-residente">Crear nuevo residente</button>
+          </div>
+        {% endif %}
+      </div>
+
+      <fieldset class="opciones-alcance">
+        <legend class="am-campo__etiqueta">{{ formulario.tipo.label }}</legend>
+        {% for valor, nombre in formulario.fields.tipo.choices %}
+          <label class="opciones-alcance__opcion">
+            <input type="radio" name="{{ formulario.tipo.html_name }}" value="{{ valor }}" required
+                   {% if formulario.tipo.value == valor %}checked{% endif %}>
+            <span><b>{{ nombre }}</b></span>
+          </label>
+        {% endfor %}
+        {% if formulario.tipo.errors %}<span class="am-campo__error">{{ formulario.tipo.errors|join:" " }}</span>{% endif %}
+      </fieldset>
+      <label class="opciones-alcance__opcion">
+        <input type="checkbox" name="{{ formulario.reside.html_name }}" {% if formulario.reside.value %}checked{% endif %}>
+        <span>
+          <b>{{ formulario.reside.label }}</b>
+          <span class="am-campo__ayuda">Solo quien vive en la unidad puede reservar a su nombre.</span>
+        </span>
+      </label>
+      <div class="acciones">
+        <button class="am-btn am-btn--primario" type="submit">Agregar vínculo</button>
+      </div>
+    </form>
+  </details>
+
+  {% if puede_crear_residente %}
+    {# Desde aquí solo se crean residentes: el formulario no tiene campo de rol y la vista pone «residente». #}
+    <dialog class="modal-formulario" id="modal-residente" aria-labelledby="titulo-modal-residente"{% if abrir_alta %} data-abrir{% endif %}>
+      <form method="post" action="{% url 'unidades:crear-residente' unidad.id %}" class="am-formulario" novalidate>
+        {% csrf_token %}
+        <div class="am-modal__cuerpo">
+          <h2 class="am-modal__titulo" id="titulo-modal-residente">Crear nuevo residente</h2>
+          <p class="am-modal__texto">Se crea su cuenta con el rol Residente en este conjunto. Después lo eliges arriba para vincularlo a {{ unidad.nombre }}.</p>
+          {% include "componentes/errores_formulario.html" with formulario=residente %}
+
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="{{ residente.tipo_documento.id_for_label }}">{{ residente.tipo_documento.label }}</label>
+            <select class="am-campo__control" id="{{ residente.tipo_documento.id_for_label }}" name="{{ residente.tipo_documento.html_name }}">
+              {% for valor, nombre in residente.fields.tipo_documento.choices %}
+                <option value="{{ valor }}"{% if residente.tipo_documento.value == valor %} selected{% endif %}>{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% include "componentes/campo.html" with campo=residente.numero_documento autocompletar="off" modo="numeric" ayuda="Si ya existe en AdMind, no se crea de nuevo: vincúlalo desde Usuarios, en Registrar persona." %}
+          <div class="alta-residente__fila">
+            {% include "componentes/campo.html" with campo=residente.nombres autocompletar="given-name" %}
+            {% include "componentes/campo.html" with campo=residente.apellidos autocompletar="family-name" %}
+          </div>
+          <div class="alta-residente__fila">
+            {% include "componentes/campo.html" with campo=residente.telefono tipo="tel" autocompletar="tel" modo="tel" %}
+            {% include "componentes/campo.html" with campo=residente.correo tipo="email" autocompletar="off" %}
+          </div>
+          <div class="alta-residente__fila">
+            {% include "componentes/campo.html" with campo=residente.contrasena tipo="password" autocompletar="new-password" ayuda="Mínimo 8 caracteres." %}
+            {% include "componentes/campo.html" with campo=residente.confirmar_contrasena tipo="password" autocompletar="new-password" %}
+          </div>
+        </div>
+        <div class="am-modal__pie">
+          <button class="am-btn am-btn--secundario" type="button" data-cerrar-modal>Cancelar</button>
+          <button class="am-btn am-btn--primario" type="submit">Crear residente</button>
+        </div>
+      </form>
+    </dialog>
+  {% endif %}
+{% endif %}
+
+<div class="acciones">
+  {% if unidad.agrupacion %}
+    <a class="am-btn am-btn--secundario" href="{% url 'unidades:agrupacion' unidad.agrupacion.id %}">Volver a {{ unidad.agrupacion.nombre }}</a>
+  {% else %}
+    <a class="am-btn am-btn--secundario" href="{% url 'unidades:lista' %}">Volver a Unidades</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ personas|json_script:"personas-datos" }}
+  <script src="{% static 'js/busqueda.js' %}" defer></script>
+  <script src="{% static 'js/vinculos.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endblock %}

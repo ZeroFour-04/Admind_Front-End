@@ -1,0 +1,66 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/solicitudes.css' %}">{% endblock %}
+{% block titulo_vista %}{{ titulo }}{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if dashboard %}
+  {% include "triage/_dashboard.html" %}
+{% else %}
+{% include "casos/_pestanas.html" with pestana_activa="reservas" %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if es_residente and solicitudes %}
+  {% for solicitud in solicitudes %}
+    <article class="am-tarjeta tarjeta-contenido">
+      <header class="acciones">
+        <h2>{{ solicitud.area.nombre }}</h2>
+        <span class="am-pastilla {% if solicitud.estado == 'APARTADA' or solicitud.estado == 'EN_SOLICITUD' %}am-pastilla--tramite{% elif solicitud.estado == 'RESERVADA' %}am-pastilla--confirmado{% elif solicitud.estado == 'RECHAZADA' %}am-pastilla--error{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_visible }}</span>
+        {% if solicitud.estado == 'APARTADA' or solicitud.estado == 'RESERVADA' %}
+          <span class="am-pastilla {% if solicitud.pago.declarado %}am-pastilla--confirmado{% else %}am-pastilla--neutro{% endif %}">{% if solicitud.pago.declarado %}Pago declarado{% else %}Sin pago declarado{% endif %}</span>
+        {% endif %}
+      </header>
+      <dl>
+        <dt>Fecha y horario</dt>
+        <dd>{{ solicitud.fecha }} · {{ solicitud.hora_inicio }} a {{ solicitud.hora_fin }}</dd>
+        <dt>Unidad</dt>
+        <dd>{% if solicitud.unidad %}{{ solicitud.unidad.nombre }}{% else %}No indicada{% endif %}</dd>
+        <dt>Motivo del residente</dt>
+        <dd>{{ solicitud.motivo }}</dd>
+        <dt>Asistentes</dt>
+        <dd>{{ solicitud.asistentes|default:"No indicados" }}</dd>
+        {% if solicitud.observaciones %}
+          <dt>Observaciones</dt>
+          <dd>{{ solicitud.observaciones }}</dd>
+        {% endif %}
+        {% if solicitud.categoria_rechazo_nombre %}
+          <dt>Motivo del rechazo</dt>
+          <dd>{{ solicitud.categoria_rechazo_nombre }}</dd>
+        {% endif %}
+        {% if solicitud.motivo_decision %}
+          <dt>Comentario de la decisión</dt>
+          <dd>{{ solicitud.motivo_decision }}</dd>
+        {% endif %}
+      </dl>
+      <div class="acciones">
+        <a class="am-btn am-btn--secundario" href="{% url 'reservas:solicitud' solicitud.id %}">Ver solicitud</a>
+      </div>
+    </article>
+  {% endfor %}
+{% elif not error %}
+  <div class="am-vacio">
+    {% if es_residente %}
+      <p class="am-vacio__titulo">Todavía no tienes solicitudes de reserva</p>
+      <p class="am-vacio__texto">Tus solicitudes anteriores aparecerán aquí con su estado y los comentarios de la administración.</p>
+    {% else %}
+      <p class="am-vacio__titulo">No tienes acceso a solicitudes de reserva</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endif %}
+{% endblock %}

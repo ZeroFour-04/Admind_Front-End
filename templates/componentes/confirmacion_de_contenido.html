@@ -1,0 +1,32 @@
+{% comment %}
+Confirmación del contenido antes de enviar (maestro §5.1, HU-12, plan P7). Un fragmento, tres usos:
+solicitud de reserva, cita (HU-31) y aceptación de una alternativa (HU-32). Solo reutiliza clases que ya existen.
+
+Se confirma el contenido, no la intención: le devuelve a la persona lo que va a comprometer, con el día
+de la semana en letras. Vive dentro de un `x-data` que tenga `revisando` y `vencido`; abrirlo o cerrarlo
+no le pide nada al servidor ni toca el reloj.
+
+Parámetros, ya formateados en el servidor: area, fecha, horario, avisos (textos que resaltan sin impedir
+el envío), condiciones (opcional) y asistentes (si es True, muestra el número enlazado con `x-text`).
+{% endcomment %}
+<section class="am-tarjeta tarjeta-contenido" x-show="revisando" x-cloak aria-labelledby="titulo-confirmacion">
+  <h2 id="titulo-confirmacion">Revisa antes de enviar</h2>
+  <p class="tarjeta-contenido__cuerpo">
+    Vas a solicitar el <b>{{ area }}</b> para el <b>{{ fecha }}</b>, de <b>{{ horario }}</b>{% if asistentes %}, para <b x-text="asistentes"></b> asistentes{% endif %}.
+  </p>
+  {% if condiciones %}
+    <div class="aviso-info" role="note">
+      <b>Reglas de renta de la zona</b>
+      <p>{{ condiciones|linebreaksbr }}</p>
+    </div>
+  {% endif %}
+  {% if avisos %}
+    <ul class="lista-simple" role="list">
+      {% for aviso in avisos %}<li><span class="am-pastilla am-pastilla--tramite">{{ aviso }}</span></li>{% endfor %}
+    </ul>
+  {% endif %}
+  <div class="acciones">
+    <button class="am-btn am-btn--secundario" type="button" @click="revisando = false">Corregir</button>
+    <button class="am-btn am-btn--primario" type="submit" :disabled="vencido">Enviar solicitud</button>
+  </div>
+</section>

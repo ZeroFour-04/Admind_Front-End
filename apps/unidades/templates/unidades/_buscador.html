@@ -1,0 +1,14 @@
+{% comment %}
+Buscador de viviendas. Va dentro de un contenedor con x-data="directorioDeUnidades(...)": escribe en `consulta`
+y la lista se filtra mientras se teclea. Parámetro: puede_gestionar (solo entonces se busca por persona).
+{% endcomment %}
+<div class="am-campo buscador-unidades">
+  <label class="am-campo__etiqueta" for="buscar-unidades">{% if puede_gestionar %}Buscar una vivienda o una persona{% else %}Buscar una vivienda{% endif %}</label>
+  <input class="am-campo__control" type="search" id="buscar-unidades" x-model.debounce.120ms="consulta"
+         autocomplete="off" spellcheck="false" aria-describedby="buscar-unidades-ayuda"
+         placeholder="{% if puede_gestionar %}Etapa 5 Apartamento 501, un nombre o una cédula{% else %}Etapa 5 Apartamento 501{% endif %}">
+  <span class="am-campo__ayuda" id="buscar-unidades-ayuda">
+    {% if puede_gestionar %}Escribe la nomenclatura, el nombre de quien la habita o su cédula.{% else %}Escribe la nomenclatura de la vivienda.{% endif %}
+    La lista se filtra mientras escribes.
+  </span>
+</div>

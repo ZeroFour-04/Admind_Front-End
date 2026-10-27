@@ -1,0 +1,26 @@
+{% extends "base/sin_sesion.html" %}
+
+{% block titulo %}Iniciar sesión{% endblock %}
+
+{% block contenido %}
+<h1 class="tarjeta-sin-sesion__titulo">Iniciar sesión</h1>
+
+{% if restablecida %}
+  <div class="aviso-exito" role="status">Tu contraseña cambió. Inicia sesión con la nueva.</div>
+{% endif %}
+{% if segundo_factor_restablecido %}
+  <div class="aviso-exito" role="status">Quitamos la verificación en dos pasos. Inicia sesión y configúrala de nuevo.</div>
+{% endif %}
+
+<form method="post" action="{% url 'cuentas:ingreso' %}" class="formulario" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {% include "componentes/campo.html" with campo=formulario.correo tipo="email" autocompletar="username" %}
+  {% include "componentes/campo.html" with campo=formulario.contrasena tipo="password" autocompletar="current-password" %}
+  <button type="submit" class="am-btn am-btn--primario formulario__envio">Iniciar sesión</button>
+</form>
+
+<p class="tarjeta-sin-sesion__pie">
+  <a href="{% url 'cuentas:recuperar-contrasena' %}">¿Olvidaste tu contraseña?</a>
+</p>
+{% endblock %}

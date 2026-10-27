@@ -1,0 +1,126 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Solicitud de reserva{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{% static 'css/reservas.css' %}">{% endblock %}
+{% block titulo_vista %}Solicitud de reserva{% endblock %}
+{% block estado_vista %}{% if solicitud %}<span class="am-pastilla {% if en_tramite %}am-pastilla--tramite{% else %}am-pastilla--neutro{% endif %}">{{ solicitud.estado_nombre }}</span>{% endif %}{% endblock %}
+
+{% block contenido %}
+{% if error_de_envio and not en_tramite %}<div class="am-alerta am-alerta--error" role="alert">{{ error_de_envio }}</div>{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% url 'reservas:calendario' %}">Volver a las zonas comunes</a>
+  </div>
+{% elif en_tramite %}
+  <div x-data="solicitudDeReserva({{ solicitud.segundos_restantes }}, '{% url 'reservas:liberar' solicitud.id %}')">
+    <p class="vista__guia">
+      {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+    </p>
+    {% if solicitud.area.condiciones_alquiler %}
+      <div class="aviso-info" role="note">
+        <b>Reglas de renta de la zona</b>
+        <p>{{ solicitud.area.condiciones_alquiler|linebreaksbr }}</p>
+      </div>
+    {% endif %}
+    <p class="reloj-solicitud" role="timer" aria-live="off">
+      Tienes
+      <span class="am-pastilla am-pastilla--tramite"><span class="am-pastilla__reloj am-num" x-text="reloj">{{ reloj }}</span></span>
+      para enviar la solicitud. Mientras tanto, la franja es solo tuya.
+    </p>
+    <div class="am-alerta am-alerta--error" role="alert" x-show="vencido" x-cloak>Se venció el tiempo. La franja quedó libre.</div>
+    {% if error_de_envio %}<div class="am-alerta am-alerta--error" role="alert">{{ error_de_envio }}</div>{% endif %}
+
+    {% if unidades %}
+      <form method="post" action="{% url 'reservas:enviar' solicitud.id %}" class="am-formulario" @submit="enviando = true">
+        {% csrf_token %}
+        <div class="am-tarjeta formulario-anuncio" x-show="!revisando">
+          {% include "componentes/errores_formulario.html" %}
+          {% if unidades|length == 1 %}
+            <input type="hidden" name="{{ formulario.unidad.html_name }}" value="{{ unidades.0.id }}">
+            <p class="vista__guia">A nombre de {{ unidades.0.nombre }}.</p>
+          {% else %}
+            <div class="am-campo">
+              <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+              <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}" required>
+                {% for valor, nombre in formulario.fields.unidad.choices %}
+                  <option value="{{ valor }}"{% if formulario.unidad.value|stringformat:"s" == valor|stringformat:"s" %} selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+              </select>
+              {% if formulario.unidad.errors %}<span class="am-campo__error">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+            </div>
+          {% endif %}
+          {% include "componentes/campo.html" with campo=formulario.motivo ayuda="Por ejemplo, «Cumpleaños de mi hija»." %}
+          {% include "componentes/campo.html" with campo=formulario.asistentes tipo="number" modo="numeric" %}
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="{{ formulario.observaciones.id_for_label }}">{{ formulario.observaciones.label }}</label>
+            <textarea class="am-campo__control" id="{{ formulario.observaciones.id_for_label }}" name="{{ formulario.observaciones.html_name }}" rows="3" maxlength="1000"
+                      aria-describedby="{{ formulario.observaciones.id_for_label }}-ayuda">{{ formulario.observaciones.value|default_if_none:'' }}</textarea>
+            <span class="am-campo__ayuda" id="{{ formulario.observaciones.id_for_label }}-ayuda">Opcional.</span>
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--primario" type="button" @click="revisar($el.form)" :disabled="vencido">Revisar solicitud</button>
+          </div>
+        </div>
+        {% include "componentes/confirmacion_de_contenido.html" with area=solicitud.area.nombre fecha=fecha_en_letras horario=horario avisos=avisos condiciones=solicitud.area.condiciones_alquiler asistentes=True %}
+      </form>
+    {% else %}
+      <div class="aviso-info" role="note"><p>Para reservar necesitas vivir en un apartamento del conjunto. Cancela la solicitud para soltar la franja.</p></div>
+    {% endif %}
+
+    <form method="post" action="{% url 'reservas:liberar' solicitud.id %}" @submit="enviando = true">
+      {% csrf_token %}
+      <div class="acciones">
+        <button class="am-btn am-btn--secundario" type="submit">Cancelar</button>
+      </div>
+    </form>
+  </div>
+{% else %}
+  <p class="vista__guia">
+    {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+  </p>
+  <div class="aviso-info" role="status">
+    {% if solicitud.estado == "EXPIRADA" %}
+      <p>Se venció el tiempo sin enviar la solicitud. La franja quedó libre.</p>
+    {% elif solicitud.estado == "LIBERADA" and motivos %}
+      <p>La solicitud no cumple las reglas del conjunto:</p>
+      <ul>{% for motivo in motivos %}<li>{{ motivo }}</li>{% endfor %}</ul>
+      <p>La franja quedó libre.</p>
+    {% elif solicitud.estado == "LIBERADA" %}
+      <p>Cancelaste esta solicitud. La franja quedó libre.</p>
+    {% elif solicitud.estado == "APARTADA" %}
+      <p>Tu solicitud quedó apartada. La administración la revisará y te avisará.</p>
+    {% elif solicitud.estado == "RESERVADA" %}
+      <p>Tu solicitud fue aceptada y la zona común quedó reservada.</p>
+      {% if solicitud.motivo_decision %}<p>Comentario de la administración: {{ solicitud.motivo_decision }}</p>{% endif %}
+    {% elif solicitud.estado == "RECHAZADA" %}
+      <p>Tu solicitud fue rechazada. La franja quedó libre.</p>
+      {% if solicitud.motivo_decision %}<p>Comentario de la administración: {{ solicitud.motivo_decision }}</p>{% endif %}
+    {% else %}
+      <p>Esta solicitud está {{ solicitud.estado_nombre|lower }}.</p>
+    {% endif %}
+  </div>
+  {% if solicitud.estado == "RESERVADA" or solicitud.estado == "RECHAZADA" %}
+    {% if solicitud.area.condiciones_alquiler %}
+      <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-condiciones-renta">
+        <h2 id="titulo-condiciones-renta">Reglas de renta de la zona</h2>
+        <p>{{ solicitud.area.condiciones_alquiler|linebreaksbr }}</p>
+      </section>
+    {% endif %}
+  {% endif %}
+  {% if muestra_el_pago %}
+    {% include "reservas/_pago.html" with pago=pago id_de_solicitud=solicitud.id aviso=aviso_del_dinero para_gestion=False puede_subir=puede_subir_comprobante error=error_de_pago %}
+  {% endif %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{{ volver }}">Volver al calendario</a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if en_tramite %}
+  <script src="{% static 'js/reservas.js' %}" defer></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+{% endif %}
+{% endblock %}

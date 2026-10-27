@@ -1,0 +1,49 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Administración del conjunto{% endblock %}
+{% block titulo_vista %}Administración del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if resumen %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-administradores">
+    <h2 id="titulo-administradores">Quién administra {{ resumen.conjunto.nombre }}</h2>
+    {% if resumen.administradores %}
+      <ul class="lista-simple" role="list">
+        {% for persona in resumen.administradores %}<li>{{ persona.nombre }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="tarjeta-contenido__meta">Todavía nadie. El conjunto necesita al menos una persona con rol Administración.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+<details class="am-tarjeta tarjeta-contenido"{% if formulario.errors or not resumen.administradores %} open{% endif %}>
+  <summary>Agregar a alguien con rol Administración</summary>
+  <form method="post" class="am-formulario" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% for campo in formulario %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<span class="am-campo__error">{{ error }}</span>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="acciones">
+      <button class="am-btn am-btn--secundario" type="submit">Agregar</button>
+    </div>
+  </form>
+</details>
+
+<div class="acciones">
+  <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:asistente-viviendas' %}">Volver</a>
+  <a class="am-btn am-btn--primario" href="{% url 'conjuntos:asistente-areas' %}">Continuar</a>
+</div>
+{% endblock %}

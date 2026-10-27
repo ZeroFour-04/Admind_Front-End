@@ -1,0 +1,17 @@
+{% comment %}
+Campo de formulario con las clases de design-system/. Parámetros: campo (obligatorio), tipo, autocompletar,
+modo (inputmode) y ayuda. Una contraseña nunca se devuelve al formulario, ni siquiera si hubo error.
+{% endcomment %}
+<div class="am-campo">
+  <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+  <input class="am-campo__control" type="{{ tipo|default:'text' }}" id="{{ campo.id_for_label }}" name="{{ campo.html_name }}"
+         {% if tipo != "password" %}value="{{ campo.value|default_if_none:'' }}"{% endif %}
+         {% if autocompletar %}autocomplete="{{ autocompletar }}"{% endif %}
+         {% if modo %}inputmode="{{ modo }}"{% endif %}
+         {% if campo.field.max_length %}maxlength="{{ campo.field.max_length }}"{% endif %}
+         {% if campo.field.required %}required{% endif %}
+         {% if campo.errors or ayuda %}aria-describedby="{% if ayuda %}{{ campo.id_for_label }}-ayuda {% endif %}{% if campo.errors %}{{ campo.id_for_label }}-error{% endif %}"{% endif %}
+         {% if campo.errors %}aria-invalid="true"{% endif %}>
+  {% if ayuda %}<span class="am-campo__ayuda" id="{{ campo.id_for_label }}-ayuda">{{ ayuda }}</span>{% endif %}
+  {% if campo.errors %}<span class="am-campo__error" id="{{ campo.id_for_label }}-error">{{ campo.errors|join:" " }}</span>{% endif %}
+</div>

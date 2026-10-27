@@ -1,0 +1,73 @@
+from django import forms
+
+
+# Los roles de conjunto del catálogo (maestro §5.3). No se crean ni se editan desde la interfaz.
+# De menos a más poder: en un select queda marcada la primera opción, y nadie debe quedar con la
+# Administración sin que alguien la haya elegido.
+ROLES_DE_CONJUNTO = [
+    ("residente", "Residente"),
+    ("vigilancia", "Vigilancia"),
+    ("secretaria", "Secretaría"),
+    ("administracion", "Administración"),
+]
+ROL_POR_DEFECTO = "residente"
+
+
+class AsignarRolForm(forms.Form):
+    """Solo ofrece los roles de conjunto que la persona todavía no tiene (HU-06)."""
+
+    rol = forms.ChoiceField(label="Rol")
+
+    def __init__(self, *args, roles_actuales=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["rol"].choices = [opcion for opcion in ROLES_DE_CONJUNTO if opcion[0] not in roles_actuales]
+
+
+TIPOS_DE_DOCUMENTO = [
+    ("CC", "Cédula de ciudadanía"),
+    ("TI", "Tarjeta de identidad"),
+    ("CE", "Cédula de extranjería"),
+    ("PAS", "Pasaporte"),
+    ("PPT", "Permiso por Protección Temporal"),
+]
+
+
+class BuscarPersonaForm(forms.Form):
+    """Paso 1 de registrar persona (HU-07): el documento exacto. Viaja por POST, nunca en la URL."""
+
+    tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
+    numero_documento = forms.CharField(label="Número de documento", max_length=20)
+
+
+class VincularPersonaForm(forms.Form):
+    persona = forms.UUIDField(widget=forms.HiddenInput)
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
+
+
+class UsuarioForm(forms.Form):
+    rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
+    tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
+    numero_documento = forms.CharField(label="Número de documento", max_length=20)
+    nombres = forms.CharField(label="Nombres", max_length=30)
+    apellidos = forms.CharField(label="Apellidos", max_length=30)
+    telefono = forms.RegexField(
+        label="Teléfono",
+        regex=r"^\+?[0-9]{7,10}$",
+        max_length=10,
+        required=False,
+        error_messages={
+            "invalid": "El teléfono debe tener entre 7 y 10 dígitos y puede iniciar con +."
+        },
+    )
+    correo = forms.EmailField(label="Correo electrónico")
+    contrasena = forms.CharField(label="Contraseña", min_length=8, strip=False, widget=forms.PasswordInput)
+    confirmar_contrasena = forms.CharField(
+        label="Confirmar contraseña", strip=False, widget=forms.PasswordInput
+    )
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get("contrasena") != datos.get("confirmar_contrasena"):
+            self.add_error("confirmar_contrasena", "Las contraseñas no coinciden.")
+        datos.pop("confirmar_contrasena", None)
+        return datos

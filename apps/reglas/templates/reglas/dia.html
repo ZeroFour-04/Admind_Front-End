@@ -1,0 +1,46 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}{{ tipo.nombre|default:"Días que no abre" }}{% endblock %}
+{% block titulo_vista %}Agregar un día que no abre{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if volver == "asistente" %}
+  {% include "conjuntos/_pasos.html" with hay_conjunto=True %}
+{% endif %}
+<p class="vista__guia">{{ tipo.descripcion }}{% if tipo.nota %} {{ tipo.nota }}{% endif %}</p>
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="volver" value="{{ volver }}">
+  {% include "componentes/errores_formulario.html" %}
+  <fieldset class="opciones-alcance">
+    <legend class="am-campo__etiqueta">{{ formulario.clase.label }}</legend>
+    {% for valor, nombre in formulario.fields.clase.choices %}
+      <label class="opciones-alcance__opcion">
+        <input type="radio" name="{{ formulario.clase.html_name }}" value="{{ valor }}" required {% if formulario.clase.value == valor %}checked{% endif %}>
+        <span><b>{{ nombre }}</b></span>
+      </label>
+    {% endfor %}
+    {% if formulario.clase.errors %}<span class="am-campo__error">{{ formulario.clase.errors|join:" " }}</span>{% endif %}
+  </fieldset>
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.dia_semana.id_for_label }}">{{ formulario.dia_semana.label }}</label>
+    <select class="am-campo__control" id="{{ formulario.dia_semana.id_for_label }}" name="{{ formulario.dia_semana.html_name }}"
+            {% if formulario.dia_semana.errors %}aria-invalid="true" aria-describedby="{{ formulario.dia_semana.id_for_label }}-error"{% endif %}>
+      <option value="">Elige el día</option>
+      {% for valor, nombre in formulario.fields.dia_semana.choices %}
+        <option value="{{ valor }}"{% if formulario.dia_semana.value == valor %} selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    {% if formulario.dia_semana.errors %}<span class="am-campo__error" id="{{ formulario.dia_semana.id_for_label }}-error">{{ formulario.dia_semana.errors|join:" " }}</span>{% endif %}
+  </div>
+  {% include "componentes/campo.html" with campo=formulario.desde tipo="date" %}
+  {% include "componentes/campo.html" with campo=formulario.hasta tipo="date" ayuda=formulario.hasta.help_text %}
+  {% include "componentes/campo.html" with campo=formulario.motivo ayuda=formulario.motivo.help_text %}
+  <div class="acciones">
+    <a class="am-btn am-btn--secundario" href="{% if volver == 'asistente' %}{% url 'conjuntos:asistente-reglas' %}{% else %}{% url 'reglas:lista' %}{% endif %}">Volver</a>
+    <button class="am-btn am-btn--primario" type="submit">Agregar día</button>
+  </div>
+</form>
+{% endblock %}
