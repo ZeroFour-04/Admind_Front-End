@@ -15,9 +15,13 @@
   {% endif %}
   <link rel="stylesheet" href="{% static 'design-system/styles.css' %}">
   <link rel="stylesheet" href="{% static 'css/estructura.css' %}">
+  <link rel="stylesheet" href="{% static 'css/apariencia.css' %}">
   {% block estilos %}{% endblock %}
+  {# Pone el fondo elegido en <html> antes de pintar: va sin defer, a propósito. #}
+  <script src="{% static 'js/apariencia.js' %}"></script>
 </head>
 <body>
+  {% include "componentes/_iconos.html" %}
   {% block cuerpo %}{% endblock %}
   {# Solo las pantallas que usan JavaScript lo cargan aquí, con defer (plan P13). #}
   {% block scripts %}{% endblock %}

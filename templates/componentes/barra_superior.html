@@ -27,6 +27,7 @@ la cabeza del lateral.
       {% endwith %}
     {% endif %}
     <div class="am-barra__derecha">
+      {% include "componentes/_apariencia.html" %}
       {% if not sin_conjunto %}
         <a class="am-btn am-btn--texto am-barra__cambiar" href="{% url 'conjuntos:selector' %}">Cambiar de conjunto</a>
         <span class="am-barra__tipo-usuario">{{ request.session.tipo_usuario|default:"Usuario" }}</span>

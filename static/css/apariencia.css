@@ -1,0 +1,131 @@
+/* APARIENCIA — la capa «con vida» sobre los componentes del sistema (decisión de Alejo, 2026-10-30).
+   Solo variables de design-system/ (efectos.css incluido). Ningún hex.
+   Va después de estructura.css y antes de la hoja de cada pantalla.
+   El acento aquí es adorno y marca. Los estados (pastillas, avisos, errores) siguen con sus
+   colores fijos: --acento-* no aparece en ninguna regla que comunique estado. */
+
+::selection{background:var(--acento-200);color:var(--texto-fuerte)}
+
+/* ---------- Fondo: liso (sin atributo o «liso»), color y cristal ------------------ */
+html[data-fondo="color"] body,
+html[data-fondo="cristal"] body{background:var(--fondo-color);background-attachment:fixed}
+html[data-fondo="cristal"] body::before,
+html[data-fondo="cristal"] body::after{content:"";position:fixed;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(80px);will-change:transform}
+html[data-fondo="cristal"] body::before{width:60vmax;height:60vmax;top:-22vmax;left:-14vmax;background:var(--mancha-1);animation:deriva-a 26s ease-in-out infinite alternate}
+html[data-fondo="cristal"] body::after{width:52vmax;height:52vmax;right:-16vmax;bottom:-20vmax;background:var(--mancha-2);animation:deriva-b 32s ease-in-out infinite alternate}
+@keyframes deriva-a{to{transform:translate(8vmax,6vmax) scale(1.08)}}
+@keyframes deriva-b{to{transform:translate(-7vmax,-5vmax) scale(1.1)}}
+
+/* Vidrio: lo que antes era una tarjeta blanca deja ver el fondo, desenfocado. */
+html[data-fondo="cristal"] :is(.am-tarjeta,.am-tesela,.am-tabla-caja,.am-vacio,.am-modal,.zona-tarjeta){
+  background:var(--vidrio);border-color:var(--vidrio-borde);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5)}
+html[data-fondo="cristal"] :is(.am-barra,.am-lateral){
+  background:var(--vidrio-barra);border-color:var(--vidrio-borde);
+  -webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6)}
+@media (max-width:900px){
+  /* El panel del menú tapa la página: ahí el vidrio es casi sólido. */
+  html[data-fondo="cristal"] .am-lateral{background:color-mix(in srgb,var(--gris-0) 94%,transparent)}
+}
+/* No se apaga con prefers-reduced-transparency: Windows lo reporta aunque «Efectos de transparencia»
+   esté apagado por rendimiento, y el vidrio ya es casi opaco (el texto de una tarjeta no baja de 4.5:1
+   sobre ninguna mancha, medido con varios acentos). Quien no lo quiera elige «Liso» o «Color» en el botón de la paleta. */
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  html[data-fondo="cristal"] :is(.am-tarjeta,.am-tesela,.am-tabla-caja,.am-vacio,.am-modal,.zona-tarjeta,.am-barra,.am-lateral){
+    background:var(--superficie-tarjeta)}
+}
+@media (prefers-reduced-motion:reduce){
+  html[data-fondo="cristal"] body::before,
+  html[data-fondo="cristal"] body::after{animation:none}
+}
+
+/* ---------- Barra superior ---------------------------------------------------- */
+.am-barra{position:sticky;top:0;z-index:15;box-shadow:var(--sombra-suave)}
+.am-barra__franja{height:5px;background:linear-gradient(90deg,var(--acento-700),var(--acento-600) 40%,var(--acento-vecino))}
+.am-barra__marca{display:inline-flex;align-items:center;gap:var(--e-2)}
+.am-barra__marca::before{content:"";flex:none;width:22px;height:22px;border-radius:7px;background:var(--acento-degradado-vivo);box-shadow:var(--sombra-acento);transform:rotate(-8deg);transition:transform var(--transicion-suave)}
+.am-barra__marca:hover::before{transform:rotate(8deg) scale(1.1)}
+.am-barra__perfil{transition:background var(--transicion),color var(--transicion),border-color var(--transicion),transform var(--transicion)}
+.am-barra__perfil:hover{background:var(--acento-50);color:var(--acento-900);border-color:var(--acento-400);transform:translateY(-1px)}
+
+/* ---------- Lateral, con íconos ----------------------------------------------- */
+.am-icono{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;color:var(--texto-suave);transition:color var(--transicion),transform var(--transicion-suave)}
+.am-lateral{gap:var(--e-1);padding:var(--e-4) var(--e-3)}
+@media (min-width:901px){.am-lateral{box-shadow:var(--sombra-suave)}}
+.am-lateral__item{border-radius:var(--radio-control);transition:background var(--transicion),color var(--transicion),transform var(--transicion)}
+.am-lateral__item:hover,.am-lateral__item.am-es-hover{background:var(--acento-50);color:var(--acento-900);transform:translateX(3px)}
+.am-lateral__item:hover .am-icono{color:var(--acento-600);transform:scale(1.12)}
+.am-lateral__item.am-es-activo{background:var(--acento-degradado-suave);color:var(--acento-900);box-shadow:inset 3px 0 0 var(--acento-600),var(--sombra-suave);transform:none}
+.am-lateral__item.am-es-activo .am-icono{color:var(--acento-600)}
+.am-lateral__pie{padding-top:var(--e-2)}
+
+/* ---------- Botones ----------------------------------------------------------- */
+.am-btn{transition:background var(--transicion),border-color var(--transicion),color var(--transicion),box-shadow var(--transicion),transform var(--transicion),filter var(--transicion)}
+.am-btn--primario{background:var(--acento-degradado);box-shadow:var(--sombra-acento)}
+.am-btn--primario:hover,.am-btn--primario.am-es-hover{background:var(--acento-degradado);filter:brightness(1.1) saturate(1.05);transform:translateY(-1px)}
+.am-btn--primario:active{transform:translateY(0) scale(.985);filter:none}
+.am-btn--primario:disabled{background:var(--superficie-hundida);box-shadow:none;transform:none;filter:none}
+.am-btn--secundario:hover,.am-btn--secundario.am-es-hover{background:var(--acento-50);border-color:var(--acento-400);color:var(--acento-900)}
+.am-btn--secundario:disabled{background:var(--superficie-hundida)}
+.am-btn--peligro:hover{transform:translateY(-1px)}
+a.am-btn--secundario:hover{color:var(--acento-900)}
+
+/* ---------- Tarjetas, tablas, pastillas, campos ------------------------------- */
+.am-tarjeta,.am-tesela,.am-tabla-caja{box-shadow:var(--sombra-suave)}
+.am-vacio{border-color:var(--acento-200);background:var(--acento-degradado-suave)}
+.am-pastilla::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.75}
+.am-tabla thead th{background:color-mix(in srgb,var(--acento-600) 6%,var(--superficie-hundida))}
+.am-tabla tbody tr{transition:background var(--transicion)}
+.am-tabla tbody tr:hover,.am-tabla tbody tr.am-es-hover{background:var(--acento-50)}
+.am-campo__control{transition:border-color var(--transicion),box-shadow var(--transicion),background var(--transicion)}
+.am-campo__control:hover:not(:disabled):not(:focus){border-color:var(--acento-400)}
+.am-pestana{transition:color var(--transicion),box-shadow var(--transicion),background var(--transicion)}
+
+/* ---------- Encabezado de cada vista ------------------------------------------ */
+.vista > .vista__encabezado{position:relative;overflow:hidden;padding:var(--e-5) var(--e-6);border:1px solid var(--acento-100);border-radius:var(--radio-caja);background:linear-gradient(120deg,color-mix(in srgb,var(--acento-100) 90%,transparent),color-mix(in srgb,var(--acento-50) 70%,transparent))}
+.vista > .vista__encabezado::after{content:"";position:absolute;right:-48px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acento-vecino) 34%,transparent),transparent 70%);pointer-events:none}
+.vista > .vista__encabezado > *{position:relative;z-index:1}
+
+/* ---------- Entrada: cada bloque de la vista sube y aparece, uno tras otro ---------- */
+@keyframes aparecer{from{opacity:0;transform:translateY(10px)}}
+.vista > *{animation:aparecer var(--duracion-entrada) var(--curva-entrada) both}
+.vista > :nth-child(2){animation-delay:70ms}
+.vista > :nth-child(3){animation-delay:140ms}
+.vista > :nth-child(4){animation-delay:210ms}
+.vista > :nth-child(5){animation-delay:280ms}
+.vista > :nth-child(6){animation-delay:340ms}
+.vista > :nth-child(n+7){animation-delay:400ms}
+
+/* ---------- Ingreso y páginas sin sesión -------------------------------------- */
+.pagina-sin-sesion{gap:var(--e-6);background:radial-gradient(60% 45% at 50% 0%,var(--acento-100),transparent)}
+.pagina-sin-sesion > .am-barra__marca{font-size:28px}
+.pagina-sin-sesion > .am-barra__marca::before{width:30px;height:30px;border-radius:9px}
+.tarjeta-sin-sesion{border-radius:var(--radio-grande);box-shadow:var(--sombra-media);animation:aparecer var(--duracion-entrada) var(--curva-entrada) 80ms both}
+
+/* ---------- Lo que flota ------------------------------------------------------ */
+.am-modal,.confirmacion-eliminar{border-radius:var(--radio-grande)}
+.am-velo{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.confirmacion-eliminar::backdrop{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+
+/* ---------- Elegir el fondo (barra superior) ------------------------------------ */
+.am-apariencia{position:relative}
+.am-apariencia > summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;width:var(--toque-minimo);height:var(--toque-minimo);border:1px solid var(--borde-fuerte);border-radius:50%;background:var(--superficie-tarjeta);color:var(--texto-medio);cursor:pointer;transition:background var(--transicion),color var(--transicion),border-color var(--transicion),transform var(--transicion)}
+.am-apariencia > summary::-webkit-details-marker{display:none}
+.am-apariencia > summary .am-icono{color:inherit}
+.am-apariencia > summary:hover,.am-apariencia[open] > summary{background:var(--acento-50);color:var(--acento-900);border-color:var(--acento-400)}
+.am-apariencia > summary:hover{transform:translateY(-1px)}
+.am-apariencia__panel{position:absolute;right:0;top:calc(100% + var(--e-2));z-index:30;display:flex;flex-direction:column;gap:var(--e-1);min-width:232px;margin:0;padding:var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-caja);background:var(--superficie-tarjeta);box-shadow:var(--sombra-flotante);animation:aparecer 200ms var(--curva-entrada) both}
+.am-apariencia__panel legend{float:left;width:100%;padding:0 var(--e-2) var(--e-1);font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-suave)}
+.am-apariencia__panel legend + *{clear:both}
+.am-apariencia__opcion{display:flex;align-items:center;gap:var(--e-3);min-height:var(--toque-minimo);padding:0 var(--e-2);border-radius:var(--radio-control);cursor:pointer;font-size:var(--tipo-cuerpo);transition:background var(--transicion)}
+.am-apariencia__opcion:hover{background:var(--acento-50)}
+.am-apariencia__opcion:has(input:checked){background:var(--acento-degradado-suave);color:var(--acento-900);font-weight:var(--peso-texto-medio)}
+.am-apariencia__opcion input{accent-color:var(--acento-600)}
+.am-apariencia__muestra{flex:none;width:28px;height:28px;border:1px solid var(--borde-fuerte);border-radius:8px}
+.am-apariencia__muestra--liso{background:var(--superficie-pagina)}
+.am-apariencia__muestra--color{background:var(--fondo-color)}
+.am-apariencia__muestra--cristal{background:radial-gradient(circle at 25% 25%,var(--mancha-2),transparent 60%),radial-gradient(circle at 80% 80%,var(--mancha-1),transparent 60%),var(--acento-50)}
+@media (max-width:480px){
+  .am-apariencia{position:static}
+  .am-apariencia__panel{position:fixed;left:var(--e-3);right:var(--e-3);top:72px;min-width:0}
+}

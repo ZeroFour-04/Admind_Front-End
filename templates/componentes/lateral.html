@@ -14,49 +14,49 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
       </svg>
     </button>
   </div>
-  <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}>Inicio</a>
-  <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}>Zonas comunes</a>
+  <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-inicio"></use></svg>Inicio</a>
+  <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-calendario"></use></svg>Zonas comunes</a>
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   {% if "area.gestionar" in request.session.permisos or "reserva.ver_todas" in request.session.permisos or "reserva.aprobar" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}>Áreas comunes</a>
+  <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-area"></use></svg>Áreas comunes</a>
   {% endif %}
   {% endif %}
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
-  <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}>Reglas</a>
+  <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-reglas"></use></svg>Reglas</a>
   {% endif %}
-  <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}>Anuncios</a>
+  <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-anuncio"></use></svg>Anuncios</a>
   {% if "documento.ver" in request.session.permisos or "documento.subir" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'documentos' %} am-es-activo{% endif %}" href="{% url 'documentos:lista' %}"{% if actual == 'documentos' %} aria-current="page"{% endif %}>Documentos</a>
+  <a class="am-lateral__item{% if actual == 'documentos' %} am-es-activo{% endif %}" href="{% url 'documentos:lista' %}"{% if actual == 'documentos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-documento"></use></svg>Documentos</a>
   {% endif %}
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
-  <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}>Notificaciones</a>
-  <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}>Solicitudes</a>
+  <a class="am-lateral__item{% if actual == 'notificaciones' %} am-es-activo{% endif %}" href="{% url 'notificaciones:bandeja' %}"{% if actual == 'notificaciones' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-campana"></use></svg>Notificaciones</a>
+  <a class="am-lateral__item{% if actual == 'triage' %} am-es-activo{% endif %}" href="{% url 'triage:bandeja' %}"{% if actual == 'triage' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-bandeja"></use></svg>Solicitudes</a>
   {% endif %}
   {% if "caso.crear" in request.session.permisos or "caso.ver_todos" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'casos' %} am-es-activo{% endif %}" href="{% url 'casos:lista' %}"{% if actual == 'casos' %} aria-current="page"{% endif %}>Casos</a>
+  <a class="am-lateral__item{% if actual == 'casos' %} am-es-activo{% endif %}" href="{% url 'casos:lista' %}"{% if actual == 'casos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-maletin"></use></svg>Casos</a>
   {% endif %}
   {% if "infraccion.ver" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'infracciones' %} am-es-activo{% endif %}" href="{% url 'infracciones:lista' %}"{% if actual == 'infracciones' %} aria-current="page"{% endif %}>Infracciones</a>
+  <a class="am-lateral__item{% if actual == 'infracciones' %} am-es-activo{% endif %}" href="{% url 'infracciones:lista' %}"{% if actual == 'infracciones' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-alerta"></use></svg>Infracciones</a>
   {% endif %}
   {% if "ingreso.registrar" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}>Ingreso a zonas</a>
+  <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-puerta"></use></svg>Ingreso a zonas</a>
   {% elif "ingreso.ver_historico" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}>Ingresos</a>
+  <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-puerta"></use></svg>Ingresos</a>
   {% endif %}
   {% if "pago.ver" in request.session.permisos or "pago.reportar" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'pagos' %} am-es-activo{% endif %}" href="{% url 'pagos:administracion' %}"{% if actual == 'pagos' %} aria-current="page"{% endif %}>Pagos</a>
+  <a class="am-lateral__item{% if actual == 'pagos' %} am-es-activo{% endif %}" href="{% url 'pagos:administracion' %}"{% if actual == 'pagos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-tarjeta"></use></svg>Pagos</a>
   {% endif %}
   {% if "Residente" in request.session.roles or request.session.tipo_usuario == "Residente" %}
-  <a class="am-lateral__item{% if actual == 'parqueaderos' %} am-es-activo{% endif %}" href="{% url 'parqueaderos:mios' %}"{% if actual == 'parqueaderos' %} aria-current="page"{% endif %}>Mi parqueadero</a>
+  <a class="am-lateral__item{% if actual == 'parqueaderos' %} am-es-activo{% endif %}" href="{% url 'parqueaderos:mios' %}"{% if actual == 'parqueaderos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-carro"></use></svg>Mi parqueadero</a>
   {% endif %}
   {% if "visitante.ver_historico" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'visitantes' %} am-es-activo{% endif %}" href="{% url 'visitantes:lista' %}"{% if actual == 'visitantes' %} aria-current="page"{% endif %}>Visitantes</a>
+  <a class="am-lateral__item{% if actual == 'visitantes' %} am-es-activo{% endif %}" href="{% url 'visitantes:lista' %}"{% if actual == 'visitantes' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-visitantes"></use></svg>Visitantes</a>
   {% elif "visitante.registrar" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'visitantes' %} am-es-activo{% endif %}" href="{% url 'visitantes:lista' %}"{% if actual == 'visitantes' %} aria-current="page"{% endif %}>Visitante</a>
+  <a class="am-lateral__item{% if actual == 'visitantes' %} am-es-activo{% endif %}" href="{% url 'visitantes:lista' %}"{% if actual == 'visitantes' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-visitantes"></use></svg>Visitante</a>
   {% endif %}
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   {% if "conjunto.editar" in request.session.permisos or "conjunto.activar" in request.session.permisos %}
-  <a class="am-lateral__item{% if actual == 'conjuntos' %} am-es-activo{% endif %}" href="{% url 'conjuntos:asistente-resumen' %}"{% if actual == 'conjuntos' %} aria-current="page"{% endif %}>Conjunto</a>
+  <a class="am-lateral__item{% if actual == 'conjuntos' %} am-es-activo{% endif %}" href="{% url 'conjuntos:asistente-resumen' %}"{% if actual == 'conjuntos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-edificio"></use></svg>Conjunto</a>
   {% endif %}
   {% if request.session.roles %}
     {% if "Superusuario" in request.session.roles or "Administrador" in request.session.roles or "Secretaría" in request.session.roles %}
