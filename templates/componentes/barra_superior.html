@@ -6,6 +6,7 @@ En ese ancho la barra queda en una sola fila: «Cambiar de conjunto» y el tipo 
 del lateral, el nombre del conjunto se recorta con puntos suspensivos y, bajo 480px, la marca va en
 la cabeza del lateral.
 {% endcomment %}
+{% load static %}
 <header class="am-barra{% if con_menu %} am-barra--con-menu{% endif %}">
   <div class="am-barra__franja" aria-hidden="true"></div>
   <div class="am-barra__fila">
@@ -16,7 +17,7 @@ la cabeza del lateral.
       </svg>
     </button>
     {% endif %}
-    <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos">AdMind</a>
+    <a class="am-barra__marca" href="{% url 'conjuntos:selector' %}" aria-label="Ir a selección de conjuntos"><img class="am-barra__logo" src="{% static 'img/logo-marca.png' %}" alt="" width="32" height="32">AdMind</a>
     {% if not sin_conjunto %}
       {% with conjunto=request.session.conjunto_activo %}
       <div class="am-barra__conjunto{% if conjunto %} barra-conjunto--con-foto{% endif %}">

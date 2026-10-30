@@ -4,10 +4,11 @@ Bajo 900px es un panel que sale desde la izquierda: lo abre el botón de la barr
 cierran la cabeza, el velo o Escape (`static/js/lateral.js`). En ese ancho trae además lo que la barra
 superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario y «Cambiar de conjunto».
 {% endcomment %}
+{% load static %}
 {% with actual=request.resolver_match.app_name %}
 <nav class="am-lateral" id="menu-lateral" aria-label="Secciones del conjunto">
   <div class="am-lateral__cabeza">
-    <span class="am-barra__marca">AdMind</span>
+    <span class="am-barra__marca"><img class="am-barra__logo" src="{% static 'img/logo-marca.png' %}" alt="" width="32" height="32">AdMind</span>
     <button type="button" class="am-lateral__cerrar" aria-label="Cerrar el menú de secciones" data-cerrar-menu>
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
         <path d="M6 6l12 12M18 6L6 18"></path>

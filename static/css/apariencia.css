@@ -43,8 +43,9 @@ html[data-fondo="cristal"] :is(.am-barra,.am-lateral){
 .am-barra{position:sticky;top:0;z-index:15;box-shadow:var(--sombra-suave)}
 .am-barra__franja{height:5px;background:linear-gradient(90deg,var(--acento-700),var(--acento-600) 40%,var(--acento-vecino))}
 .am-barra__marca{display:inline-flex;align-items:center;gap:var(--e-2)}
-.am-barra__marca::before{content:"";flex:none;width:22px;height:22px;border-radius:7px;background:var(--acento-degradado-vivo);box-shadow:var(--sombra-acento);transform:rotate(-8deg);transition:transform var(--transicion-suave)}
-.am-barra__marca:hover::before{transform:rotate(8deg) scale(1.1)}
+/* El logo trae su propio fondo blanco: se lee igual con cualquier fondo elegido. */
+.am-barra__logo{flex:none;width:32px;height:32px;border-radius:8px;box-shadow:var(--sombra-suave);transition:transform var(--transicion-suave)}
+.am-barra__marca:hover .am-barra__logo{transform:scale(1.08)}
 .am-barra__perfil{transition:background var(--transicion),color var(--transicion),border-color var(--transicion),transform var(--transicion)}
 .am-barra__perfil:hover{background:var(--acento-50);color:var(--acento-900);border-color:var(--acento-400);transform:translateY(-1px)}
 
@@ -99,7 +100,7 @@ a.am-btn--secundario:hover{color:var(--acento-900)}
 /* ---------- Ingreso y páginas sin sesión -------------------------------------- */
 .pagina-sin-sesion{gap:var(--e-6);background:radial-gradient(60% 45% at 50% 0%,var(--acento-100),transparent)}
 .pagina-sin-sesion > .am-barra__marca{font-size:28px}
-.pagina-sin-sesion > .am-barra__marca::before{width:30px;height:30px;border-radius:9px}
+.pagina-sin-sesion > .am-barra__marca .am-barra__logo{width:48px;height:48px;border-radius:12px}
 .tarjeta-sin-sesion{border-radius:var(--radio-grande);box-shadow:var(--sombra-media);animation:aparecer var(--duracion-entrada) var(--curva-entrada) 80ms both}
 
 /* ---------- Lo que flota ------------------------------------------------------ */
