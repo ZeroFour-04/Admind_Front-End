@@ -169,15 +169,11 @@
       <input type="radio" name="patron" value="corrido" x-model="patron">
       <span><b>Consecutivo corrido</b> <span class="am-campo__ayuda">La numeración sigue de una agrupación a la siguiente.</span></span>
     </label>
-    <label class="opciones-alcance__opcion">
-      <input type="radio" name="patron" value="lista" x-model="patron">
-      <span><b>Los escribo yo</b> <span class="am-campo__ayuda">Para lo que no sigue un patrón, como PH o 1A.</span></span>
-    </label>
   </fieldset>
 
   <fieldset class="opciones-vivienda" x-show="patron" style="display:none">
     <legend class="am-campo__etiqueta">¿Cuántas son?</legend>
-    <div class="campos-en-fila" x-show="iguales && patron !== 'lista'">
+    <div class="campos-en-fila" x-show="iguales">
       <div class="am-campo" x-show="porPisos">
         <label class="am-campo__etiqueta" for="pisos">Pisos</label>
         <input class="am-campo__control" id="pisos" type="number" inputmode="numeric" min="1" max="60" x-model.number="pisos">
@@ -201,15 +197,11 @@
       <label class="am-campo__etiqueta" for="desde">¿En qué número empieza?</label>
       <input class="am-campo__control" id="desde" type="number" inputmode="numeric" min="1" max="9999" x-model.number="desde">
     </div>
-    <div class="am-campo" x-show="patron === 'lista'" style="display:none">
-      <label class="am-campo__etiqueta" for="lista-de-numeros">Un número por línea</label>
-      <textarea class="am-campo__control campo-texto-largo" id="lista-de-numeros" x-model="lista"></textarea>
-    </div>
-    <label class="opciones-alcance__opcion" x-show="agrupa && filas.length > 1 && patron !== 'lista'" style="display:none">
+    <label class="opciones-alcance__opcion" x-show="agrupa && filas.length > 1" style="display:none">
       <input type="checkbox" :checked="!iguales" @change="distintas($event.target.checked)">
       <span><b>No todas son iguales</b></span>
     </label>
-    <div class="am-tabla-caja" x-show="!iguales && patron !== 'lista'" style="display:none">
+    <div class="am-tabla-caja" x-show="!iguales" style="display:none">
       <table class="am-tabla">
         <thead>
           <tr>

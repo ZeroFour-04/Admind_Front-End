@@ -12,7 +12,7 @@ const LETRAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 // El mismo tope de la API.
 const MAXIMO_DE_AGRUPACIONES = 60;
 const CAMPOS_DEL_ESTADO = ["tipo", "mixto", "agrupa", "etiqueta", "otra", "modo", "cuantas", "nombres",
-  "iguales", "pisos", "porPiso", "primerPiso", "cantidad", "filas", "patron", "desde", "lista"];
+  "iguales", "pisos", "porPiso", "primerPiso", "cantidad", "filas", "patron", "desde"];
 
 function enLineas(texto) {
   return texto.split("\n").map((linea) => linea.trim()).filter(Boolean);
@@ -36,7 +36,6 @@ document.addEventListener("alpine:init", () => {
     filas: [],
     patron: "",
     desde: 1,
-    lista: "",
 
     // Después de la vista previa el servidor devuelve las respuestas tal como se enviaron.
     init() {
@@ -81,9 +80,6 @@ document.addEventListener("alpine:init", () => {
     get porPisos() {
       return this.patron === "piso_consecutivo";
     },
-    get numerosPropios() {
-      return enLineas(this.lista);
-    },
 
     // Una fila por agrupación, para cuando no todas son iguales. Conserva lo ya escrito.
     alinear() {
@@ -107,13 +103,11 @@ document.addEventListener("alpine:init", () => {
     get agrupaciones() {
       return this.nombresDeAgrupaciones.map((nombre, i) => {
         const fila = this.iguales ? this : this.filas[i] || this;
-        if (this.patron === "lista") return { nombre };
         if (this.porPisos) return { nombre, pisos: Number(fila.pisos) || 0, por_piso: Number(fila.porPiso) || 0 };
         return { nombre, cantidad: Number(fila.cantidad) || 0 };
       });
     },
     get total() {
-      if (this.patron === "lista") return this.numerosPropios.length * this.agrupaciones.length;
       return this.agrupaciones.reduce((suma, a) => suma + (this.porPisos ? a.pisos * a.por_piso : a.cantidad), 0);
     },
     get especificacion() {
@@ -125,7 +119,6 @@ document.addEventListener("alpine:init", () => {
       };
       if (this.porPisos) datos.primer_piso = Number(this.primerPiso) || 1;
       if (this.patron === "corrido") datos.desde = Number(this.desde) || 1;
-      if (this.patron === "lista") datos.numeros = this.numerosPropios;
       return datos;
     },
     get estado() {
@@ -142,7 +135,7 @@ document.addEventListener("alpine:init", () => {
       const cuantas = this.agrupaciones.length;
       const palabra = cuantas === 1 ? this.palabraDeAgrupacion : this.plural(this.palabraDeAgrupacion);
       const grupos = `${cuantas} ${palabra.toLowerCase()}`;
-      if (!this.iguales || this.patron === "lista") return `${grupos}: ${viviendas}`;
+      if (!this.iguales) return `${grupos}: ${viviendas}`;
       if (this.porPisos) return `${grupos} de ${this.pisos} pisos con ${this.porPiso} ${this.palabra}s por piso: ${viviendas}`;
       return `${grupos} de ${this.cantidad} ${this.palabra}s: ${viviendas}`;
     },
