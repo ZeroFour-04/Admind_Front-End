@@ -9,6 +9,7 @@ app_name = "conjuntos"
 urlpatterns = [
     path("", views.selector, name="selector"),
     path("nuevo/", views.nuevo, name="nuevo"),
+    path("superusuarios/nuevo/", views.nuevo_superusuario, name="superusuario-nuevo"),
     path("asistente/datos/", views.datos, name="asistente-datos"),
     path("asistente/viviendas/", views.viviendas, name="asistente-viviendas"),
     path("asistente/administracion/", views.administracion, name="asistente-administracion"),
