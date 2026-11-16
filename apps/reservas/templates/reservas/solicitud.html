@@ -16,7 +16,7 @@
 {% elif en_tramite %}
   <div x-data="solicitudDeReserva({{ solicitud.segundos_restantes }}, '{% url 'reservas:liberar' solicitud.id %}')">
     <p class="vista__guia">
-      {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+      {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}{# «p.m.» ya trae su punto: no se agrega otro #}
     </p>
     {% if solicitud.area.condiciones_alquiler %}
       <div class="aviso-info" role="note">
@@ -78,7 +78,7 @@
   </div>
 {% else %}
   <p class="vista__guia">
-    {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}.
+    {{ solicitud.area.nombre }}, {{ solicitud.fecha|date:"l j \d\e F \d\e Y"|lower }}, de {{ solicitud.hora_inicio|time:"g:i a" }} a {{ solicitud.hora_fin|time:"g:i a" }}{# «p.m.» ya trae su punto: no se agrega otro #}
   </p>
   <div class="aviso-info" role="status">
     {% if solicitud.estado == "EXPIRADA" %}
