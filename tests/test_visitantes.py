@@ -58,6 +58,28 @@ def test_vigilancia_solo_ve_las_secciones_permitidas_en_el_lateral():
     assert opciones == ["Inicio", "Zonas comunes", "Anuncios", "Visitante"]
 
 
+def test_el_lateral_oculta_secciones_sin_permiso_para_residente_y_secretaria():
+    permisos_residente = ["area.ver", "reserva.solicitar", "caso.crear", "cita.agendar_propia", "pago.reportar"]
+    html_residente = cliente_con_sesion(
+        permisos=permisos_residente, tipo_usuario="Residente"
+    ).get("/inicio/").content.decode()
+    lateral_residente = html_residente.split('<nav class="am-lateral"', 1)[1].split("</nav>", 1)[0]
+
+    permisos_secretaria = [
+        "area.ver", "reserva.ver_todas", "solicitud.bandeja_ver", "anuncio.publicar",
+        "anuncio.dirigir", "caso.ver_todos", "caso.gestionar", "pago.ver",
+    ]
+    html_secretaria = cliente_con_sesion(
+        permisos=permisos_secretaria, tipo_usuario="Secretaría"
+    ).get("/inicio/").content.decode()
+    lateral_secretaria = html_secretaria.split('<nav class="am-lateral"', 1)[1].split("</nav>", 1)[0]
+
+    assert ">Reglas</a>" not in lateral_residente
+    assert ">Solicitudes</a>" in lateral_residente
+    assert ">Usuarios</a>" not in lateral_secretaria
+    assert ">Unidades</a>" in lateral_secretaria
+
+
 def test_administracion_y_superusuario_ven_el_historial_sin_formulario():
     with mock.patch("cliente_api.visitantes.listar", return_value=[VISITANTE]):
         paginas = [

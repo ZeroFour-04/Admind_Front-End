@@ -49,7 +49,7 @@ VENCIDO = {
     "salida_en": "2026-10-08T09:30:00-05:00",
 }
 VIGILANCIA = ["visitante.registrar", "reserva.ver_todas", "ingreso.registrar"]
-ADMINISTRACION = ["area.ver", "area.gestionar", "ingreso.ver_historico"]
+ADMINISTRACION = ["area.ver", "area.gestionar", "regla.ver", "ingreso.ver_historico"]
 DATOS_DE_BUSQUEDA = {"paso": "buscar", "area": GIMNASIO["id"], "numero_documento": "1.000.000.001", "acompanantes": "1"}
 
 

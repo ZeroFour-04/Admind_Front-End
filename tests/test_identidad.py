@@ -51,11 +51,14 @@ def test_el_lateral_trae_en_el_pie_lo_que_la_barra_oculta_en_pantallas_angostas(
 
 
 @pytest.mark.parametrize("rol", ["Superusuario", "Administrador", "Secretaría"])
-def test_el_lateral_muestra_usuarios_y_unidades_solo_a_roles_autorizados(rol):
-    html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
+def test_el_lateral_muestra_usuarios_y_unidades_segun_permiso_y_rol(rol):
+    permisos = ["anuncio.dirigir"]
+    if rol != "Secretaría":
+        permisos.append("usuario.gestionar")
+    html = cliente_con_sesion(permisos=permisos, roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
 
-    assert ">Usuarios</a>" in html
     assert ">Unidades</a>" in html
+    assert (">Usuarios</a>" in html) is (rol != "Secretaría")
 
 
 @pytest.mark.parametrize("rol", ["Residente", "Vigilancia"])

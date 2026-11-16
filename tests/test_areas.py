@@ -173,12 +173,14 @@ def test_el_asistente_tiene_siete_pasos_y_el_de_areas_crea_en_el_conjunto_activo
     assert respuesta["Location"] == "/conjuntos/asistente/areas/"
 
 
-def test_el_lateral_muestra_areas_comunes_solo_con_area_gestionar():
+def test_el_lateral_muestra_areas_comunes_con_permiso_de_lectura_o_gestion():
     with mock.patch("cliente_api.anuncios.listar", return_value=[]):
         con_permiso = cliente_con_sesion(permisos=ADMINISTRACION).get("/anuncios/").content.decode()
-        sin_permiso = cliente_con_sesion(permisos=["area.ver"]).get("/anuncios/").content.decode()
+        solo_lectura = cliente_con_sesion(permisos=["area.ver"]).get("/anuncios/").content.decode()
+        sin_permiso = cliente_con_sesion(permisos=["reserva.ver_todas"]).get("/anuncios/").content.decode()
 
     assert ">Áreas comunes</a>" in con_permiso
+    assert ">Áreas comunes</a>" in solo_lectura
     assert ">Áreas comunes</a>" not in sin_permiso
 
 
