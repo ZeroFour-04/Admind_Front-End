@@ -1,0 +1,61 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Documentos{% endblock %}
+{% block titulo_vista %}Documentos del conjunto{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if aviso %}
+  <div class="aviso-exito" role="status">{{ aviso }}</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% for documento in documentos %}
+  <section class="am-tarjeta tarjeta-contenido" aria-labelledby="titulo-{{ documento.tipo }}">
+    <h2 id="titulo-{{ documento.tipo }}">{{ documento.tipo_nombre }}</h2>
+    {% if documento.cargado %}
+      <p class="tarjeta-contenido__meta">{{ documento.nombre }} · {{ documento.peso|filesizeformat }} · lo subió {{ documento.subido_por }} el {{ documento.subido_en|date:"l j \d\e F \d\e Y"|lower }}</p>
+      <div class="acciones">
+        <a class="am-btn am-btn--secundario" href="{% url 'documentos:archivo' documento.tipo %}" target="_blank" rel="noopener">Descargar {{ documento.tipo_nombre|lower }}</a>
+        {% if puede_ver_versiones %}
+          <a class="am-btn am-btn--secundario" href="{% url 'documentos:versiones' documento.tipo %}">Versiones de {{ documento.tipo_nombre|lower }}</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p><span class="am-pastilla am-pastilla--neutro">Sin cargar</span></p>
+      <p class="tarjeta-contenido__meta">La administración todavía no lo ha subido.</p>
+    {% endif %}
+
+    {% if puede_subir %}
+      <details class="confirmar-accion"{% if documento.formulario.errors %} open{% endif %}>
+        <summary>{% if documento.cargado %}Subir versión nueva{% else %}Subir {{ documento.tipo_nombre|lower }}{% endif %}</summary>
+        <form method="post" action="{% url 'documentos:subir' documento.tipo %}" enctype="multipart/form-data" class="am-formulario" novalidate>
+          {% csrf_token %}
+          {% include "componentes/errores_formulario.html" with formulario=documento.formulario %}
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="archivo-{{ documento.tipo }}">{{ documento.formulario.archivo.label }}</label>
+            <input class="am-campo__control campo-archivo" type="file" id="archivo-{{ documento.tipo }}" name="archivo"
+                   accept=".pdf,application/pdf" required
+                   aria-describedby="archivo-{{ documento.tipo }}-ayuda{% if documento.formulario.archivo.errors %} archivo-{{ documento.tipo }}-error{% endif %}"
+                   {% if documento.formulario.archivo.errors %}aria-invalid="true"{% endif %}>
+            <span class="am-campo__ayuda" id="archivo-{{ documento.tipo }}-ayuda">Un PDF de hasta 10 MB.{% if documento.cargado %} El actual se conserva como versión archivada.{% endif %}</span>
+            {% if documento.formulario.archivo.errors %}<span class="am-campo__error" id="archivo-{{ documento.tipo }}-error">{{ documento.formulario.archivo.errors|join:" " }}</span>{% endif %}
+          </div>
+          <div class="acciones">
+            <button class="am-btn am-btn--secundario" type="submit">Subir {{ documento.tipo_nombre|lower }}</button>
+          </div>
+        </form>
+      </details>
+    {% endif %}
+  </section>
+{% empty %}
+  {% if not error %}
+    <div class="am-vacio">
+      <p class="am-vacio__titulo">Todavía no hay documentos</p>
+      <p class="am-vacio__texto">Cuando la administración suba el reglamento o el manual de convivencia, los podrás consultar aquí.</p>
+    </div>
+  {% endif %}
+{% endfor %}
+{% endblock %}

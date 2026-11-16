@@ -4,13 +4,15 @@ from urllib.parse import urlencode
 from cliente_api.http import pedir, pedir_archivo
 
 
-def listar(request, orden=None):
+def listar(request, orden=None, **filtros):
     """GET /casos/ → los casos propios, o todos los del conjunto para gestión.
 
     Para gestión vienen primero los abiertos, por prioridad y luego antigüedad; con
-    `orden="antiguedad"` la prioridad no cuenta.
+    `orden="antiguedad"` la prioridad no cuenta. Los `filtros` (`estado`, `prioridad`, `desde`, `hasta`,
+    `solicitante`) reducen las filas sin cambiar el orden; la API los valida y responde 400 si no sirven.
     """
-    consulta = f"?{urlencode({'orden': orden})}" if orden else ""
+    parametros = {clave: valor for clave, valor in {"orden": orden, **filtros}.items() if valor}
+    consulta = f"?{urlencode(parametros)}" if parametros else ""
     return pedir(request, "GET", f"casos/{consulta}")
 
 

@@ -105,3 +105,12 @@ class AdministradorForm(UsuarioForm):
         datos = super().clean()
         datos["rol"] = "administracion"
         return datos
+
+class SuperusuarioForm(UsuarioForm):
+    """La cuenta de otro Superusuario desde el selector (2026-10-30). Sin rol: la API fija el de plataforma."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        del self.fields["rol"]
+        for campo in self.fields.values():
+            campo.widget.attrs["class"] = "am-campo__control"

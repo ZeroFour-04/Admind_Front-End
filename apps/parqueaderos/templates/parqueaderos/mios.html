@@ -1,0 +1,46 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Mi parqueadero{% endblock %}
+{% block titulo_vista %}Mi parqueadero{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if puestos %}
+  <div class="am-tabla-caja">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Vehículo</th>
+          <th>Vivienda</th>
+          <th>Accesible</th>
+          <th>Notas</th>
+          <th>Desde</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for puesto in puestos %}
+          <tr>
+            <td><b>{{ puesto.codigo }}</b></td>
+            <td>{% if puesto.vehiculo == "moto" %}Moto{% elif puesto.vehiculo == "bicicleta" %}Bicicleta{% else %}Carro{% endif %}</td>
+            <td>{{ puesto.vivienda }}</td>
+            <td>{% if puesto.accesible %}Sí{% else %}No{% endif %}</td>
+            <td>{{ puesto.notas|default:"—" }}</td>
+            <td>{{ puesto.desde|date:"d/m/Y" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="am-campo__ayuda">La asignación es un registro administrativo de tu conjunto. Para cambiarla, habla con la administración.</p>
+{% elif not error %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Tu vivienda no tiene parqueadero asignado</p>
+    <p class="am-vacio__texto">Si tu conjunto te asigna uno, lo verás aquí. La administración es quien lo asigna.</p>
+  </div>
+{% endif %}
+{% endblock %}

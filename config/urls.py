@@ -3,6 +3,7 @@ from django.urls import include, path
 urlpatterns = [
     path("", include("apps.cuentas.urls")),
     path("conjuntos/", include("apps.conjuntos.urls")),
+    path("documentos/", include("apps.documentos.urls")),
     path("inicio/", include("apps.paneles.urls")),
     path("reservas/", include("apps.reservas.urls")),
     path("reglas/", include("apps.reglas.urls")),
@@ -14,6 +15,7 @@ urlpatterns = [
     path("parqueaderos/", include("apps.parqueaderos.urls")),
     path("solicitudes/", include("apps.triage.urls")),
     path("casos/", include("apps.casos.urls")),
+    path("infracciones/", include("apps.infracciones.urls")),
     path("unidades/", include("apps.unidades.urls")),
     path("usuarios/", include("apps.usuarios.urls")),
     path("visitantes/", include("apps.visitantes.urls")),

@@ -22,6 +22,8 @@ CATALOGO = [
      "descripcion": "El día del mes hasta el que se paga la administración sin entrar en mora.", "nota": ""},
     {"tipo": "ACOMPANANTES", "nivel": "alfa", "nombre": "Acompañantes", "modos": ["ingreso"],
      "descripcion": "Cuántos acompañantes puede tener adentro una misma vivienda a la vez.", "nota": ""},
+    {"tipo": "PARQUEADEROS_POR_VIVIENDA", "nivel": "alfa", "nombre": "Parqueaderos por vivienda", "modos": [],
+     "descripcion": "Cuántos parqueaderos de residentes puede tener asignados una misma vivienda, por vehículo.", "nota": ""},
     {"tipo": "DIAS_QUE_NO_ABRE", "nivel": "beta", "nombre": "Días que no abre", "modos": ["reserva", "ingreso"],
      "descripcion": "Días de la semana, fechas o periodos en que el área no presta servicio.", "nota": ""},
     {"tipo": "CUPO_POR_UNIDAD", "nivel": "beta", "nombre": "Límite de reservas por apartamento", "modos": ["reserva"],
@@ -49,6 +51,7 @@ CAMPOS_POR_TIPO = {
     "CUPO_POR_UNIDAD": ["reservas", "dias"],
     "ACOMPANANTES": ["maximo"],
     "DIA_LIMITE_DE_PAGO": ["dia"],
+    "PARQUEADEROS_POR_VIVIENDA": ["carro", "moto", "bicicleta"],
     "REQUIERE_PAZ_Y_SALVO": [],
     "UNA_RESERVA_POR_DIA": [],
     "SIN_FRANJAS_SEGUIDAS": [],
@@ -413,3 +416,33 @@ def test_un_dia_limite_pasado_del_28_se_rechaza_sin_llamar_a_la_api():
     crear.assert_not_called()
     assert "Asegúrese de que este valor sea menor o igual a 28." in html or "menor o igual a 28" in html
     assert "Hasta el 28, para que exista en todos los meses." in html
+
+
+def test_parqueaderos_por_vivienda_se_define_con_un_tope_por_vehiculo_y_acepta_cero():
+    html = tablero([], areas=(SALON,))
+    conjunto = html.split("Reglas del conjunto</h2>")[1].split("Salón comunal</h2>")[0]
+
+    assert "Parqueaderos por vivienda" in conjunto and "/reglas/definir/PARQUEADEROS_POR_VIVIENDA/" in conjunto
+
+    with (
+        mock.patch("cliente_api.reglas.catalogo", return_value=CATALOGO),
+        mock.patch("cliente_api.reglas.crear") as crear,
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).post(
+            "/reglas/definir/PARQUEADEROS_POR_VIVIENDA/",
+            {"carro": "1", "moto": "1", "bicicleta": "0", "vigencia_desde": "2026-10-25"},
+        )
+
+    assert crear.call_args.args[1] == {
+        "tipo": "PARQUEADEROS_POR_VIVIENDA",
+        "parametros": {"carro": 1, "moto": 1, "bicicleta": 0},
+        "vigencia_desde": "2026-10-25",
+    }
+    assert respuesta["Location"] == "/reglas/"
+
+
+def test_parqueaderos_por_vivienda_rechaza_un_tope_negativo_o_vacio():
+    from apps.reglas.forms import ParqueaderosPorViviendaForm
+
+    assert ParqueaderosPorViviendaForm({"carro": "-1", "moto": "1", "bicicleta": "0", "vigencia_desde": "2026-10-25"}).errors.keys() == {"carro"}
+    assert ParqueaderosPorViviendaForm({"carro": "1", "vigencia_desde": "2026-10-25"}).errors.keys() == {"moto", "bicicleta"}

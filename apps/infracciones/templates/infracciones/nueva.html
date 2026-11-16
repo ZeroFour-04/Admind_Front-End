@@ -1,0 +1,52 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Registrar infracción{% endblock %}
+{% block titulo_vista %}Registrar una infracción{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+{% include "infracciones/_aviso_de_r11.html" %}
+
+<form method="post" class="am-formulario am-tarjeta formulario-anuncio" novalidate>
+  {% csrf_token %}
+  {% include "componentes/errores_formulario.html" %}
+  {{ formulario.caso }}
+  {% if nace_de_un_caso %}
+    <p class="am-campo__ayuda">Este registro nace de un caso.{% if sugeridas %} Viviendas del residente que lo abrió: {% for unidad in sugeridas %}<b>{{ unidad.nombre }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.{% else %} El caso no guarda la vivienda: elígela a mano.{% endif %}</p>
+  {% endif %}
+
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.unidad.id_for_label }}">{{ formulario.unidad.label }}</label>
+    <select class="am-campo__control" id="{{ formulario.unidad.id_for_label }}" name="{{ formulario.unidad.html_name }}" required{% if formulario.unidad.errors %} aria-invalid="true"{% endif %}>
+      {% for valor, etiqueta in formulario.unidad.field.choices %}
+        <option value="{{ valor }}"{% if formulario.unidad.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+    <span class="am-campo__ayuda">Se comunicará al propietario y al arrendatario vigentes, vivan o no ahí.</span>
+    {% if formulario.unidad.errors %}<span class="am-campo__error" role="alert">{{ formulario.unidad.errors|join:" " }}</span>{% endif %}
+  </div>
+
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.fecha_hecho.id_for_label }}">{{ formulario.fecha_hecho.label }}</label>
+    <input class="am-campo__control" type="date" id="{{ formulario.fecha_hecho.id_for_label }}" name="{{ formulario.fecha_hecho.html_name }}"
+           value="{{ formulario.fecha_hecho.value|default_if_none:'' }}" required{% if formulario.fecha_hecho.errors %} aria-invalid="true"{% endif %}>
+    {% if formulario.fecha_hecho.errors %}<span class="am-campo__error" role="alert">{{ formulario.fecha_hecho.errors|join:" " }}</span>{% endif %}
+  </div>
+
+  <div class="am-campo">
+    <label class="am-campo__etiqueta" for="{{ formulario.descripcion_hecho.id_for_label }}">{{ formulario.descripcion_hecho.label }}</label>
+    <textarea class="am-campo__control" id="{{ formulario.descripcion_hecho.id_for_label }}" name="{{ formulario.descripcion_hecho.html_name }}" rows="5" maxlength="2000" required{% if formulario.descripcion_hecho.errors %} aria-invalid="true"{% endif %}>{{ formulario.descripcion_hecho.value|default_if_none:'' }}</textarea>
+    <span class="am-campo__ayuda">Describe el hecho, no a las personas. El aviso no dice quién lo registró.</span>
+    {% if formulario.descripcion_hecho.errors %}<span class="am-campo__error" role="alert">{{ formulario.descripcion_hecho.errors|join:" " }}</span>{% endif %}
+  </div>
+
+  <div class="acciones">
+    <button class="am-btn am-btn--primario" type="submit">Registrar y comunicar</button>
+    <a class="am-btn am-btn--secundario" href="{% url 'infracciones:lista' %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

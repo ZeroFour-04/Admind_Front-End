@@ -93,7 +93,7 @@ def test_sin_viviendas_la_lista_invita_a_registrarlas():
 def test_el_lateral_llama_a_la_seccion_unidades():
     html = abrir_lista([APTO]).content.decode()
 
-    assert 'aria-current="page">Unidades</a>' in html
+    assert re.search(r'aria-current="page">(?:<svg.*?</svg>)?Unidades</a>', html)
     assert "Apartamentos y parqueaderos" not in html
 
 

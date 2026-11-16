@@ -26,16 +26,36 @@
       </select>
       {% if formulario.tipo.errors %}<span class="am-campo__error" role="alert">{{ formulario.tipo.errors|join:" " }}</span>{% endif %}
     </div>
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="{{ formulario.vehiculo.id_for_label }}">{{ formulario.vehiculo.label }}</label>
+      <select class="am-campo__control" id="{{ formulario.vehiculo.id_for_label }}" name="{{ formulario.vehiculo.html_name }}">
+        {% for valor, etiqueta in formulario.vehiculo.field.choices %}
+          <option value="{{ valor }}"{% if formulario.vehiculo.value == valor %} selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <span class="am-campo__ayuda">Con él se cuenta el tope por vivienda de los parqueaderos de residentes.</span>
+      {% if formulario.vehiculo.errors %}<span class="am-campo__error" role="alert">{{ formulario.vehiculo.errors|join:" " }}</span>{% endif %}
+    </div>
     <label class="am-opcion">
       <input type="checkbox" name="{{ formulario.accesible.html_name }}" id="{{ formulario.accesible.id_for_label }}"{% if formulario.accesible.value %} checked{% endif %}>
       {{ formulario.accesible.label }}
     </label>
     {% include "componentes/campo.html" with campo=formulario.notas ayuda="Opcional. Por ejemplo, «junto a la portería»." %}
-    <p class="am-campo__ayuda">Un parqueadero de visitantes no se asigna a un apartamento: lo ocupa la visita mientras no registre su salida.</p>
+    <p class="am-campo__ayuda">Un parqueadero de visitantes no se asigna a un apartamento: lo ocupa la visita mientras no registre su salida. Los de residentes se crean sin asignar y se asignan desde la tabla.</p>
     <div class="acciones">
       <button class="am-btn am-btn--primario" type="submit">Crear parqueadero</button>
     </div>
   </form>
+{% endif %}
+
+{% if puede_asignar %}
+  <p class="am-campo__ayuda" id="tope-por-vivienda">
+    {% if tope %}
+      <b>Tope por vivienda:</b> {{ tope }}. Solo limita las asignaciones nuevas.
+    {% else %}
+      <b>Tope por vivienda:</b> el conjunto no lo ha definido, así que no hay tope. Se define en <a href="{% url 'reglas:lista' %}">Reglas</a>, «Parqueaderos por vivienda».
+    {% endif %}
+  </p>
 {% endif %}
 
 {% if parqueaderos %}
@@ -45,10 +65,11 @@
         <tr>
           <th>Código</th>
           <th>Tipo</th>
+          <th>Vehículo</th>
           <th>Accesible</th>
           <th>Notas</th>
           <th>Estado</th>
-          {% if puede_gestionar %}<th>Acciones</th>{% endif %}
+          {% if puede_gestionar or puede_asignar %}<th>Acciones</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -56,27 +77,48 @@
           <tr>
             <td><b>{{ parqueadero.codigo }}</b></td>
             <td>{% if parqueadero.tipo == "visitantes" %}Visitantes{% else %}Residentes{% endif %}</td>
+            <td>{% if parqueadero.vehiculo == "moto" %}Moto{% elif parqueadero.vehiculo == "bicicleta" %}Bicicleta{% else %}Carro{% endif %}</td>
             <td>{% if parqueadero.accesible %}Sí{% else %}No{% endif %}</td>
             <td>{{ parqueadero.notas|default:"—" }}</td>
             <td>
               {% if parqueadero.tipo != "visitantes" %}
-                <span class="am-pastilla am-pastilla--neutro">Sin asignar</span>
+                {% if parqueadero.asignado_a %}
+                  <span class="am-pastilla am-pastilla--confirmado">Asignado a {{ parqueadero.asignado_a }}</span>
+                {% else %}
+                  <span class="am-pastilla am-pastilla--neutro">Sin asignar</span>
+                {% endif %}
               {% elif parqueadero.ocupado %}
                 <span class="am-pastilla am-pastilla--tramite">Ocupado</span>
               {% else %}
                 <span class="am-pastilla am-pastilla--confirmado">Libre</span>
               {% endif %}
             </td>
-            {% if puede_gestionar %}
+            {% if puede_gestionar or puede_asignar %}
               <td>
-                <details class="confirmar-accion">
-                  <summary>Retirar</summary>
-                  <form method="post" action="{% url 'parqueaderos:desactivar' parqueadero.id %}">
-                    {% csrf_token %}
-                    <p>Vas a retirar el parqueadero <b>{{ parqueadero.codigo }}</b>. Ya no se ofrecerá a las visitas ni se podrá volver a usar ese código.</p>
-                    <button class="am-btn am-btn--secundario" type="submit">Retirar {{ parqueadero.codigo }}</button>
-                  </form>
-                </details>
+                {% if puede_asignar and parqueadero.tipo == "residentes" %}
+                  <a class="am-btn am-btn--secundario" href="{% url 'parqueaderos:asignar' parqueadero.id %}">{% if parqueadero.asignado_a %}Reasignar{% else %}Asignar{% endif %} {{ parqueadero.codigo }}</a>
+                  <a class="am-btn am-btn--secundario" href="{% url 'parqueaderos:historial' parqueadero.id %}">Historial de {{ parqueadero.codigo }}</a>
+                  {% if parqueadero.asignado_a %}
+                    <details class="confirmar-accion">
+                      <summary>Liberar</summary>
+                      <form method="post" action="{% url 'parqueaderos:liberar' parqueadero.id %}">
+                        {% csrf_token %}
+                        <p>Vas a dejar el parqueadero <b>{{ parqueadero.codigo }}</b> sin asignar. Hoy deja de ser de {{ parqueadero.asignado_a }}; la asignación sigue en el historial.</p>
+                        <button class="am-btn am-btn--secundario" type="submit">Liberar {{ parqueadero.codigo }}</button>
+                      </form>
+                    </details>
+                  {% endif %}
+                {% endif %}
+                {% if puede_gestionar %}
+                  <details class="confirmar-accion">
+                    <summary>Retirar</summary>
+                    <form method="post" action="{% url 'parqueaderos:desactivar' parqueadero.id %}">
+                      {% csrf_token %}
+                      <p>Vas a retirar el parqueadero <b>{{ parqueadero.codigo }}</b>. Ya no se ofrecerá a las visitas ni se podrá volver a usar ese código.</p>
+                      <button class="am-btn am-btn--secundario" type="submit">Retirar {{ parqueadero.codigo }}</button>
+                    </form>
+                  </details>
+                {% endif %}
               </td>
             {% endif %}
           </tr>

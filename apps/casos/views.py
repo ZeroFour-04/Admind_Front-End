@@ -95,6 +95,8 @@ def pantalla_del_detalle(request, caso_id, error=None, escrito=None):
         "aviso": hecho[1] if hecho else None,
         "acciones": acciones,
         "hay_acciones": any(acciones.values()),
+        # Administración abre la infracción desde el caso; el registro se llena a mano (el caso no guarda la vivienda).
+        "puede_registrar_infraccion": tiene_permiso(request, "infraccion.registrar"),
         "prioridades": [(clave, nombre) for clave, (nombre, _) in PRIORIDADES_VISIBLES.items()],
         "causales": CAUSALES_DE_DESCARTE,
         "volver": url_del_dashboard(),
