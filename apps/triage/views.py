@@ -216,10 +216,10 @@ def dashboard(request):
     )
     casos, error_de_casos = [], None
     if ve_casos:
-        casos, error_de_casos = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
+        casos, error_de_casos, _ = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
     citas, error_de_citas = [], None
     if ve_citas:
-        citas, error_de_citas = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
+        citas, error_de_citas, _ = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
     pendientes = {
         "reservas": sum(fila["pendiente"] for fila in reservas),
         "casos": sum(fila["abierto"] for fila in casos),

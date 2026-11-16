@@ -1,3 +1,4 @@
+from datetime import date
 from unittest import mock
 
 from cliente_api.http import ErrorDeApi
@@ -223,7 +224,7 @@ def test_residente_ve_horario_semanal_y_calendario_de_citas():
     html = respuesta.content.decode()
     assert respuesta.status_code == 200
     assert "Horario de atención de Administración" in html
-    assert 'href="/citas/agenda/">Citas</a>' in html
+    assert 'href="/citas/agenda/" aria-current="page">Citas</a>' in html
     assert "Almuerzo o descanso: 12:00 a 14:00" in html
     assert "Mes anterior" in html and "Mes siguiente" in html
     assert "Elige un día en el calendario" in html
@@ -238,7 +239,10 @@ def test_el_calendario_no_limita_la_anticipacion_a_un_numero_fijo_de_anios():
 
 
 def test_al_elegir_un_dia_muestra_franjas_de_dos_horas_y_permite_agendar():
-    with mock.patch("cliente_api.citas.agenda", return_value=respuesta_agenda("2026-11-02")):
+    with (
+        mock.patch("cliente_api.citas.agenda", return_value=respuesta_agenda("2026-11-02")),
+        mock.patch("apps.citas.views.timezone.localdate", return_value=date(2026, 10, 1)),
+    ):
         respuesta = cliente_con_sesion(permisos=PERMISO_AGENDAR).get(
             "/citas/agenda/?mes=2026-11&dia=2026-11-02"
         )
