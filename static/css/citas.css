@@ -1,0 +1,25 @@
+.citas-horario{max-width:900px;padding:var(--e-5)}
+.citas-horario__introduccion{max-width:680px;margin-bottom:var(--e-5)}
+.citas-horario__introduccion h2,.citas-configuracion h3{margin-top:0}
+.citas-formulario{display:grid;gap:var(--e-5)}
+.citas-formulario__modos{display:grid;gap:var(--e-2);margin:0;padding:var(--e-4);border:1px solid var(--borde);border-radius:var(--radio-caja)}
+.citas-formulario__modos legend,.citas-dia legend{padding:0 var(--e-1);font-weight:var(--peso-texto-medio);color:var(--texto-fuerte)}
+.citas-opcion{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo)}
+.citas-configuracion{display:grid;gap:var(--e-3);padding-top:var(--e-4);border-top:1px solid var(--borde)}
+.citas-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-4)}
+.citas-campos .am-campo__control{width:100%;min-height:var(--toque-minimo);padding:0 var(--e-3);border:1px solid var(--borde-fuerte);border-radius:var(--radio-control);background:var(--superficie-tarjeta);color:var(--texto-fuerte)}
+.citas-campos .am-campo__control:focus{outline:none;border-color:var(--acento-600);box-shadow:0 0 0 3px var(--acento-anillo)}
+.citas-rango{display:grid;gap:var(--e-3);margin-top:var(--e-3)}
+.citas-dias{display:grid;gap:var(--e-3)}
+.citas-dia{display:grid;gap:var(--e-3);margin:0;padding:var(--e-4);border:1px solid var(--borde);border-radius:var(--radio-caja)}
+.citas-dia__activo{display:flex;align-items:center;gap:var(--e-2);min-height:var(--toque-minimo);font-weight:var(--peso-texto-medio)}
+.citas-ayuda{margin:0;color:var(--texto-suave)}
+.citas-formulario__acciones{display:flex;justify-content:flex-end}
+.citas-resumen{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e-3);margin:0 0 var(--e-5)}
+.citas-resumen__dia{display:grid;gap:var(--e-2);padding:var(--e-4);border:1px solid var(--borde);border-radius:var(--radio-caja)}
+.citas-resumen__dia dt{font-weight:var(--peso-texto-medio);color:var(--texto-fuerte)}
+.citas-resumen__dia dd{display:grid;gap:var(--e-1);margin:0;color:var(--texto-medio)}
+.citas-resumen__descanso{font-size:var(--tipo-meta);color:var(--texto-suave)}
+[data-configuracion][hidden], [data-rango-dias][hidden]{display:none}
+.citas-agenda__franjas{margin-top:var(--e-5)}
+@media(max-width:600px){.citas-horario{padding:var(--e-4)}.citas-campos,.citas-resumen{grid-template-columns:1fr}}

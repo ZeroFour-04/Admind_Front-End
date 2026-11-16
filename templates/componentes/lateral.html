@@ -39,6 +39,13 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   {% if "infraccion.ver" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'infracciones' %} am-es-activo{% endif %}" href="{% url 'infracciones:lista' %}"{% if actual == 'infracciones' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-alerta"></use></svg>Infracciones</a>
   {% endif %}
+  {% if "cita.gestionar_horario" in request.session.permisos or "cita.agendar_propia" in request.session.permisos %}
+  {% if "cita.gestionar_horario" in request.session.permisos %}
+  <a class="am-lateral__item{% if actual == 'citas' %} am-es-activo{% endif %}" href="{% url 'citas:horario' %}"{% if actual == 'citas' %} aria-current="page"{% endif %}>Citas</a>
+  {% else %}
+  <a class="am-lateral__item{% if actual == 'citas' %} am-es-activo{% endif %}" href="{% url 'citas:agenda' %}"{% if actual == 'citas' %} aria-current="page"{% endif %}>Citas</a>
+  {% endif %}
+  {% endif %}
   {% if "ingreso.registrar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'ingresos' %} am-es-activo{% endif %}" href="{% url 'ingresos:lista' %}"{% if actual == 'ingresos' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-puerta"></use></svg>Ingreso a zonas</a>
   {% elif "ingreso.ver_historico" in request.session.permisos %}

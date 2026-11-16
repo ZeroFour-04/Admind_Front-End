@@ -1,8 +1,31 @@
-{% comment %}
-Pestaña Citas del dashboard. El módulo de citas (HU-31) todavía no existe: la pestaña lo dice y no
-ofrece nada que no funcione.
-{% endcomment %}
-<div class="am-vacio">
-  <p class="am-vacio__titulo">Las citas todavía no están disponibles</p>
-  <p class="am-vacio__texto">Aquí aparecerán las citas que los residentes pidan con la administración, con su fecha, su hora y su estado.</p>
-</div>
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% elif filas %}
+  <div class="am-tabla-caja tabla-solicitudes">
+    <table class="am-tabla">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Día y franja</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Residente</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+          <tr>
+            <td>{{ fila.codigo }}</td>
+            <td>{{ fila.dia|capfirst }} <span class="am-tabla__secundario">{{ fila.hora_inicio|time:"H:i" }} a {{ fila.hora_fin|time:"H:i" }}</span></td>
+            <td><span class="am-pastilla {{ fila.estado_clase }}">{{ fila.estado }}</span></td>
+            <td>{{ fila.residente }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="am-vacio">
+    <p class="am-vacio__titulo">Todavía no hay citas</p>
+    <p class="am-vacio__texto">Cuando un residente agende una cita, aparecerá aquí con su fecha y horario.</p>
+  </div>
+{% endif %}
