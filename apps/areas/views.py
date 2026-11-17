@@ -1,11 +1,15 @@
 """Catálogo de áreas comunes del conjunto activo (HU-09): listar, crear, editar y desactivar."""
+from datetime import date
+
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods, require_POST
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.cuentas.sesion import tiene_permiso
 from apps.cuentas.views import errores_de_la_api_al_formulario
-from cliente_api import areas as api_areas
+from cliente_api import areas as api_areas, reservas as api_reservas
 from cliente_api.http import MENSAJE_API_NO_DISPONIBLE, ApiNoDisponible, ErrorDeApi
 
 from .forms import AreaForm, EditarAreaForm
@@ -38,6 +42,7 @@ def crear_desde(request, formulario):
 
 def lista(request, error_de_accion=None):
     areas, error = cargar_areas(request)
+    hoy = timezone.localdate()
     contexto = {
         "areas": areas,
         "error": error_de_accion or error,
@@ -47,9 +52,59 @@ def lista(request, error_de_accion=None):
             for permiso in ("reserva.ver_todas", "reserva.aprobar", "reserva.rechazar")
         ),
         "creada": request.GET.get("creada") == "1",
+        "desde_reporte": request.GET.get("desde", hoy.replace(day=1).isoformat()),
+        "hasta_reporte": request.GET.get("hasta", hoy.isoformat()),
         "cambio_de_modo": request.session.pop(CLAVE_CAMBIO_DE_MODO, None) if request.method == "GET" else None,
     }
     return render(request, "areas/lista.html", contexto)
+
+
+@require_GET
+def reporte_agendas(request):
+    if not tiene_permiso(request, "area.gestionar"):
+        return redirect("areas:lista")
+    try:
+        contenido, tipo = api_reservas.reporte_agendas(request)
+    except ApiNoDisponible:
+        return lista(request, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return lista(request, error.mensaje)
+    respuesta = HttpResponse(contenido, content_type=tipo)
+    respuesta["Content-Disposition"] = 'attachment; filename="agendas-zonas-comunes.xlsx"'
+    return respuesta
+
+
+def rango_de_reporte(request):
+    hoy = timezone.localdate()
+    inicio_mes = hoy.replace(day=1)
+    try:
+        desde = date.fromisoformat(request.GET.get("desde", inicio_mes.isoformat()))
+        hasta = date.fromisoformat(request.GET.get("hasta", hoy.isoformat()))
+    except ValueError:
+        return None, None, "Selecciona un rango de fechas válido."
+    if hasta < desde:
+        return desde, hasta, "La fecha final debe ser igual o posterior a la inicial."
+    return desde, hasta, None
+
+
+@require_GET
+def reporte_uso(request):
+    if not tiene_permiso(request, "area.gestionar"):
+        return redirect("areas:lista")
+    desde, hasta, error = rango_de_reporte(request)
+    if error:
+        return lista(request, error)
+    try:
+        contenido, tipo = api_areas.reporte_ocupacion(request, desde.isoformat(), hasta.isoformat())
+    except ApiNoDisponible:
+        return lista(request, MENSAJE_API_NO_DISPONIBLE)
+    except ErrorDeApi as error:
+        return lista(request, error.mensaje)
+    respuesta = HttpResponse(contenido, content_type=tipo)
+    respuesta["Content-Disposition"] = (
+        f'attachment; filename="uso-zonas-comunes-{desde.isoformat()}-{hasta.isoformat()}.pdf"'
+    )
+    return respuesta
 
 
 @require_http_methods(["GET", "POST"])

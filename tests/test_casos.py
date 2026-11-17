@@ -113,6 +113,14 @@ def test_el_detalle_muestra_a_gestion_el_caso_con_residente_vivienda_y_nota_inte
     assert 'href="/solicitudes/?pestana=casos">Volver a los casos</a>' in html
 
 
+def test_la_foto_del_caso_conserva_su_cache_privada():
+    with mock.patch("cliente_api.casos.foto", return_value=(PNG, "image/png")):
+        respuesta = cliente_con_sesion().get(f"{URL}fotos/{CASO['foto_id']}/")
+
+    assert respuesta.status_code == 200
+    assert respuesta["Cache-Control"] == "private, max-age=3600"
+
+
 def test_secretaria_clasifica_y_no_ve_como_responder():
     html = ver_detalle(PARA_GESTION, SECRETARIA)
 
