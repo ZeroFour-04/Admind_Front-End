@@ -28,3 +28,20 @@ def test_el_perfil_muestra_datos_del_usuario_y_roles_sin_contrasena():
     assert "admin@torres.com" in html
     assert "Administración" in html
     assert "Contraseña" not in html
+
+
+def test_una_pagina_con_sesion_no_se_guarda_en_cache_y_cerrar_sesion_protege_la_url():
+    cliente = cliente_con_sesion()
+    with mock.patch("cliente_api.cuentas.obtener_perfil", return_value=PERFIL):
+        respuesta = cliente.get("/perfil/")
+
+    assert respuesta.status_code == 200
+    assert "no-store" in respuesta["Cache-Control"]
+
+    with mock.patch("cliente_api.cuentas.cerrar_sesion"):
+        salida = cliente.post("/salir/")
+    sin_sesion = cliente.get("/perfil/")
+
+    assert salida.status_code == 302
+    assert sin_sesion.status_code == 302
+    assert sin_sesion["Location"] == "/"

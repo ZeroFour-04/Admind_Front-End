@@ -36,6 +36,50 @@ DATOS = {
 ADMINISTRACION = ["area.ver", "area.gestionar"]
 
 
+def test_la_lista_muestra_exportaciones_solo_a_quien_gestiona():
+    with mock.patch("cliente_api.areas.listar", return_value=[SALON]):
+        admin = cliente_con_sesion(permisos=ADMINISTRACION).get("/areas/").content.decode()
+        residente = cliente_con_sesion(permisos=["area.ver"]).get("/areas/").content.decode()
+
+    assert ">Generar Excel</a>" in admin
+    assert "Generar PDF de uso" in admin
+    assert "Generar Excel" not in residente
+    assert "Generar PDF de uso" not in residente
+
+
+def test_descargar_excel_requiere_gestion_y_transmite_archivo():
+    contenido = b"contenido-xlsx"
+    with mock.patch("cliente_api.reservas.reporte_agendas", return_value=(contenido, "application/xlsx")) as descargar:
+        admin = cliente_con_sesion(permisos=ADMINISTRACION).get("/areas/reportes/agendas.xlsx")
+        residente = cliente_con_sesion(permisos=["area.ver"]).get("/areas/reportes/agendas.xlsx")
+
+    descargar.assert_called_once()
+    assert admin.status_code == 200 and admin.content == contenido
+    assert admin["Content-Disposition"] == 'attachment; filename="agendas-zonas-comunes.xlsx"'
+    assert residente.status_code == 302
+
+
+def test_descargar_pdf_envia_rango_y_rechaza_fechas_invertidas():
+    contenido = b"contenido-pdf"
+    with (
+        mock.patch("cliente_api.areas.reporte_ocupacion", return_value=(contenido, "application/pdf")) as descargar,
+        mock.patch("cliente_api.areas.listar", return_value=[SALON]),
+    ):
+        respuesta = cliente_con_sesion(permisos=ADMINISTRACION).get(
+            "/areas/reportes/uso.pdf?desde=2026-03-01&hasta=2026-03-15"
+        )
+        invalida = cliente_con_sesion(permisos=ADMINISTRACION).get(
+            "/areas/reportes/uso.pdf?desde=2026-03-15&hasta=2026-03-01"
+        )
+
+    descargar.assert_called_once()
+    assert descargar.call_args.args[1:] == ("2026-03-01", "2026-03-15")
+    assert respuesta.status_code == 200 and respuesta.content == contenido
+    assert respuesta["Content-Disposition"] == 'attachment; filename="uso-zonas-comunes-2026-03-01-2026-03-15.pdf"'
+    assert invalida.status_code == 200
+    assert "La fecha final debe ser igual o posterior" in invalida.content.decode()
+
+
 def test_la_lista_muestra_nombre_horario_y_estado():
     with mock.patch("cliente_api.areas.listar", return_value=[SALON, PORTERIA]):
         html = cliente_con_sesion(permisos=ADMINISTRACION).get("/areas/").content.decode()

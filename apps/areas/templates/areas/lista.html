@@ -23,9 +23,17 @@
     {% endif %}
   </div>
 {% endif %}
-{% if puede_gestionar and areas %}
+{% if puede_gestionar %}
   <div class="vista__acciones">
-    <a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear área</a>
+    {% if areas %}<a class="am-btn am-btn--primario" href="{% url 'areas:nueva' %}">Crear área</a>{% endif %}
+    <a class="am-btn am-btn--primario" href="{% url 'areas:reporte-agendas' %}">Generar Excel</a>
+    <form method="get" action="{% url 'areas:reporte-uso' %}">
+      <label class="am-campo__etiqueta" for="reporte-desde">Desde</label>
+      <input class="am-campo__control" id="reporte-desde" name="desde" type="date" value="{{ desde_reporte }}" required>
+      <label class="am-campo__etiqueta" for="reporte-hasta">Hasta</label>
+      <input class="am-campo__control" id="reporte-hasta" name="hasta" type="date" value="{{ hasta_reporte }}" required>
+      <button class="am-btn am-btn--secundario" type="submit">Generar PDF de uso</button>
+    </form>
   </div>
 {% endif %}
 

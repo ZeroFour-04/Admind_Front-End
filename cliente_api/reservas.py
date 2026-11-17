@@ -50,6 +50,11 @@ def solicitudes_para_bandeja(request, **filtros):
     return pedir(request, "GET", f"reservas/bandeja/{consulta}")
 
 
+def reporte_agendas(request):
+    """Descarga el Excel con todas las solicitudes de zonas comunes del conjunto activo."""
+    return pedir_archivo(request, "reservas/reportes/agendas.xlsx")
+
+
 def decidir(request, solicitud_id, datos):
     """POST /reservas/solicitudes/<id>/decision/ → Administración acepta o rechaza una solicitud apartada.
 
