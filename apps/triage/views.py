@@ -29,7 +29,11 @@ ESTADO_PARA_RESIDENTE = {
     "LIBERADA": "Liberada",
 }
 
-TITULO_DEL_DASHBOARD = "Dashboard de Gestión de Reservas"
+TITULOS_DEL_DASHBOARD = {
+    "reservas": "Dashboard de Gestión de Reservas",
+    "casos": "Dashboard de Gestión de Casos",
+    "citas": "Dashboard de Gestión de Citas",
+}
 PESTANAS = ("reservas", "casos", "citas")
 
 # Cómo se ve en la tabla cada estado de una reserva: siempre con texto, nunca solo con color.
@@ -216,10 +220,10 @@ def dashboard(request):
     )
     casos, error_de_casos = [], None
     if ve_casos:
-        casos, error_de_casos = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
+        casos, error_de_casos, _ = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
     citas, error_de_citas = [], None
     if ve_citas:
-        citas, error_de_citas = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
+        citas, error_de_citas, _ = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
     pendientes = {
         "reservas": sum(fila["pendiente"] for fila in reservas),
         "casos": sum(fila["abierto"] for fila in casos),
@@ -269,7 +273,7 @@ def dashboard(request):
         ]
     return render(request, "triage/bandeja.html", {
         "dashboard": True,
-        "titulo": TITULO_DEL_DASHBOARD,
+        "titulo": TITULOS_DEL_DASHBOARD[pestana],
         "pestana": pestana,
         "pestanas": [
             {

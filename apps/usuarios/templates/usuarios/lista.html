@@ -18,7 +18,7 @@
     <div class="barra-directorio">
       <div class="am-campo">
         <label class="am-campo__etiqueta" for="buscar-usuarios">Buscar un usuario</label>
-        <input class="am-campo__control" type="search" id="buscar-usuarios" x-model.debounce.120ms="consulta"
+        <input class="am-campo__control" type="search" id="buscar-usuarios" maxlength="100" x-model.debounce.120ms="consulta"
                autocomplete="off" spellcheck="false" aria-describedby="buscar-usuarios-ayuda"
                placeholder="Un nombre, un correo, una cédula o una vivienda">
         <span class="am-campo__ayuda" id="buscar-usuarios-ayuda">La lista se filtra mientras escribes.</span>

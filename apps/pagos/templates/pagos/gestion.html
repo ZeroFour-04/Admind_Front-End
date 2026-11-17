@@ -21,7 +21,7 @@
   <input type="hidden" name="periodo" value="{{ periodo }}">
   <div class="am-campo">
     <label class="am-campo__etiqueta" for="buscar">Buscar por nombre, cédula o apartamento</label>
-    <input class="am-campo__control" type="search" id="buscar" name="buscar" value="{{ buscar }}" autocomplete="off">
+    <input class="am-campo__control" type="search" id="buscar" name="buscar" maxlength="100" value="{{ buscar }}" autocomplete="off">
   </div>
   <div class="acciones">
     <button class="am-btn am-btn--primario" type="submit">Buscar</button>

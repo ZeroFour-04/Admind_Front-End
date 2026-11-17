@@ -258,12 +258,19 @@ def test_vigilancia_gana_ingreso_a_zonas_y_conserva_el_resto_de_su_menu():
     menu = lateral(VIGILANCIA, "Vigilancia")
 
     assert ">Ingreso a zonas</a>" in menu
-    assert ">Zonas comunes</a>" in menu and ">Anuncios</a>" in menu
+    assert ">Anuncios</a>" in menu
+    # El calendario pide las áreas a la API, que exige `area.ver`: Vigilancia no la tiene y vería un error.
+    assert ">Zonas comunes</a>" not in menu
 
 
 def test_vigilancia_no_ve_reglas_en_el_menu_y_administracion_si():
     assert ">Reglas</a>" not in lateral(VIGILANCIA, "Vigilancia")
-    assert ">Reglas</a>" in lateral(ADMINISTRACION, "Administrador")
+    assert ">Reglas</a>" in lateral([*ADMINISTRACION, "regla.ver"], "Administrador")
+
+
+def test_reglas_aparece_solo_con_regla_ver():
+    for rol in ("Residente", "Secretaría"):
+        assert ">Reglas</a>" not in lateral(["area.ver"], rol)
 
 
 def test_administracion_ve_ingresos_y_un_residente_ninguno_de_los_dos():

@@ -29,7 +29,7 @@ Parámetros: formulario.
 {% include "componentes/campo.html" with campo=formulario.nombre ayuda="Como la conoce el conjunto, por ejemplo «Salón comunal»." %}
 <div class="am-campo">
   <label class="am-campo__etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
-  <textarea class="am-campo__control" id="{{ formulario.descripcion.id_for_label }}" name="{{ formulario.descripcion.html_name }}" rows="3"
+  <textarea class="am-campo__control" id="{{ formulario.descripcion.id_for_label }}" name="{{ formulario.descripcion.html_name }}" rows="3" maxlength="1000"
             aria-describedby="{{ formulario.descripcion.id_for_label }}-ayuda">{{ formulario.descripcion.value|default_if_none:'' }}</textarea>
   <span class="am-campo__ayuda" id="{{ formulario.descripcion.id_for_label }}-ayuda">Opcional.</span>
 </div>
