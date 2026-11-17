@@ -149,7 +149,7 @@
     </div>
     <div class="am-campo" x-show="modo === 'nombres'" style="display:none">
       <label class="am-campo__etiqueta" for="nombres-agrupaciones">Escribe un nombre por línea</label>
-      <textarea class="am-campo__control campo-texto-largo" id="nombres-agrupaciones" x-model="nombres"
+      <textarea class="am-campo__control campo-texto-largo" id="nombres-agrupaciones" x-model="nombres" maxlength="2000"
                 aria-describedby="nombres-agrupaciones-ayuda"></textarea>
       <span class="am-campo__ayuda" id="nombres-agrupaciones-ayuda">Solo el nombre: Esmeralda, no Bloque Esmeralda.</span>
     </div>

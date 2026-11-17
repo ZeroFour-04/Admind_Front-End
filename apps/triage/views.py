@@ -29,7 +29,11 @@ ESTADO_PARA_RESIDENTE = {
     "LIBERADA": "Liberada",
 }
 
-TITULO_DEL_DASHBOARD = "Dashboard de Gestión de Reservas"
+TITULOS_DEL_DASHBOARD = {
+    "reservas": "Dashboard de Gestión de Reservas",
+    "casos": "Dashboard de Gestión de Casos",
+    "citas": "Dashboard de Gestión de Citas",
+}
 PESTANAS = ("reservas", "casos", "citas")
 
 # Cómo se ve en la tabla cada estado de una reserva: siempre con texto, nunca solo con color.
@@ -269,7 +273,7 @@ def dashboard(request):
         ]
     return render(request, "triage/bandeja.html", {
         "dashboard": True,
-        "titulo": TITULO_DEL_DASHBOARD,
+        "titulo": TITULOS_DEL_DASHBOARD[pestana],
         "pestana": pestana,
         "pestanas": [
             {

@@ -4,7 +4,7 @@ Bajo 900px es un panel que sale desde la izquierda: lo abre el botón de la barr
 cierran la cabeza, el velo o Escape (`static/js/lateral.js`). En ese ancho trae además lo que la barra
 superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario y «Cambiar de conjunto».
 {% endcomment %}
-{% load static %}
+{% load static rol_visible %}
 {% with actual=request.resolver_match.app_name %}
 <nav class="am-lateral" id="menu-lateral" aria-label="Secciones del conjunto">
   <div class="am-lateral__cabeza">
@@ -16,13 +16,15 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
     </button>
   </div>
   <a class="am-lateral__item{% if actual == 'paneles' %} am-es-activo{% endif %}" href="{% url 'paneles:inicio' %}"{% if actual == 'paneles' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-inicio"></use></svg>Inicio</a>
+  {% if "area.ver" in request.session.permisos or "area.gestionar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'reservas' %} am-es-activo{% endif %}" href="{% url 'reservas:calendario' %}"{% if actual == 'reservas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-calendario"></use></svg>Zonas comunes</a>
+  {% endif %}
   {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
   {% if "area.gestionar" in request.session.permisos or "reserva.ver_todas" in request.session.permisos or "reserva.aprobar" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'areas' %} am-es-activo{% endif %}" href="{% url 'areas:lista' %}"{% if actual == 'areas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-area"></use></svg>Áreas comunes</a>
   {% endif %}
   {% endif %}
-  {% if "Vigilancia" not in request.session.roles and request.session.tipo_usuario != "Vigilancia" %}
+  {% if "regla.ver" in request.session.permisos %}
   <a class="am-lateral__item{% if actual == 'reglas' %} am-es-activo{% endif %}" href="{% url 'reglas:lista' %}"{% if actual == 'reglas' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-reglas"></use></svg>Reglas</a>
   {% endif %}
   <a class="am-lateral__item{% if actual == 'anuncios' %} am-es-activo{% endif %}" href="{% url 'anuncios:lista' %}"{% if actual == 'anuncios' %} aria-current="page"{% endif %}><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-anuncio"></use></svg>Anuncios</a>
@@ -75,7 +77,7 @@ superior deja de mostrar: la marca en la cabeza y, en el pie, el tipo de usuario
   {% endif %}
   {% endif %}
   <div class="am-lateral__pie">
-    <span class="am-lateral__grupo">{{ request.session.tipo_usuario|default:"Usuario" }}</span>
+    <span class="am-lateral__grupo">{{ request.session.tipo_usuario|default:"Usuario"|rol_visible }}</span>
     <a class="am-lateral__item" href="{% url 'conjuntos:selector' %}">Cambiar de conjunto</a>
   </div>
 </nav>
