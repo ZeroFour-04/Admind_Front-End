@@ -12,6 +12,11 @@ def cerrar_sesion(request):
     pedir(request, "POST", "auth/logout/")
 
 
+def crear_superusuario(request, datos):
+    """POST /auth/superusuarios/ → crea la persona, su cuenta y su rol de Superusuario."""
+    return pedir(request, "POST", "auth/superusuarios/", datos)
+
+
 def crear_usuario(request, datos):
     """POST /auth/usuarios/ → crea la persona, su cuenta y su rol en el conjunto activo."""
     return pedir(request, "POST", "auth/usuarios/", datos)

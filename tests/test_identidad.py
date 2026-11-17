@@ -23,7 +23,8 @@ def test_sin_foto_la_barra_muestra_las_iniciales_y_el_nombre_sin_ninguna_imagen(
     html = respuesta.content.decode()
     assert "<b>Torres del Río</b>" in html
     assert MARCADOR in html
-    assert "<img" not in html
+    # La única imagen es el logo de AdMind; el conjunto no pone ninguna.
+    assert html.count("<img") == html.count('class="am-barra__logo"')
 
 
 def test_la_barra_muestra_el_tipo_de_usuario_y_el_enlace_al_perfil():

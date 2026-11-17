@@ -1,0 +1,48 @@
+/* CONJUNTOS — la tarjeta de cada conjunto en el selector y el asistente de creación.
+   Solo variables de design-system/. Ningún hex. Va después de apariencia.css.
+   El color de cada tarjeta es el de SU conjunto: la tarjeta lleva data-acento (o el color propio en
+   su style) y todo lo de aquí sale de --acento-*. Ninguna regla de este archivo comunica un estado. */
+
+/* ---------- Selector: una tarjeta por conjunto -------------------------------------- */
+.rejilla-tarjetas{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--e-5)}
+.tarjeta-conjunto{padding:0;gap:0;border-radius:var(--radio-grande);transition:transform var(--transicion-suave),box-shadow var(--transicion-suave)}
+.tarjeta-conjunto:hover,.tarjeta-conjunto:focus-within{transform:translateY(-4px);box-shadow:var(--sombra-media)}
+
+/* La franja de 4px pasa a ser la portada de la tarjeta. */
+.tarjeta-conjunto__franja{position:relative;inset:auto;display:block;width:100%;height:96px;background:
+  radial-gradient(120% 140% at 92% -20%,color-mix(in srgb,var(--acento-vecino) 85%,transparent),transparent 60%),
+  radial-gradient(90% 120% at 0% 125%,color-mix(in srgb,var(--acento-900) 55%,transparent),transparent 62%),
+  var(--acento-degradado)}
+/* La foto monta sobre la portada; el nombre va a su lado, debajo de la portada, y si ocupa dos líneas crece hacia abajo. */
+.tarjeta-conjunto__cabeza{position:relative;align-items:flex-start;gap:var(--e-3);margin-top:-32px;padding:0 var(--e-5)}
+.tarjeta-conjunto__cabeza h2{padding-top:calc(32px + var(--e-2));font-size:var(--tipo-tarjeta)}
+.tarjeta-conjunto .foto-conjunto--tarjeta{width:64px;border:3px solid var(--superficie-tarjeta);border-radius:18px;box-shadow:var(--sombra-media);font-size:1.5rem}
+.tarjeta-conjunto .foto-conjunto--vacia{background:var(--acento-100);color:var(--acento-900)}
+.tarjeta-conjunto__dato{padding:var(--e-3) var(--e-5) 0}
+.tarjeta-conjunto form{width:100%;margin-top:auto;padding:var(--e-4) var(--e-5) var(--e-5)}
+.tarjeta-conjunto .am-btn{width:100%;margin-top:0}
+.tarjeta-conjunto .am-btn::after{content:"→";margin-left:var(--e-1);transition:transform var(--transicion)}
+.tarjeta-conjunto .am-btn:hover::after{transform:translateX(4px)}
+
+/* ---------- Asistente de creación ---------------------------------------------------- */
+/* Los siete pasos como píldoras. El texto y la marca de paso actual no cambian: solo su forma. */
+.am-pestanas.pasos-asistente{gap:var(--e-2);padding:var(--e-1) 0;border-bottom:0}
+.pasos-asistente .am-pestana{display:inline-flex;align-items:center;padding:0 var(--e-4);border:1px solid var(--borde);border-radius:var(--radio-pastilla);background:var(--superficie-tarjeta);box-shadow:none;text-decoration:none;white-space:nowrap}
+.pasos-asistente a.am-pestana:hover{border-color:var(--acento-400);background:var(--acento-50);color:var(--acento-900);transform:translateY(-1px)}
+.pasos-asistente span.am-pestana:not(.am-es-activa){background:var(--superficie-hundida);color:var(--texto-suave);cursor:default}
+.pasos-asistente .am-pestana.am-es-activa{border-color:var(--acento-600);background:var(--acento-100);color:var(--acento-900);box-shadow:var(--sombra-suave)}
+
+/* Las opciones que se eligen: la elegida se marca con el acento del conjunto (antes, con neutros). */
+.opciones-vivienda__opcion,.opciones-alcance__opcion{background:var(--superficie-tarjeta);transition:border-color var(--transicion),box-shadow var(--transicion),background var(--transicion),transform var(--transicion)}
+.opciones-vivienda__opcion:hover,.opciones-alcance__opcion:hover{border-color:var(--acento-400);background:var(--acento-50);transform:translateY(-1px)}
+.opciones-vivienda__opcion:has(input:checked),.opciones-alcance__opcion:has(input:checked){border-color:var(--acento-600);background:var(--acento-degradado-suave);box-shadow:0 0 0 1px var(--acento-600),var(--sombra-suave)}
+.opciones-vivienda__opcion input,.opciones-alcance__opcion input{accent-color:var(--acento-600)}
+.selector-acento__opcion{transition:border-color var(--transicion),box-shadow var(--transicion),transform var(--transicion)}
+.selector-acento__opcion:hover{transform:translateY(-1px);border-color:var(--acento-400)}
+
+.icono-vivienda{color:var(--acento-600)}
+.frase-estructura{border:1px solid var(--acento-100);background:var(--acento-degradado-suave);color:var(--acento-900)}
+.estructura__item{background:var(--superficie-tarjeta);transition:border-color var(--transicion),transform var(--transicion)}
+.estructura__item:hover{border-color:var(--acento-400);transform:translateY(-1px)}
+.requisitos__item{transition:background var(--transicion)}
+.requisitos__item:hover{background:var(--acento-50)}
