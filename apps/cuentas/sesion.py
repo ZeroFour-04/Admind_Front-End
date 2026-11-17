@@ -2,6 +2,7 @@
 from datetime import datetime
 
 from django.shortcuts import redirect
+from django.utils.cache import add_never_cache_headers
 
 from cliente_api.http import CLAVE_TOKEN, token_de
 
@@ -97,7 +98,10 @@ class SesionRequeridaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
+        response = self.get_response(request)
+        if token_de(request) and not response.has_header("Cache-Control"):
+            add_never_cache_headers(response)
+        return response
 
     def process_view(self, request, vista, args, kwargs):
         if getattr(vista, "publica", False):

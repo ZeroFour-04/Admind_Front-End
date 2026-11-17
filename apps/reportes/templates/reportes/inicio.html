@@ -1,0 +1,39 @@
+{% extends "base/aplicacion.html" %}
+
+{% block titulo %}Reportes{% endblock %}
+{% block titulo_vista %}Reportes{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section class="am-tarjeta">
+  <h2>Uso de zonas comunes</h2>
+  <p>Descarga las reservas confirmadas en un rango de fechas.</p>
+  <form method="get" action="{% url 'reportes:zonas' %}" class="am-formulario">
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="zonas-desde">Desde</label>
+      <input class="am-campo__control" id="zonas-desde" name="desde" type="date" value="{{ desde }}" required>
+    </div>
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="zonas-hasta">Hasta</label>
+      <input class="am-campo__control" id="zonas-hasta" name="hasta" type="date" value="{{ hasta }}" required>
+    </div>
+    <button class="am-btn am-btn--primario" type="submit">Descargar PDF</button>
+  </form>
+</section>
+
+<section class="am-tarjeta">
+  <h2>Estado de pagos del mes</h2>
+  <p>Descarga el estado de pago de cada vivienda para el mes seleccionado.</p>
+  <form method="get" action="{% url 'reportes:pagos' %}" class="am-formulario">
+    <div class="am-campo">
+      <label class="am-campo__etiqueta" for="pagos-periodo">Mes</label>
+      <input class="am-campo__control" id="pagos-periodo" name="periodo" type="month" value="{{ periodo }}" required>
+    </div>
+    <button class="am-btn am-btn--primario" type="submit">Descargar Excel</button>
+  </form>
+</section>
+{% endblock %}

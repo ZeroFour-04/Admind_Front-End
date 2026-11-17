@@ -4,8 +4,9 @@ Proyecto de Django del servidor web. No contiene lógica de negocio ni modelos d
 
 ## Qué va aquí
 
-- Ajustes: apps instaladas, plantillas y archivos estáticos
+- Ajustes: apps instaladas, plantillas, seguridad y archivos estáticos
 - La dirección de la API del backend, por variable de entorno
+- Variables de entorno: `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` y `DJANGO_CSRF_TRUSTED_ORIGINS`
 - URLs raíz, que montan las URLs de cada app de `apps/`
 
 ## Con qué se conecta

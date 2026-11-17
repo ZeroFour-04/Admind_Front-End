@@ -1,5 +1,7 @@
 """Endpoints de `Admind_Backend/apps/areas/`: el catálogo de áreas comunes del conjunto activo (HU-09)."""
-from cliente_api.http import pedir
+from urllib.parse import urlencode
+
+from cliente_api.http import pedir, pedir_archivo
 
 
 def listar(request):
@@ -25,3 +27,9 @@ def editar(request, area_id, datos):
 def desactivar(request, area_id):
     """POST /areas/<id>/desactivar/ → el área inactiva. No se borra."""
     return pedir(request, "POST", f"areas/{area_id}/desactivar/")
+
+
+def reporte_ocupacion(request, desde, hasta):
+    """Descarga el PDF de ocupación de zonas comunes para el rango indicado."""
+    consulta = urlencode({"desde": desde, "hasta": hasta})
+    return pedir_archivo(request, f"areas/reportes/uso.pdf?{consulta}")
