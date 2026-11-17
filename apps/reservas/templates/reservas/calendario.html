@@ -11,115 +11,59 @@
 {% block contenido %}
 {% if zonas %}
   <section aria-labelledby="titulo-zonas">
-    <h2 id="titulo-zonas">Cómo se usa cada zona</h2>
+    <div class="zonas__encabezado">
+      <h2 id="titulo-zonas">Cómo se usa cada zona</h2>
+    </div>
     {% if aviso_de_cupos %}
       <div class="aviso-info" role="note"><p>No pudimos consultar los cupos en este momento. {{ aviso_de_cupos }} Las reservas siguen funcionando.</p></div>
     {% endif %}
-    <div class="am-tabla-caja tabla-desplazable">
-      <table class="am-tabla">
-        <thead>
-          <tr>
-            <th scope="col">Zona</th>
-            <th scope="col">Cómo se usa</th>
-            <th scope="col">Horario</th>
-            <th scope="col">Cupos ahora</th>
-            <th scope="col">Estado</th>
-            {% if puede_solicitar %}<th scope="col">Acciones</th>{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for fila in zonas %}
-            <tr>
-              <td>{{ fila.area.nombre }}</td>
-              <td>{% if fila.con_ingreso %}Con ingreso{% else %}Con reserva{% endif %}</td>
-              <td class="am-num">
-                {{ fila.area.hora_apertura }} a {{ fila.area.hora_cierre }}
-                <span class="am-tabla__secundario">{% if fila.con_ingreso %}puedes quedarte hasta {{ fila.area.permanencia_maxima_minutos }} min{% else %}franjas de {{ fila.area.duracion_franja_minutos }} min{% endif %}</span>
-              </td>
-              <td class="am-num">
-                {% if not fila.con_ingreso %}Por franjas{% elif fila.cupos is not None %}{{ fila.cupos }} de {{ fila.area.aforo_maximo }} libres{% else %}Sin información{% endif %}
-              </td>
-              <td>
-                <span class="am-pastilla {{ fila.clase }}">{{ fila.texto }}</span>
-                {% if fila.detalle %}<span class="am-tabla__secundario">{{ fila.detalle }}</span>{% endif %}
-              </td>
-              {% if puede_solicitar %}
-                <td>
-                  {% if not fila.con_ingreso and not fila.area.en_mantenimiento %}
-                    <a class="am-btn am-btn--secundario" href="?area={{ fila.area.id }}&amp;mes={{ mes|date:'Y-m' }}">Reservar</a>
-                  {% endif %}
-                </td>
+    <ul class="zonas__rejilla" role="list">
+      {% for fila in zonas %}
+        <li class="zona-tarjeta{% if area and fila.area.id == area.id %} zona-tarjeta--elegida{% endif %}">
+          <div class="zona-tarjeta__cabeza">
+            <span class="zona-tarjeta__icono" aria-hidden="true">
+              <svg class="am-icono" viewBox="0 0 24 24" focusable="false"><use href="#{% if fila.con_ingreso %}i-puerta{% else %}i-calendario{% endif %}"></use></svg>
+            </span>
+            <div>
+              <h3 class="zona-tarjeta__nombre">{{ fila.area.nombre }}</h3>
+              <p class="zona-tarjeta__uso">{% if fila.con_ingreso %}Con ingreso{% else %}Con reserva{% endif %}</p>
+            </div>
+          </div>
+          <div class="zona-tarjeta__estado">
+            <span class="am-pastilla {{ fila.clase }}">{{ fila.texto }}</span>
+            {% if fila.detalle %}<span class="zona-tarjeta__detalle">{{ fila.detalle }}</span>{% endif %}
+          </div>
+          <dl class="zona-tarjeta__datos">
+            <div>
+              <dt>Horario</dt>
+              <dd class="am-num">{{ fila.area.hora_apertura }} a {{ fila.area.hora_cierre }}</dd>
+            </div>
+            <div>
+              <dt>{% if fila.con_ingreso %}Permanencia{% else %}Cada franja{% endif %}</dt>
+              <dd class="am-num">{% if fila.con_ingreso %}puedes quedarte hasta {{ fila.area.permanencia_maxima_minutos }} min{% else %}dura {{ fila.area.duracion_franja_minutos }} min{% endif %}</dd>
+            </div>
+          </dl>
+          {% if fila.con_ingreso %}
+            <div class="zona-tarjeta__cupos">
+              {% if fila.cupos is not None %}
+                <p class="am-num">{{ fila.cupos }} de {{ fila.area.aforo_maximo }} libres</p>
+                {% if fila.area.aforo_maximo %}
+                  <div class="medidor" aria-hidden="true" style="--libres:{% widthratio fila.cupos fila.area.aforo_maximo 100 %}%"><span class="medidor__relleno"></span></div>
+                {% endif %}
+              {% else %}
+                <p>Sin información</p>
               {% endif %}
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+            </div>
+          {% endif %}
+          {% if puede_solicitar and not fila.con_ingreso and not fila.area.en_mantenimiento %}
+            <a class="am-btn am-btn--primario zona-tarjeta__accion" href="?area={{ fila.area.id }}&amp;mes={{ mes|date:'Y-m' }}#reservar">Reservar</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
     <p class="vista__guia">Los cupos se actualizan al recargar la página. <a href="{{ request.get_full_path }}">Actualizar</a></p>
   </section>
 {% endif %}
-
-<div class="calendario-reservas">
-{% if areas %}
-  <form method="get" class="am-formulario selector-area">
-    <div class="am-campo">
-      <label class="am-campo__etiqueta" for="area">Área para reservar</label>
-      <select class="am-campo__control" id="area" name="area" data-envio-al-cambiar>
-        <option value="">Elige el área</option>
-        {% for opcion in areas %}
-          <option value="{{ opcion.id }}"{% if opcion.id == area.id %} selected{% endif %}>{{ opcion.nombre }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <input type="hidden" name="mes" value="{{ mes|date:'Y-m' }}">
-    {% if dia_elegido %}<input type="hidden" name="dia" value="{{ dia_elegido|date:'Y-m-d' }}">{% endif %}
-  </form>
-{% elif not error %}
-  <div class="am-vacio">
-    <p class="am-vacio__titulo">Todavía no hay áreas para reservar</p>
-    <p class="am-vacio__texto">Cuando la administración registre las áreas comunes, aparecen aquí.</p>
-  </div>
-{% endif %}
-
-<section class="am-tarjeta calendario" aria-labelledby="titulo-mes">
-  <div class="calendario__encabezado">
-    <a class="am-btn am-btn--secundario" href="?area={{ area.id|default:'' }}&amp;mes={{ mes_anterior|date:'Y-m' }}">Mes anterior</a>
-    <h2 id="titulo-mes">{{ mes|date:"F Y"|capfirst }}</h2>
-    <a class="am-btn am-btn--secundario" href="?area={{ area.id|default:'' }}&amp;mes={{ mes_siguiente|date:'Y-m' }}">Mes siguiente</a>
-  </div>
-
-  <table class="calendario__tabla">
-    <thead>
-      <tr>
-        {% for fecha in semanas.0 %}
-          <th scope="col"><abbr title="{{ fecha|date:'l'|capfirst }}">{{ fecha|date:"D"|capfirst }}</abbr></th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for semana in semanas %}
-        <tr>
-          {% for fecha in semana %}
-            <td>
-              {% if fecha.month == mes.month %}
-                {% if fecha >= hoy %}
-                  <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
-                     href="?area={{ area.id|default:'' }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
-                     aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
-                     {% if fecha == hoy %}aria-current="date"{% endif %}>
-                    <span class="am-num">{{ fecha.day }}</span>
-                    {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
-                  </a>
-                {% endif %}
-              {% endif %}
-            </td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
-</div>
 
 {% if error %}
   <div class="am-alerta am-alerta--error" role="alert">
@@ -128,33 +72,107 @@
   </div>
 {% endif %}
 
-{% if area and dia_elegido %}
-  <section aria-labelledby="titulo-franjas">
-    <h2 id="titulo-franjas">{{ area.nombre }}, {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower }}</h2>
-    <p class="vista__guia">Horario para reservas: {{ area.hora_apertura }} a {{ area.hora_cierre }}.</p>
-    <ul class="franjas" role="list">
-      {% for franja in franjas %}
-        <li class="franjas__item">
-          <span class="am-num">{{ franja.hora_inicio }} a {{ franja.hora_fin }}</span>
-          <span class="am-pastilla {{ franja.clase }}">{{ franja.texto }}</span>
-          {% if franja.estado == "libre" and puede_solicitar %}
-            <form method="post" action="{% url 'reservas:tomar' %}?area={{ area.id }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ dia_elegido|date:'Y-m-d' }}">
-              {% csrf_token %}
-              <input type="hidden" name="area" value="{{ area.id }}">
-              <input type="hidden" name="fecha" value="{{ dia_elegido|date:'Y-m-d' }}">
-              <input type="hidden" name="hora_inicio" value="{{ franja.hora_inicio }}">
-              <button class="am-btn am-btn--primario" type="submit">Reservar</button>
-            </form>
-          {% endif %}
-        </li>
-      {% empty %}
-        <li class="vista__guia">Esta área no tiene franjas ese día.</li>
-      {% endfor %}
-    </ul>
-  </section>
-{% else %}
-  <p class="vista__guia">
-    {% if dia_elegido %}Día elegido: {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower|capfirst }}. Elige el área para ver sus franjas.{% else %}Elige un área y un día del calendario.{% endif %}
-  </p>
-{% endif %}
+<section id="reservar" aria-labelledby="titulo-reservar">
+  <div class="zonas__encabezado">
+    <h2 id="titulo-reservar">Reserva tu espacio</h2>
+  </div>
+  <div class="reservar__rejilla">
+    <div class="reservar__calendario">
+      {% if areas %}
+        <form method="get" class="am-formulario selector-area">
+          <div class="am-campo">
+            <label class="am-campo__etiqueta" for="area">Área para reservar</label>
+            <select class="am-campo__control" id="area" name="area" data-envio-al-cambiar>
+              <option value="">Elige el área</option>
+              {% for opcion in areas %}
+                <option value="{{ opcion.id }}"{% if opcion.id == area.id %} selected{% endif %}>{{ opcion.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <input type="hidden" name="mes" value="{{ mes|date:'Y-m' }}">
+          {% if dia_elegido %}<input type="hidden" name="dia" value="{{ dia_elegido|date:'Y-m-d' }}">{% endif %}
+        </form>
+      {% elif not error %}
+        <div class="am-vacio">
+          <p class="am-vacio__titulo">Todavía no hay áreas para reservar</p>
+          <p class="am-vacio__texto">Cuando la administración registre las áreas comunes, aparecen aquí.</p>
+        </div>
+      {% endif %}
+
+      <section class="am-tarjeta calendario" aria-labelledby="titulo-mes">
+        <div class="calendario__encabezado">
+          <a class="am-btn am-btn--secundario" href="?area={{ area.id|default:'' }}&amp;mes={{ mes_anterior|date:'Y-m' }}"><svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-flecha-izq"></use></svg>Mes anterior</a>
+          <h2 id="titulo-mes">{{ mes|date:"F Y"|capfirst }}</h2>
+          <a class="am-btn am-btn--secundario" href="?area={{ area.id|default:'' }}&amp;mes={{ mes_siguiente|date:'Y-m' }}">Mes siguiente<svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-flecha-der"></use></svg></a>
+        </div>
+
+        <table class="calendario__tabla">
+          <thead>
+            <tr>
+              {% for fecha in semanas.0 %}
+                <th scope="col"><abbr title="{{ fecha|date:'l'|capfirst }}">{{ fecha|date:"D"|capfirst }}</abbr></th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for semana in semanas %}
+              <tr>
+                {% for fecha in semana %}
+                  <td>
+                    {% if fecha.month == mes.month %}
+                      {% if fecha >= hoy %}
+                        <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
+                           href="?area={{ area.id|default:'' }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
+                           aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
+                           {% if fecha == hoy %}aria-current="date"{% endif %}>
+                          <span class="am-num">{{ fecha.day }}</span>
+                          {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
+                        </a>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <div class="reservar__dia">
+      {% if area and dia_elegido %}
+        <section class="am-tarjeta franjas-panel" aria-labelledby="titulo-franjas">
+          <h2 id="titulo-franjas">{{ area.nombre }}, {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower }}</h2>
+          <p class="vista__guia">Horario para reservas: {{ area.hora_apertura }} a {{ area.hora_cierre }}.</p>
+          <ul class="franjas" role="list">
+            {% for franja in franjas %}
+              <li class="franjas__item">
+                <span class="am-num">{{ franja.hora_inicio }} a {{ franja.hora_fin }}</span>
+                <span class="am-pastilla {{ franja.clase }}">{{ franja.texto }}</span>
+                {% if franja.estado == "libre" and puede_solicitar %}
+                  <form method="post" action="{% url 'reservas:tomar' %}?area={{ area.id }}&amp;mes={{ mes|date:'Y-m' }}&amp;dia={{ dia_elegido|date:'Y-m-d' }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="area" value="{{ area.id }}">
+                    <input type="hidden" name="fecha" value="{{ dia_elegido|date:'Y-m-d' }}">
+                    <input type="hidden" name="hora_inicio" value="{{ franja.hora_inicio }}">
+                    <button class="am-btn am-btn--primario" type="submit">Reservar</button>
+                  </form>
+                {% endif %}
+              </li>
+            {% empty %}
+              <li class="vista__guia">Esta área no tiene franjas ese día.</li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% else %}
+        <div class="reservar__pista">
+          <svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-calendario"></use></svg>
+          <p class="vista__guia">
+            {% if dia_elegido %}Día elegido: {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower|capfirst }}. Elige el área para ver sus franjas.{% else %}Elige un área y un día del calendario.{% endif %}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
 {% endblock %}

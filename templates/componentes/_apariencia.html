@@ -1,0 +1,16 @@
+{% comment %}
+Elegir el fondo de la interfaz: liso, color o cristal. Va en la barra superior.
+Lo aplica static/js/apariencia.js y lo guarda en el navegador de cada persona. Sin JavaScript
+el botón no hace nada y la página queda lisa.
+{% endcomment %}
+<details class="am-apariencia" data-apariencia>
+  <summary aria-label="Apariencia: elegir el fondo de la página">
+    <svg class="am-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-paleta"></use></svg>
+  </summary>
+  <fieldset class="am-apariencia__panel">
+    <legend>Fondo de la página</legend>
+    <label class="am-apariencia__opcion"><input type="radio" name="fondo" value="liso"><span class="am-apariencia__muestra am-apariencia__muestra--liso" aria-hidden="true"></span>Liso</label>
+    <label class="am-apariencia__opcion"><input type="radio" name="fondo" value="color"><span class="am-apariencia__muestra am-apariencia__muestra--color" aria-hidden="true"></span>Color</label>
+    <label class="am-apariencia__opcion"><input type="radio" name="fondo" value="cristal"><span class="am-apariencia__muestra am-apariencia__muestra--cristal" aria-hidden="true"></span>Cristal</label>
+  </fieldset>
+</details>

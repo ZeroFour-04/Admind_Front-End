@@ -2,6 +2,8 @@
 import json
 from unittest import mock
 
+from django.conf import settings
+
 from cliente_api.http import ErrorDeApi
 from tests.ayudantes import cliente_con_sesion
 
@@ -78,3 +80,15 @@ def test_un_409_de_la_vista_previa_se_muestra():
 
     assert "«Torre 1» ya existe y es de otro tipo de vivienda." in html
     assert "Así va a quedar" not in html
+
+
+def test_el_paso_ofrece_tres_patrones_y_ninguno_pide_escribir_los_numeros_a_mano():
+    cliente = cliente_con_sesion(permisos=ADMINISTRACION)
+    with mock.patch("cliente_api.unidades.agrupaciones", return_value=SIN_VIVIENDAS):
+        html = cliente.get("/conjuntos/asistente/viviendas/").content.decode()
+
+    for patron in ("piso_consecutivo", "consecutivo", "corrido"):
+        assert f'name="patron" value="{patron}"' in html
+    assert 'value="lista"' not in html
+    assert "Los escribo yo" not in html and "Un número por línea" not in html
+    assert "lista" not in (settings.BASE_DIR / "static" / "js" / "viviendas.js").read_text(encoding="utf-8")

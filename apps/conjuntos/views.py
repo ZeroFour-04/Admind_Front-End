@@ -25,6 +25,7 @@ from .forms import (
     ConjuntoForm,
     LogoForm,
     ReglamentoForm,
+    SuperusuarioForm,
 )
 
 # Los únicos tipos que la API acepta como logo. Cualquier otra cosa no se le entrega al navegador.
@@ -49,6 +50,10 @@ def nombre_del_color(conjunto):
 
 def puede_cambiar_identidad(request):
     return tiene_permiso(request, "conjunto.branding") or tiene_permiso(request, "conjunto.activar")
+
+
+def es_superusuario(request):
+    return "Superusuario" in request.session.get("roles", [])
 
 
 @require_http_methods(["GET", "POST"])
@@ -77,8 +82,28 @@ def selector(request):
         "conjuntos": conjuntos or [],
         "error": error,
         "puede_crear": puede_crear_conjunto(request),
+        "es_superusuario": es_superusuario(request),
+        "superusuario_creado": request.GET.get("superusuario") == "creado",
     }
     return render(request, "conjuntos/selector.html", contexto)
+
+
+@require_http_methods(["GET", "POST"])
+def nuevo_superusuario(request):
+    """La cuenta de otro integrante del equipo, desde el selector. Solo la abre un Superusuario."""
+    if not es_superusuario(request):
+        return redirect("conjuntos:selector")
+    formulario = SuperusuarioForm(request.POST or None)
+    if request.method == "POST" and formulario.is_valid():
+        try:
+            api_cuentas.crear_superusuario(request, formulario.cleaned_data)
+        except ApiNoDisponible:
+            formulario.add_error(None, MENSAJE_API_NO_DISPONIBLE)
+        except ErrorDeApi as error:
+            errores_de_la_api_al_formulario(formulario, error)
+        else:
+            return redirect(f"{reverse('conjuntos:selector')}?superusuario=creado")
+    return render(request, "conjuntos/superusuario_nuevo.html", {"formulario": formulario})
 
 
 # Asistente de creación (HU-03). Cada paso se guarda apenas se completa: se puede salir y volver.
@@ -289,7 +314,7 @@ def resumen(request):
     error = None
     if request.method == "POST":
         if request.POST.get("accion") == "eliminar":
-            if "Superusuario" in request.session.get("roles", []):
+            if es_superusuario(request):
                 try:
                     api_conjuntos.eliminar(request)
                 except ApiNoDisponible:

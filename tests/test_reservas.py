@@ -450,15 +450,16 @@ def ver_zonas(areas, zonas=None, permisos=RESIDENTE, url="/reservas/"):
 
 
 def fila(html, nombre):
-    return html.split(f"<td>{nombre}</td>")[1].split("</tr>")[0]
+    """La tarjeta de una zona: desde su nombre hasta el cierre de su <li>."""
+    return html.split(f'<h3 class="zona-tarjeta__nombre">{nombre}</h3>')[1].split("</li>")[0]
 
 
-def test_la_tabla_dice_como_se_usa_cada_zona_y_la_de_ingreso_muestra_sus_cupos_sin_reservar():
+def test_las_tarjetas_dicen_como_se_usa_cada_zona_y_la_de_ingreso_muestra_sus_cupos_sin_reservar():
     html = ver_zonas([SALON, GIMNASIO], [ZONA_GIMNASIO])
 
-    assert "<td>Con reserva</td>" in fila(html, "Salón comunal") and ">Reservar</a>" in fila(html, "Salón comunal")
+    assert ">Con reserva</p>" in fila(html, "Salón comunal") and ">Reservar</a>" in fila(html, "Salón comunal")
     gimnasio = fila(html, "Gimnasio")
-    assert "<td>Con ingreso</td>" in gimnasio
+    assert ">Con ingreso</p>" in gimnasio
     assert "12 de 30 libres" in gimnasio and "Abierta" in gimnasio and "puedes quedarte hasta 60 min" in gimnasio
     assert "Reservar" not in gimnasio
 
@@ -505,7 +506,7 @@ def test_sin_zonas_con_ingreso_no_se_consulta_la_api_de_ingresos():
     zonas.assert_not_called()
 
 
-def test_la_tabla_invita_a_recargar_para_ver_los_cupos_nuevos():
+def test_las_zonas_invitan_a_recargar_para_ver_los_cupos_nuevos():
     html = ver_zonas([GIMNASIO], [ZONA_GIMNASIO])
 
     assert "Los cupos se actualizan al recargar la página." in html and ">Actualizar</a>" in html

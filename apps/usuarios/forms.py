@@ -59,10 +59,12 @@ class UsuarioForm(forms.Form):
             "invalid": "El teléfono debe tener entre 7 y 10 dígitos y puede iniciar con +."
         },
     )
-    correo = forms.EmailField(label="Correo electrónico")
-    contrasena = forms.CharField(label="Contraseña", min_length=8, strip=False, widget=forms.PasswordInput)
+    correo = forms.EmailField(label="Correo electrónico", max_length=254)
+    contrasena = forms.CharField(
+        label="Contraseña", min_length=8, max_length=128, strip=False, widget=forms.PasswordInput
+    )
     confirmar_contrasena = forms.CharField(
-        label="Confirmar contraseña", strip=False, widget=forms.PasswordInput
+        label="Confirmar contraseña", max_length=128, strip=False, widget=forms.PasswordInput
     )
 
     def clean(self):

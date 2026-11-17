@@ -112,7 +112,7 @@
         </template>
 
         <div class="selector-persona__busqueda" :hidden="!!persona" x-cloak>
-          <input class="am-campo__control" type="search" id="buscar-persona"
+          <input class="am-campo__control" type="search" id="buscar-persona" maxlength="100"
                  x-model.debounce.120ms="consulta" @keydown.enter.prevent="elegirPrimera()"
                  autocomplete="off" spellcheck="false" placeholder="Nombre, correo o cédula"
                  aria-describedby="buscar-persona-ayuda{% if formulario.persona.errors %} buscar-persona-error{% endif %}"

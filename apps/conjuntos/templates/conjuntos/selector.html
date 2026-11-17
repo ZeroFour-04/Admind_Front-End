@@ -11,12 +11,20 @@
   </div>
   <p class="vista__guia">Tienes acceso a estos conjuntos. Todo lo que veas y registres después pertenece al que elijas.</p>
 
+  {% if superusuario_creado %}
+    <div class="am-alerta" role="status">Superusuario creado con éxito.</div>
+  {% endif %}
   {% if error %}
     <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
   {% endif %}
-  {% if puede_crear %}
+  {% if puede_crear or es_superusuario %}
     <div class="acciones">
-      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:nuevo' %}">Crear conjunto</a>
+      {% if puede_crear %}
+        <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:nuevo' %}">Crear conjunto</a>
+      {% endif %}
+      {% if es_superusuario %}
+        <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:superusuario-nuevo' %}">Crear superusuario</a>
+      {% endif %}
     </div>
   {% endif %}
 

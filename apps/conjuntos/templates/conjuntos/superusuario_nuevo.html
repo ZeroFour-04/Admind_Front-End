@@ -1,0 +1,29 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Crear superusuario{% endblock %}
+
+{% block cuerpo %}
+{% include "componentes/barra_superior.html" with sin_conjunto=True %}
+<main class="vista vista--sin-lateral">
+  <div class="vista__encabezado">
+    <h1>Crear superusuario</h1>
+  </div>
+  <p class="vista__guia">La cuenta tendrá acceso a todos los conjuntos y deberá configurar la verificación en dos pasos al entrar.</p>
+
+  <form method="post" class="am-formulario am-tarjeta" novalidate>
+    {% csrf_token %}
+    {% include "componentes/errores_formulario.html" %}
+    {% for campo in formulario %}
+      <div class="am-campo">
+        <label class="am-campo__etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<span class="am-campo__error">{{ error }}</span>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="acciones">
+      <a class="am-btn am-btn--secundario" href="{% url 'conjuntos:selector' %}">Volver</a>
+      <button class="am-btn am-btn--primario" type="submit">Crear superusuario</button>
+    </div>
+  </form>
+</main>
+{% endblock %}

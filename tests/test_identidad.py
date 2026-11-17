@@ -23,13 +23,15 @@ def test_sin_foto_la_barra_muestra_las_iniciales_y_el_nombre_sin_ninguna_imagen(
     html = respuesta.content.decode()
     assert "<b>Torres del Río</b>" in html
     assert MARCADOR in html
-    assert "<img" not in html
+    # La única imagen es el logo de AdMind; el conjunto no pone ninguna.
+    assert html.count("<img") == html.count('class="am-barra__logo"')
 
 
 def test_la_barra_muestra_el_tipo_de_usuario_y_el_enlace_al_perfil():
     html = cliente_con_sesion(tipo_usuario="Administrador").get("/inicio/").content.decode()
 
-    assert "Administrador" in html
+    assert '<span class="am-barra__tipo-usuario">Administración</span>' in html
+    assert "Administrador" not in html
     assert 'href="/perfil/" aria-label="Ver perfil del usuario"' in html
 
 
@@ -50,11 +52,18 @@ def test_el_lateral_trae_en_el_pie_lo_que_la_barra_oculta_en_pantallas_angostas(
     assert 'href="/conjuntos/">Cambiar de conjunto</a>' in pie
 
 
-@pytest.mark.parametrize("rol", ["Superusuario", "Administrador", "Secretaría"])
-def test_el_lateral_muestra_usuarios_y_unidades_solo_a_roles_autorizados(rol):
-    html = cliente_con_sesion(roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
+@pytest.mark.parametrize("rol", ["Superusuario", "Administrador"])
+def test_el_lateral_muestra_usuarios_y_unidades_a_quien_puede_gestionar_usuarios(rol):
+    html = cliente_con_sesion(permisos=["usuario.gestionar"], roles=[rol], tipo_usuario=rol).get("/inicio/").content.decode()
 
     assert ">Usuarios</a>" in html
+    assert ">Unidades</a>" in html
+
+
+def test_secretaria_ve_unidades_pero_no_usuarios_porque_no_puede_gestionarlos():
+    html = cliente_con_sesion(roles=["Secretaría"], tipo_usuario="Secretaría").get("/inicio/").content.decode()
+
+    assert ">Usuarios</a>" not in html
     assert ">Unidades</a>" in html
 
 

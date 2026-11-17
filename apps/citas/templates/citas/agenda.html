@@ -1,0 +1,111 @@
+{% extends "base/aplicacion.html" %}
+{% load static %}
+
+{% block titulo %}Citas{% endblock %}
+{% block estilos %}
+  <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+  <link rel="stylesheet" href="{% static 'css/citas.css' %}">
+{% endblock %}
+{% block titulo_vista %}Citas{% endblock %}
+{% block estado_vista %}{% endblock %}
+
+{% block contenido %}
+{% if agendada %}
+  <div class="aviso-exito" role="status">Tu cita quedó agendada.</div>
+{% endif %}
+{% if error %}
+  <div class="am-alerta am-alerta--error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section aria-labelledby="titulo-horario-residente">
+  <h2 id="titulo-horario-residente">Horario de atención de Administración</h2>
+  <dl class="citas-resumen">
+    {% for dia in horario %}
+      <div class="citas-resumen__dia">
+        <dt>{{ dia.nombre }}</dt>
+        <dd>
+          {% if dia.configuracion.activo %}
+            <span>{{ dia.configuracion.hora_inicio|slice:":5" }} a {{ dia.configuracion.hora_fin|slice:":5" }}</span>
+            {% if dia.configuracion.descanso_inicio and dia.configuracion.descanso_fin %}
+              <span class="citas-resumen__descanso">Almuerzo o descanso: {{ dia.configuracion.descanso_inicio|slice:":5" }} a {{ dia.configuracion.descanso_fin|slice:":5" }}</span>
+            {% endif %}
+          {% else %}
+            <span>Sin atención</span>
+          {% endif %}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+</section>
+
+{% if cita_propia %}
+  <section class="am-alerta am-alerta--info" aria-labelledby="titulo-cita-propia">
+    <h2 id="titulo-cita-propia">Ya tienes una cita futura</h2>
+    <p>{{ cita_propia.fecha }} de {{ cita_propia.hora_inicio|slice:":5" }} a {{ cita_propia.hora_fin|slice:":5" }}.</p>
+  </section>
+{% endif %}
+
+<section class="am-tarjeta calendario" aria-labelledby="titulo-mes-citas">
+  <div class="calendario__encabezado">
+    <a class="am-btn am-btn--secundario" href="?mes={{ mes_anterior|date:'Y-m' }}">Mes anterior</a>
+    <h2 id="titulo-mes-citas">{{ mes|date:"F Y"|capfirst }}</h2>
+    <a class="am-btn am-btn--secundario" href="?mes={{ mes_siguiente|date:'Y-m' }}">Mes siguiente</a>
+  </div>
+  <table class="calendario__tabla">
+    <thead>
+      <tr>
+        {% for fecha in semanas.0 %}
+          <th scope="col"><abbr title="{{ fecha|date:'l'|capfirst }}">{{ fecha|date:"D"|capfirst }}</abbr></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for semana in semanas %}
+        <tr>
+          {% for fecha in semana %}
+            <td>
+              {% if fecha.month == mes.month and fecha >= hoy %}
+                <a class="calendario__dia{% if fecha == dia_elegido %} calendario__dia--elegido{% endif %}"
+                   href="?mes={{ mes|date:'Y-m' }}&amp;dia={{ fecha|date:'Y-m-d' }}"
+                   aria-label="{{ fecha|date:'l j \d\e F'|lower|capfirst }}{% if fecha == hoy %}, hoy{% endif %}{% if fecha == dia_elegido %}, elegido{% endif %}"
+                   {% if fecha == hoy %}aria-current="date"{% endif %}>
+                  <span class="am-num">{{ fecha.day }}</span>
+                  {% if fecha == hoy %}<span class="calendario__hoy">Hoy</span>{% endif %}
+                </a>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if dia_elegido %}
+  <section class="citas-agenda__franjas" aria-labelledby="titulo-franjas-citas">
+    <h2 id="titulo-franjas-citas">Franjas para {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower|capfirst }}</h2>
+    <p class="vista__guia">Cada cita dura dos horas. El almuerzo o descanso no se ofrece para agendar.</p>
+    <ul class="franjas" role="list">
+      {% for franja in franjas %}
+        <li class="franjas__item">
+          <span class="am-num">{{ franja.hora_inicio|slice:":5" }} a {{ franja.hora_fin|slice:":5" }}</span>
+          <span class="am-pastilla {{ franja.clase }}">{{ franja.texto }}</span>
+          {% if franja.estado == "libre" and not cita_propia %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="fecha" value="{{ dia_elegido|date:'Y-m-d' }}">
+              <input type="hidden" name="hora_inicio" value="{{ franja.hora_inicio|slice:':5' }}">
+              <p>Vas a agendar una cita de dos horas con Administración para {{ dia_elegido|date:"l j \d\e F \d\e Y"|lower }}, de {{ franja.hora_inicio|slice:":5" }} a {{ franja.hora_fin|slice:":5" }}.</p>
+              <button class="am-btn am-btn--primario" type="submit">Agendar cita</button>
+            </form>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="vista__guia">No hay franjas de atención disponibles en este día.</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% else %}
+  <p class="vista__guia">Elige un día en el calendario para consultar y agendar una franja de dos horas.</p>
+{% endif %}
+{% endblock %}

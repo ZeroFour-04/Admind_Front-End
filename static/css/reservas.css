@@ -1,37 +1,75 @@
-/* RESERVAS — calendario de zonas comunes. Solo variables de design-system/.
-   El día elegido no usa el acento: no es uno de sus cuatro sitios (maestro §6.1). */
+/* RESERVAS — «Zonas comunes»: las zonas como tarjetas, el calendario y las franjas del día.
+   Solo variables de design-system/. Ningún hex.
+   El acento es adorno (banda, medidor, día elegido). El estado de cada zona y de cada franja lo
+   dice su pastilla, con texto y con sus colores fijos. */
 
-.calendario-reservas{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,480px);align-items:start;gap:var(--e-4)}
+/* ---------- Las zonas ------------------------------------------------------------------ */
+.zonas__encabezado{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--e-1) var(--e-5);margin-bottom:var(--e-4)}
+.zonas__rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:var(--e-4)}
+.zonas__rejilla + .vista__guia{margin-top:var(--e-4)}
+.zona-tarjeta{position:relative;display:flex;flex-direction:column;gap:var(--e-4);padding:var(--e-5);background:var(--superficie-tarjeta);border:1px solid var(--borde);border-radius:var(--radio-caja);box-shadow:var(--sombra-suave);overflow:hidden;transition:transform var(--transicion-suave),box-shadow var(--transicion-suave),border-color var(--transicion)}
+.zona-tarjeta:hover{transform:translateY(-3px);border-color:var(--acento-200);box-shadow:var(--sombra-media)}
+.zona-tarjeta--elegida{border-color:var(--acento-600);box-shadow:0 0 0 1px var(--acento-600),var(--sombra-media)}
+.zona-tarjeta__cabeza{display:flex;align-items:center;gap:var(--e-3)}
+.zona-tarjeta__icono{display:inline-flex;flex:none;align-items:center;justify-content:center;width:46px;height:46px;border-radius:14px;background:var(--acento-degradado-suave);box-shadow:inset 0 0 0 1px var(--acento-100);color:var(--acento-600);transition:transform var(--transicion-suave)}
+.zona-tarjeta__icono .am-icono{width:24px;height:24px;color:inherit}
+.zona-tarjeta:hover .zona-tarjeta__icono{transform:rotate(-6deg) scale(1.08)}
+.zona-tarjeta__nombre{font-size:var(--tipo-tarjeta)}
+.zona-tarjeta__uso{font-size:var(--tipo-meta);color:var(--texto-suave)}
+.zona-tarjeta__estado{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e-1)}
+.zona-tarjeta__detalle{font-size:var(--tipo-meta);color:var(--texto-medio)}
+.zona-tarjeta__datos{display:grid;grid-template-columns:1fr 1fr;gap:var(--e-3);margin:0;padding-top:var(--e-3);border-top:1px dashed var(--acento-200)}
+.zona-tarjeta__datos dt{font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-suave)}
+.zona-tarjeta__datos dd{margin:0;font-size:var(--tipo-cuerpo);color:var(--texto-fuerte)}
+.zona-tarjeta__cupos{display:flex;flex-direction:column;gap:var(--e-2);margin:0;font-size:var(--tipo-cuerpo);font-weight:var(--peso-texto-medio)}
+.zona-tarjeta__accion{margin-top:auto;width:100%}
+.medidor{height:8px;overflow:hidden;border-radius:var(--radio-pastilla);background:var(--acento-100)}
+.medidor__relleno{display:block;width:var(--libres);height:100%;border-radius:inherit;background:var(--acento-degradado-vivo);animation:llenar 900ms var(--curva-entrada) 200ms both}
+@keyframes llenar{from{width:0}}
+
+/* ---------- Reservar: calendario y franjas del día, lado a lado ------------------------- */
+.reservar__rejilla{display:grid;grid-template-columns:minmax(0,480px) minmax(0,1fr);align-items:start;gap:var(--e-5)}
+.reservar__calendario{display:flex;flex-direction:column;gap:var(--e-4)}
+.reservar__dia{position:sticky;top:calc(var(--e-9) + var(--e-5))}
+.reservar__pista{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e-3);padding:var(--e-7) var(--e-6);border:1px dashed var(--acento-200);border-radius:var(--radio-caja);background:var(--acento-degradado-suave)}
+.reservar__pista .am-icono{width:36px;height:36px;color:var(--acento-600)}
+.franjas-panel{display:flex;flex-direction:column;gap:var(--e-3);padding:var(--e-5)}
+.franjas-panel h2{text-wrap:balance}
+@media (max-width:900px){
+  .reservar__rejilla{grid-template-columns:minmax(0,1fr)}
+  .reservar__dia{position:static}
+}
+
+/* ---------- Calendario ---------------------------------------------------------------- */
 .calendario{width:100%;max-width:480px;padding:var(--e-5)}
-.calendario__encabezado{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--e-3);margin-bottom:var(--e-4)}
-
+.calendario__encabezado{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:var(--e-2);margin-bottom:var(--e-4)}
+.calendario__encabezado h2{font-size:var(--tipo-guia);white-space:nowrap}
+.calendario__encabezado .am-btn{gap:var(--e-1);padding:0 var(--e-2)}
+.calendario__encabezado .am-icono{width:18px;height:18px;color:inherit}
 .calendario__tabla{table-layout:fixed}
 .calendario__tabla th{padding:var(--e-2) 0;font-size:var(--tipo-meta);font-weight:var(--peso-texto-medio);color:var(--texto-medio);text-align:center}
 .calendario__tabla abbr{text-decoration:none}
-.calendario__tabla td{padding:1px;height:var(--toque-minimo)}
-
-.calendario__dia{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:var(--toque-minimo);border:1px solid transparent;border-radius:var(--radio-control);line-height:1.1;text-decoration:none;transition:background var(--transicion),border-color var(--transicion)}
+.calendario__tabla td{padding:2px;height:var(--toque-minimo)}
+.calendario__dia{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:var(--toque-minimo);border:1px solid transparent;border-radius:var(--radio-control);line-height:1.1;text-decoration:none;transition:background var(--transicion),border-color var(--transicion),transform var(--transicion),box-shadow var(--transicion)}
 a.calendario__dia{background:var(--acento-50);color:var(--acento-900)}
-a.calendario__dia:hover{border-color:var(--acento-600)}
-.calendario__dia--elegido{border-color:var(--acento-700);font-weight:var(--peso-texto-medio)}
+a.calendario__dia:hover{border-color:var(--acento-400);background:var(--acento-100);transform:translateY(-2px) scale(1.04);box-shadow:var(--sombra-suave)}
+.calendario__dia--elegido,a.calendario__dia--elegido{border:2px solid var(--acento-600);background:var(--acento-100);font-weight:var(--peso-texto-medio);box-shadow:var(--sombra-acento)}
 .calendario__hoy{font-size:var(--tipo-meta);color:var(--texto-medio)}
-
-@media (max-width:480px){
-  .calendario-reservas{grid-template-columns:minmax(0,1fr)}
-}
-
 @media (max-width:480px){
   .calendario{padding:var(--e-2)}
+  .calendario__encabezado{flex-wrap:wrap}
   .calendario__encabezado h2{order:-1;flex-basis:100%;text-align:center}
   .calendario__encabezado .am-btn{flex:1}
 }
 
-/* Selector de área y franjas del día (HU-11). El estado va en una pastilla con texto. */
-.selector-area{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--e-3);max-width:none;margin:0}
-.selector-area .am-campo{width:100%}
-.franjas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e-2);max-width:640px}
-.franjas__item{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-3);min-height:var(--toque-minimo);padding:var(--e-2) var(--e-3);border:1px solid var(--borde);border-radius:var(--radio-control)}
-.franjas__item form{margin-left:auto}
+/* ---------- Selector de área y franjas del día (HU-11). El estado va en una pastilla con texto. */
+.selector-area{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--e-3);max-width:none;margin:0;padding:0}
+.selector-area .am-campo{width:100%;max-width:none}
+.franjas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:var(--e-2);max-width:none}
+.franjas__item{display:flex;flex-direction:column;align-items:flex-start;gap:var(--e-2);min-height:var(--toque-minimo);padding:var(--e-3) var(--e-4);border:1px solid var(--borde);border-radius:var(--radio-control);background:var(--superficie-tarjeta);transition:border-color var(--transicion),transform var(--transicion),box-shadow var(--transicion)}
+.franjas__item:hover{border-color:var(--acento-400);transform:translateY(-2px);box-shadow:var(--sombra-suave)}
+.franjas__item form{width:100%;margin:0}
+.franjas__item .am-btn{width:100%}
 
 /* Solicitud en trámite: la cuenta regresiva va en cifras tabulares. */
 .reloj-solicitud{display:flex;flex-wrap:wrap;align-items:center;gap:var(--e-2)}

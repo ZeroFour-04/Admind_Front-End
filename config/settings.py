@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "apps.unidades",
     "apps.usuarios",
     "apps.visitantes",
+    "apps.citas",
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Después de las sesiones: necesita leer el token guardado en ellas.
     "apps.cuentas.sesion.SesionRequeridaMiddleware",
+    # Traduce los errores de la API que ninguna vista atrapó en una página con su mensaje.
+    "apps.cuentas.errores.ErroresDeApiMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

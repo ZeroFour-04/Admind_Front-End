@@ -1,0 +1,55 @@
+/* EFECTOS — la capa «con vida» (decisión de Alejo, 2026-10-30).
+   Solo variables. Todo sale de --acento-*, así que cambia con cada conjunto: el verde por
+   defecto, los otros siete del catálogo y el color propio. Los neutros y los cinco estados
+   (--estado-*, --info-*) no se tocan: el acento nunca comunica significado.
+   Para volver al aspecto anterior: quitar el @import de este archivo en styles.css y los
+   <link> de apariencia.css y conjuntos.css en templates/base/base.html. */
+
+:root{
+  /* Formas más redondeadas (antes 4px y 8px). */
+  --radio-control:10px;
+  --radio-caja:16px;
+  --radio-grande:24px;
+
+  /* Movimiento. Responde a una acción y entra al cargar la vista. Con
+     prefers-reduced-motion todo se apaga (base.css). */
+  --transicion:160ms cubic-bezier(.2,0,.3,1);
+  --transicion-suave:320ms cubic-bezier(.22,1,.36,1);
+  --duracion-entrada:520ms;
+  --curva-entrada:cubic-bezier(.22,1,.36,1);
+}
+
+/* Tonos derivados del acento. Van en :root Y en [data-acento] porque la tarjeta de cada
+   conjunto en el selector reapunta --acento-600 solo para ella: sus derivados se tienen que
+   recalcular ahí y no heredarse ya resueltos desde <html>. */
+:root,[data-acento]{
+  --acento-100:color-mix(in srgb,var(--acento-600) 16%,var(--gris-0));
+  --acento-200:color-mix(in srgb,var(--acento-600) 30%,var(--gris-0));
+  --acento-400:color-mix(in srgb,var(--acento-600) 70%,var(--gris-0));
+  /* Un tono vecino del acento (mismo color corrido en la rueda): da profundidad a los degradados. */
+  --acento-vecino:var(--acento-400);
+  --acento-degradado:linear-gradient(135deg,var(--acento-600),var(--acento-700));
+  --acento-degradado-vivo:linear-gradient(135deg,var(--acento-600),var(--acento-vecino));
+  --acento-degradado-suave:linear-gradient(135deg,var(--acento-50),var(--acento-100));
+
+  /* Sombras teñidas con el acento. Las tarjetas ya no se separan solo con borde. */
+  --sombra-suave:0 1px 2px color-mix(in srgb,var(--acento-900) 8%,transparent),0 6px 16px -8px color-mix(in srgb,var(--acento-900) 18%,transparent);
+  --sombra-media:0 2px 4px color-mix(in srgb,var(--acento-900) 8%,transparent),0 16px 32px -14px color-mix(in srgb,var(--acento-900) 28%,transparent);
+  --sombra-acento:0 8px 20px -8px color-mix(in srgb,var(--acento-600) 60%,transparent);
+}
+@supports (color:hsl(from red h s l)){
+  :root,[data-acento]{--acento-vecino:hsl(from var(--acento-600) calc(h + 32) s calc(l + 8))}
+}
+
+/* Fondo de la página. Lo elige cada persona: static/js/apariencia.js pone en <html> el
+   atributo data-fondo con «liso» (el de antes), «color» o «cristal» (manchas desenfocadas
+   y tarjetas de vidrio, como un fondo de pantalla con blur). */
+:root{
+  --fondo-color:linear-gradient(160deg,var(--acento-50) 0%,var(--acento-100) 55%,color-mix(in srgb,var(--acento-vecino) 22%,var(--gris-0)) 100%);
+  --mancha-1:color-mix(in srgb,var(--acento-600) 26%,transparent);
+  --mancha-2:color-mix(in srgb,var(--acento-vecino) 30%,transparent);
+  /* El vidrio es casi opaco a propósito: el texto de las tarjetas no baja de 4.5:1 sobre ninguna mancha (medido con los acentos). */
+  --vidrio:color-mix(in srgb,var(--gris-0) 86%,transparent);
+  --vidrio-barra:color-mix(in srgb,var(--gris-0) 76%,transparent);
+  --vidrio-borde:color-mix(in srgb,var(--gris-0) 75%,transparent);
+}
