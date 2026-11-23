@@ -132,10 +132,10 @@ def test_secretaria_clasifica_y_no_ve_como_responder():
     assert "/responder/" not in html and "/rechazar/" not in html
 
 
-def test_administracion_responde_un_caso_sin_que_nadie_lo_redirija():
-    html = ver_detalle(PARA_GESTION, ADMINISTRACION)
+def test_administracion_responde_un_caso_redirigido():
+    html = ver_detalle({**PARA_GESTION, "estado": "REDIRIGIDO"}, ADMINISTRACION)
 
-    for accion in ("tomar", "prioridad", "responder", "rechazar"):
+    for accion in ("prioridad", "responder", "rechazar"):
         assert f'action="/casos/{CASO["id"]}/{accion}/"' in html
     assert ">Responder y resolver</button>" in html and 'name="respuesta"' in html
     assert "/redirigir/" not in html and "/descartar/" not in html
@@ -167,9 +167,10 @@ def test_un_caso_cerrado_no_ofrece_ninguna_accion():
 
 
 def gestionar(accion, datos, permisos=SECRETARIA, **simulacion):
+    caso = {**PARA_GESTION, "estado": "REDIRIGIDO"} if accion in ("responder", "rechazar") else PARA_GESTION
     with (
         mock.patch("cliente_api.casos.gestionar", **simulacion) as api,
-        mock.patch("cliente_api.casos.obtener", return_value=PARA_GESTION),
+        mock.patch("cliente_api.casos.obtener", return_value=caso),
     ):
         respuesta = cliente_con_sesion(permisos=permisos).post(f"{URL}{accion}/", datos)
     return respuesta, api

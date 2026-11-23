@@ -211,6 +211,7 @@ def dashboard(request):
     if pestana not in disponibles:
         pestana = "reservas"
     orden = elegido(request, "orden", ORDENES_DE_CASOS)
+    ver = elegido(request, "ver", FILTROS.get(pestana, (("todos", "Todos"),)))
 
     filtros = filtros_de(request, pestana)
     # Las dos listas sin filtrar se piden siempre: las cuentas de las pestañas y las opciones de zona y
@@ -220,7 +221,15 @@ def dashboard(request):
     )
     casos, error_de_casos = [], None
     if ve_casos:
-        casos, error_de_casos, _ = pedir_filas(lambda: api_casos.listar(request, orden=orden), fila_de_caso, hoy)
+        casos, error_de_casos, _ = pedir_filas(
+            lambda: api_casos.listar(
+                request,
+                orden=orden,
+                solo_redirigidos=(ver == "abiertos"),
+            ),
+            fila_de_caso,
+            hoy,
+        )
     citas, error_de_citas = [], None
     if ve_citas:
         citas, error_de_citas, _ = pedir_filas(lambda: api_citas.bandeja(request), fila_de_cita, hoy)
@@ -238,13 +247,19 @@ def dashboard(request):
         )
     elif filtros and pestana == "casos":
         casos, error_de_casos, errores_de_filtros = pedir_filas(
-            lambda: api_casos.listar(request, orden=orden, **filtros), fila_de_caso, hoy
+            lambda: api_casos.listar(
+                request,
+                orden=orden,
+                solo_redirigidos=(ver == "abiertos"),
+                **filtros,
+            ),
+            fila_de_caso,
+            hoy,
         )
 
-    filas, error, ver, filtros_de_vista = [], None, None, []
+    filas, error, filtros_de_vista = [], None, []
     # Con un estado elegido «Pendientes / Todas» desaparece: se contradirían.
     if pestana in FILTROS and "estado" not in filtros:
-        ver = elegido(request, "ver", FILTROS[pestana])
         extra = {"orden": orden} if pestana == "casos" else {}
         filtros_de_vista = [
             {

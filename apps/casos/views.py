@@ -67,12 +67,12 @@ def acciones_para(request, caso):
     abierto = caso["abierto"]
     en_secretaria = caso["estado"] in EN_SECRETARIA
     return {
-        "tomar": caso["estado"] == "ABIERTO" and (gestiona or responde),
+        "tomar": caso["estado"] == "ABIERTO" and gestiona,
         "prioridad": abierto and tiene_permiso(request, "solicitud.priorizar"),
         "redirigir": en_secretaria and gestiona,
         "descartar": en_secretaria and gestiona,
-        "responder": abierto and responde,
-        "rechazar": abierto and responde,
+        "responder": caso["estado"] == "REDIRIGIDO" and responde,
+        "rechazar": caso["estado"] == "REDIRIGIDO" and responde,
     }
 
 
