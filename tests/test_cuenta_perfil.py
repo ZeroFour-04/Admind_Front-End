@@ -43,5 +43,8 @@ def test_una_pagina_con_sesion_no_se_guarda_en_cache_y_cerrar_sesion_protege_la_
     sin_sesion = cliente.get("/perfil/")
 
     assert salida.status_code == 302
+    # Que «atrás» no muestre las páginas que el navegador guardó con la sesión abierta.
+    assert salida["Clear-Site-Data"] == '"cache"'
+    assert "no-store" in salida["Cache-Control"]
     assert sin_sesion.status_code == 302
     assert sin_sesion["Location"] == "/"
