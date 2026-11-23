@@ -1,5 +1,6 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.cache import add_never_cache_headers
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.cuentas.forms import CodigoForm, IngresoForm, RecuperarForm, RestablecerForm
@@ -60,7 +61,12 @@ def salir(request):
         # Si el token ya venció o la API no responde, la sesión de este lado se cierra igual.
         pass
     cerrar_sesion(request)
-    return redirect("cuentas:ingreso")
+    respuesta = redirect("cuentas:ingreso")
+    # Le pide al navegador borrar lo que guardó de este sitio, incluidas las páginas que «atrás»
+    # mostraría sin preguntar al servidor. Solo aplica en HTTPS (el despliegue).
+    respuesta["Clear-Site-Data"] = '"cache"'
+    add_never_cache_headers(respuesta)
+    return respuesta
 
 
 @antes_del_segundo_factor

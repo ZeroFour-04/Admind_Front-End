@@ -22,6 +22,8 @@
   <script src="{% static 'js/apariencia.js' %}"></script>
   {# Los avisos en rojo de los campos con formato (documento, nombres, teléfono, placa), en todas las pantallas. #}
   <script src="{% static 'js/validacion.js' %}" defer></script>
+  {# Con «atrás» tras cerrar sesión, no deja ver la página guardada por el navegador. #}
+  <script src="{% static 'js/sesion.js' %}" defer></script>
 </head>
 <body>
   {% include "componentes/_iconos.html" %}
