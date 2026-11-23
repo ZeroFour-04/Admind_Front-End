@@ -145,7 +145,7 @@ def test_ver_todas_trae_las_decididas_y_una_franja_que_ya_paso_sale_completada()
 def test_la_pestana_casos_trae_estado_prioridad_y_antiguedad_y_enlaza_al_detalle():
     html, _, de_casos = abrir_dashboard("?pestana=casos")
 
-    assert de_casos.call_args.kwargs == {"orden": "prioridad"}
+    assert de_casos.call_args.kwargs == {"orden": "prioridad", "solo_redirigidos": True}
     assert '<span class="am-pestana am-es-activa" aria-current="page">Casos' in html
     for columna in ("ID", "Asunto", "Estado", "Prioridad", "Residente", "Vivienda", "Creado"):
         assert f'<th scope="col">{columna}</th>' in html
@@ -161,7 +161,7 @@ def test_la_pestana_casos_trae_estado_prioridad_y_antiguedad_y_enlaza_al_detalle
 def test_los_casos_se_pueden_ver_todos_y_por_antiguedad_sin_perder_la_columna():
     html, _, de_casos = abrir_dashboard("?pestana=casos&ver=todos&orden=antiguedad")
 
-    assert de_casos.call_args.kwargs == {"orden": "antiguedad"}
+    assert de_casos.call_args.kwargs == {"orden": "antiguedad", "solo_redirigidos": False}
     assert "Ruido en la noche" in html and 'am-pastilla--confirmado">Resuelto</span>' in html
     assert '<th scope="col">Creado</th>' in html and "hace 1 día" in html
     assert 'tablero__opcion--activa" href="/solicitudes/?pestana=casos&amp;ver=todos&amp;orden=antiguedad"' in html
@@ -345,7 +345,12 @@ def test_hu22_con_cualquier_filtro_la_antiguedad_sigue_visible_en_casos(filtros)
     assert "<th scope=\"col\">Creado</th>" in html
     assert "hace 1 día" in html
     if filtros:
-        de_casos.assert_called_with(mock.ANY, orden="prioridad", **filtros)
+        de_casos.assert_called_with(
+            mock.ANY,
+            orden="prioridad",
+            solo_redirigidos=False,
+            **filtros,
+        )
 
 
 def test_hu22_la_bandeja_no_tiene_aprobar_responder_ni_exportar():

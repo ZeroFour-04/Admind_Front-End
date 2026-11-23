@@ -17,10 +17,10 @@ Gestión entra por la pestaña **Casos** del dashboard (`apps/triage`); `/casos/
 
 | Acción | Quién la ve | Ruta del front |
 |---|---|---|
-| Tomar el caso | `caso.gestionar` o `caso.responder`, si está «Por revisar» | `/casos/<id>/tomar/` |
+| Tomar el caso | `caso.gestionar`, si está «Por revisar» | `/casos/<id>/tomar/` |
 | Cambiar la prioridad | `solicitud.priorizar`, si está abierto | `/casos/<id>/prioridad/` |
 | Redirigir al administrador, Descartar | `caso.gestionar` (Secretaría), antes de redirigirlo | `/casos/<id>/redirigir/`, `/descartar/` |
-| Responder y resolver, Rechazar | `caso.responder` (Administración), si está abierto | `/casos/<id>/responder/`, `/rechazar/` |
+| Responder y resolver, Rechazar | `caso.responder` (Administración), si está redirigido | `/casos/<id>/responder/`, `/rechazar/` |
 
 Las seis pasan por una sola vista (`views.gestionar`), que manda los campos a la API y vuelve al detalle. Ocultar un botón no es lo que impide la acción: lo impide la API. Si la API la rechaza, la pantalla dice por qué y conserva lo escrito. Los nombres de estados y prioridades están en `presentacion.py`.
 
