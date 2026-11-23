@@ -280,3 +280,20 @@ def test_no_se_muestra_el_acceso_a_casos_a_quien_no_tiene_permiso():
         html = cliente_con_sesion(permisos=["area.ver"]).get("/anuncios/").content.decode()
 
     assert ">Casos</a>" not in html
+
+
+def test_el_cliente_manda_solo_redirigidos_tambien_en_falso():
+    """Para Administración la API toma `solo_redirigidos=true` si falta: «Todos» tiene que decir `false`."""
+    from cliente_api import casos as api_casos
+
+    with mock.patch("cliente_api.casos.pedir", return_value=[]) as pedir:
+        api_casos.listar(None, orden="prioridad", solo_redirigidos=False)
+        api_casos.listar(None, orden="prioridad", solo_redirigidos=True)
+        api_casos.listar(None)
+
+    rutas = [llamada.args[2] for llamada in pedir.call_args_list]
+    assert rutas == [
+        "casos/?orden=prioridad&solo_redirigidos=false",
+        "casos/?orden=prioridad&solo_redirigidos=true",
+        "casos/",
+    ]
