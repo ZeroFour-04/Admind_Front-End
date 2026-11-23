@@ -1,5 +1,7 @@
 from django import forms
 
+from .validacion import campo_documento, campo_letras, limpiar_documento
+
 
 # Los roles de conjunto del catálogo (maestro §5.3). No se crean ni se editan desde la interfaz.
 # De menos a más poder: en un select queda marcada la primera opción, y nadie debe quedar con la
@@ -36,7 +38,10 @@ class BuscarPersonaForm(forms.Form):
     """Paso 1 de registrar persona (HU-07): el documento exacto. Viaja por POST, nunca en la URL."""
 
     tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
-    numero_documento = forms.CharField(label="Número de documento", max_length=20)
+    numero_documento = campo_documento()
+
+    def clean(self):
+        return limpiar_documento(self, super().clean())
 
 
 class VincularPersonaForm(forms.Form):
@@ -47,17 +52,18 @@ class VincularPersonaForm(forms.Form):
 class UsuarioForm(forms.Form):
     rol = forms.ChoiceField(label="Rol en el conjunto", choices=ROLES_DE_CONJUNTO, initial=ROL_POR_DEFECTO)
     tipo_documento = forms.ChoiceField(label="Tipo de documento", choices=TIPOS_DE_DOCUMENTO)
-    numero_documento = forms.CharField(label="Número de documento", max_length=20)
-    nombres = forms.CharField(label="Nombres", max_length=30)
-    apellidos = forms.CharField(label="Apellidos", max_length=30)
+    numero_documento = campo_documento()
+    nombres = campo_letras("Nombres", 30)
+    apellidos = campo_letras("Apellidos", 30)
     telefono = forms.RegexField(
         label="Teléfono",
         regex=r"^\+?[0-9]{7,10}$",
         max_length=10,
         required=False,
         error_messages={
-            "invalid": "El teléfono debe tener entre 7 y 10 dígitos y puede iniciar con +."
+            "invalid": "El teléfono solo acepta números: entre 7 y 10 dígitos, y puede iniciar con +."
         },
+        widget=forms.TextInput(attrs={"data-solo": "telefono", "inputmode": "tel", "autocomplete": "tel"}),
     )
     correo = forms.EmailField(label="Correo electrónico", max_length=254)
     contrasena = forms.CharField(
@@ -68,7 +74,7 @@ class UsuarioForm(forms.Form):
     )
 
     def clean(self):
-        datos = super().clean()
+        datos = limpiar_documento(self, super().clean())
         if datos.get("contrasena") != datos.get("confirmar_contrasena"):
             self.add_error("confirmar_contrasena", "Las contraseñas no coinciden.")
         datos.pop("confirmar_contrasena", None)

@@ -150,7 +150,7 @@ CARLOS = {"id": "1b2c3d4e-0000-4000-8000-000000000009", "nombre": "Carlos Gómez
           "roles_en_el_conjunto": []}
 
 
-def buscar(cliente, numero="1.023.456.789"):
+def buscar(cliente, numero="1023456789"):
     return cliente.post("/usuarios/registrar/", {"accion": "buscar", "tipo_documento": "CC", "numero_documento": numero})
 
 
@@ -234,7 +234,7 @@ def test_encontrada_se_ofrece_vincularla():
     with mock.patch("cliente_api.personas.buscar", return_value={"encontrada": True, "persona": CARLOS}) as api:
         html = buscar(cliente_con_sesion(permisos=BUSCADOR)).content.decode()
 
-    assert api.call_args.args[1] == {"tipo_documento": "CC", "numero_documento": "1.023.456.789"}
+    assert api.call_args.args[1] == {"tipo_documento": "CC", "numero_documento": "1023456789"}
     assert "Carlos Gómez" in html and "Sin cuenta" in html
     assert "Vincular al conjunto" in html
     assert f'value="{CARLOS["id"]}"' in html

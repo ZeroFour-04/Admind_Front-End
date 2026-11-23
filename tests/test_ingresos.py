@@ -50,7 +50,7 @@ VENCIDO = {
 }
 VIGILANCIA = ["visitante.registrar", "reserva.ver_todas", "ingreso.registrar"]
 ADMINISTRACION = ["area.ver", "area.gestionar", "ingreso.ver_historico"]
-DATOS_DE_BUSQUEDA = {"paso": "buscar", "area": GIMNASIO["id"], "numero_documento": "1.000.000.001", "acompanantes": "1"}
+DATOS_DE_BUSQUEDA = {"paso": "buscar", "area": GIMNASIO["id"], "numero_documento": "1000000001", "acompanantes": "1"}
 
 
 def pantalla(permisos, listas, url="/ingresos/", tipo_usuario="Vigilancia", zonas=(ZONA,)):
@@ -133,7 +133,7 @@ def test_buscar_un_documento_muestra_nombre_y_vivienda_antes_de_registrar():
     respuesta, buscar, api_registrar = enviar_formulario(DATOS_DE_BUSQUEDA)
     html = texto(respuesta)
 
-    assert buscar.call_args.args[1] == "1.000.000.001"
+    assert buscar.call_args.args[1] == "1000000001"
     assert "Pedro Gómez · Torre 1 – 101" in html and "Registrar entrada" in html
     assert f'value="{PEDRO}:{TORRE_101}" id="id_residente_0" required checked' in html
     api_registrar.assert_not_called()
@@ -161,7 +161,7 @@ def test_no_encontrado_sale_junto_al_campo_del_documento():
 
     html = respuesta.content.decode()
     assert 'id="id_numero_documento-error">No encontrado' in html
-    assert 'value="1.000.000.001"' in html
+    assert 'value="1000000001"' in html
 
 
 def test_confirmar_manda_el_ingreso_a_la_api_y_vuelve_a_la_pantalla():
@@ -183,7 +183,7 @@ def test_un_registro_rechazado_muestra_todos_los_motivos_y_conserva_lo_escrito()
 
     assert "Entran 2 y en esta zona quedan 1 puestos libres de 3." in html
     assert "La zona atiende de 05:00 a 22:00." in html
-    assert 'name="numero_documento" value="1.000.000.001"' in html and 'name="acompanantes" value="1"' in html
+    assert 'name="numero_documento" value="1000000001"' in html and 'name="acompanantes" value="1"' in html
     assert "Pedro Gómez · Torre 1 – 101" in html
 
 

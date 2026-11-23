@@ -1,16 +1,18 @@
 from django import forms
 
+from apps.usuarios.validacion import campo_cedula, campo_letras, campo_placa
+
 
 class RegistrarVisitanteForm(forms.Form):
-    cedula = forms.CharField(label="CC", max_length=20, widget=forms.TextInput(attrs={"inputmode": "numeric"}))
-    nombre = forms.CharField(label="Nombre", max_length=120)
+    cedula = campo_cedula()
+    nombre = campo_letras("Nombre", 120)
     ingresa_con_vehiculo = forms.ChoiceField(
         label="¿El visitante ingresa con vehículo?",
         choices=(("no", "No"), ("si", "Sí")),
         initial="no",
         widget=forms.RadioSelect,
     )
-    placa_vehiculo = forms.CharField(label="Placa vehículo", max_length=10, required=False)
+    placa_vehiculo = campo_placa(required=False)
     tipo_vehiculo = forms.ChoiceField(
         label="Tipo vehículo",
         choices=(("Auto", "Auto"), ("Moto", "Moto")),

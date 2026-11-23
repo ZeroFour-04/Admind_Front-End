@@ -1,5 +1,7 @@
 from django import forms
 
+from apps.usuarios.validacion import campo_documento
+
 
 def opciones_de_zonas(zonas):
     return [("", "Elige la zona")] + [(zona["area"]["id"], zona["area"]["nombre"]) for zona in zonas]
@@ -9,11 +11,8 @@ class BuscarResidenteForm(forms.Form):
     """Primer paso: la zona, el documento de quien entra y cuántos lo acompañan."""
 
     area = forms.ChoiceField(label="Zona")
-    numero_documento = forms.CharField(
-        label="Número de documento del residente",
-        max_length=30,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
-    )
+    # Con letras: quien vive en el conjunto puede tener pasaporte.
+    numero_documento = campo_documento("Número de documento del residente", con_letras=True)
     acompanantes = forms.IntegerField(label="Acompañantes que entran con la persona", min_value=0, max_value=50, initial=0)
 
     def __init__(self, *args, zonas=(), **kwargs):

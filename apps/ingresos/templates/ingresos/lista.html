@@ -94,7 +94,7 @@
           </select>
           {% if formulario.area.errors %}<span class="am-campo__error">{{ formulario.area.errors|join:" " }}</span>{% endif %}
         </div>
-        {% include "componentes/campo.html" with campo=formulario.numero_documento modo="numeric" ayuda="Sin puntos ni espacios. Solo se busca entre quienes viven en el conjunto." %}
+        {% include "componentes/campo.html" with campo=formulario.numero_documento modo="numeric" ayuda="Solo letras y números, sin puntos ni espacios. Solo se busca entre quienes viven en el conjunto." %}
         {% include "componentes/campo.html" with campo=formulario.acompanantes tipo="number" modo="numeric" %}
         <div class="acciones">
           <button class="am-btn am-btn--primario" type="submit">Buscar residente</button>

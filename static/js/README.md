@@ -13,6 +13,7 @@ Comportamiento en el navegador con Alpine.js. Solo lo que no se resuelve con HTM
 - `vinculos.js`: en el detalle de una vivienda, el buscador para elegir a la persona del vínculo y el modal de «Crear nuevo residente»
 - `directorio-usuarios.js`: la lista de Usuarios; reparte las cuentas por rol, las busca y ordena cada grupo en el navegador con lo que la API ya entregó
 - `usuarios.js`: abre y cierra la confirmación de «Eliminar usuario» en el detalle
+- `validacion.js`: el aviso en rojo bajo los campos con formato (documento, nombres, teléfono, placa) mientras se escribe; lee `data-solo`, `minlength` y `maxlength`, que pone `apps/usuarios/validacion.py`. Lo carga `templates/base/base.html` en todas las pantallas
 - `vendor/`: Alpine.js autoalojado
 
 ## Lo que no va

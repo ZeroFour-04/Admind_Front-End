@@ -21,7 +21,7 @@
       {% endfor %}
     </select>
   </div>
-  {% include "componentes/campo.html" with campo=busqueda.numero_documento autocompletar="off" ayuda="Tal como aparece en el documento. Los puntos y espacios no importan." %}
+  {% include "componentes/campo.html" with campo=busqueda.numero_documento autocompletar="off" ayuda="Solo números, sin puntos ni espacios (el pasaporte admite letras). De 5 a 11 caracteres." %}
   <div class="acciones">
     <a class="am-btn am-btn--secundario" href="{% url 'usuarios:lista' %}">Cancelar</a>
     <button class="am-btn am-btn--primario" type="submit">Buscar</button>

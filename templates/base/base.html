@@ -20,6 +20,8 @@
   {% block estilos %}{% endblock %}
   {# Pone el fondo elegido en <html> antes de pintar: va sin defer, a propósito. #}
   <script src="{% static 'js/apariencia.js' %}"></script>
+  {# Los avisos en rojo de los campos con formato (documento, nombres, teléfono, placa), en todas las pantallas. #}
+  <script src="{% static 'js/validacion.js' %}" defer></script>
 </head>
 <body>
   {% include "componentes/_iconos.html" %}
